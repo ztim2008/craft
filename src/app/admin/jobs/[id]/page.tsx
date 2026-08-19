@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getContent } from "@/modules/content/store";
+import { listLeads } from "@/modules/forms/leads";
 import { getImportJob } from "@/modules/jobs/store";
 import { getPageModel } from "@/modules/pageModel/buildPageModel";
 import { RebuildModelButton } from "@/components/admin/RebuildModelButton";
@@ -16,6 +17,7 @@ export default async function AdminJobModelPage({
   const job = await getImportJob(id);
   const model = await getPageModel(id);
   const content = await getContent(id);
+  const leads = await listLeads(id);
 
   return (
     <div className="space-y-5">
@@ -59,6 +61,31 @@ export default async function AdminJobModelPage({
             initial={content}
             previewUrl={job?.previewUrl}
           />
+          <section className="rounded border border-[#c3c4c7] bg-white p-4">
+            <h2 className="font-medium">Заявки</h2>
+            <p className="mt-1 text-sm text-[#50575e]">
+              Укажите email у формы, сохраните, затем отправьте тестовую заявку в Preview.
+              Без SMTP заявки всё равно появятся здесь.
+            </p>
+            {leads.length === 0 ? (
+              <p className="mt-3 text-sm text-[#50575e]">Пока нет заявок.</p>
+            ) : (
+              <ul className="mt-3 space-y-3 text-sm">
+                {leads.map((lead) => (
+                  <li key={lead.id} className="border-t border-[#f0f0f1] pt-3">
+                    <div className="text-xs text-[#50575e]">
+                      {lead.at} · {lead.emailed ? "email отправлен" : "только в админке"} · {lead.to}
+                    </div>
+                    {Object.entries(lead.fields).map(([key, value]) => (
+                      <div key={key}>
+                        <strong>{key}:</strong> {value}
+                      </div>
+                    ))}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </>
       )}
     </div>

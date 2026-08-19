@@ -8,11 +8,12 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/modules/security/urlGuard.test.ts src/modules/crawler/discoverLinks.test.ts src/modules/assets/assets.test.ts src/modules/pageModel/analyzeHtml.test.ts src/modules/content/patchHtml.test.ts",
+    "test": "tsx --test src/modules/security/urlGuard.test.ts src/modules/crawler/discoverLinks.test.ts src/modules/assets/assets.test.ts src/modules/pageModel/analyzeHtml.test.ts src/modules/content/patchHtml.test.ts src/modules/forms/forms.test.ts",
     "start:prod": "next start -p 3040"
   },
   "dependencies": {
     "next": "16.2.4",
+    "nodemailer": "^9.0.5",
     "playwright": "^1.62.1",
     "react": "19.2.4",
     "react-dom": "19.2.4"
@@ -20,6 +21,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
