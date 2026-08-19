@@ -21,6 +21,7 @@
 | 5 | Rewrite донора practic-hub.ru | ✅ |
 | 6 | Виджет `.pic`: attr(class) vs custom-class, similar groups, вкладка «Виджеты» | ✅ |
 | 7 | Документы: live-editor, ADR-0031/0032 | ✅ |
+| 8 | GitHub deploy key craft-vps, push `ea91678` | ✅ |
 
 ### План на 2026-08-20 · утверждён
 
