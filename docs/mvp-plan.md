@@ -31,12 +31,19 @@ URL: ma-maniere-ballet.ru, kc3748.craftum.io, madlenmartynova.ru, sx7238.craftum
 
 ---
 
-## Phase 3 — Page Model v1 📋
+## Phase 3 — Sitemap + internal links + SEO files ✅
 
-- Секции по `cli-block` + `data-type`
-- Поля: text, phone, link из `n-{uuid}` nodes
-- Формы: dynamic fields from `<form>`
-- Output: `content.json` schema
+- `/sitemap.xml` как источник URL
+- rewrite внутренних ссылок в preview
+- `sitemap.xml`, `robots.txt`, `canonical`
+
+---
+
+## Phase 3b — Page Model v1 ✅ (read-only)
+
+- Секции `cli-block`, поля text/phone/link/button/image, формы из HTML
+- `storage/projects/{id}/page-model.json`
+- Админка сервиса: `/login`, `/admin` (WP-style, 1 владелец)
 
 ---
 
@@ -78,10 +85,9 @@ URL: ma-maniere-ballet.ru, kc3748.craftum.io, madlenmartynova.ru, sx7238.craftum
 
 ---
 
-## Phase 9 — Multi-page import 📋
+## Phase 9 — Multi-page import ✅
 
-- sitemap.xml, same-origin crawl
-- Pro tier
+- sitemap.xml + BFS same-origin. Проверено на madlenmartynova.ru (5 страниц).
 
 ---
 

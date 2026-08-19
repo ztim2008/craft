@@ -70,6 +70,12 @@ export type ImportJob = {
   assetsDownloaded: number;
   assetsFailed: number;
   previewUrl?: string;
+  pageModelCounts?: {
+    pages: number;
+    sections: number;
+    fields: number;
+    forms: number;
+  };
   warnings: string[];
   errors: string[];
   discoveredLinks: string[];

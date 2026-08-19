@@ -31,7 +31,7 @@ export function ImportForm() {
       if (!response.ok || !data.jobId) {
         throw new Error(data.error || "Не удалось запустить импорт");
       }
-      router.push(`/jobs/${data.jobId}`);
+        router.push(`/jobs/${data.jobId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка запроса");
       setPending(false);

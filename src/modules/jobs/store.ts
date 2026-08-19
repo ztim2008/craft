@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { createId } from "@/lib/ids";
 import { JOBS_ROOT, jobJsonPath } from "@/lib/storage";
 import type { ImportJob } from "@/modules/crawler/types";
@@ -23,6 +23,7 @@ export async function createImportJob(input: {
     networkHits: 0,
     assetsDownloaded: 0,
     assetsFailed: 0,
+    pageModelCounts: { pages: 0, sections: 0, fields: 0, forms: 0 },
     warnings: [],
     errors: [],
     discoveredLinks: [],
@@ -55,4 +56,23 @@ export async function patchImportJob(
   const next = { ...current, ...patch };
   await saveImportJob(next);
   return next;
+}
+
+export async function listImportJobs(): Promise<ImportJob[]> {
+  try {
+    const files = await readdir(JOBS_ROOT);
+    const jobs: ImportJob[] = [];
+    for (const file of files) {
+      if (!file.endsWith(".json")) continue;
+      try {
+        const raw = await readFile(jobJsonPath(file.replace(/\.json$/, "")), "utf8");
+        jobs.push(JSON.parse(raw) as ImportJob);
+      } catch {
+        // skip broken
+      }
+    }
+    return jobs.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  } catch {
+    return [];
+  }
 }

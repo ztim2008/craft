@@ -140,6 +140,10 @@ export default function JobPage() {
                   </a>
                 </>
               ) : null}
+              {" · "}
+              <a className="underline" href={`/admin/jobs/${job.id}`}>
+                Page Model
+              </a>
             </p>
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -65,3 +65,7 @@ Preview использует `https://craft.nordic-builder.ru/preview/{jobId}/..
 ## ADR-0016 · Sitemap.xml как источник URL
 
 При multi-page crawl сначала читаем `/sitemap.xml` (и вложенные sitemapindex), затем добираем ссылки с страниц. Same-origin only.
+
+## ADR-0017 · Админка сервиса Craft
+
+Один владелец. Сессия cookie HMAC. Email/hash пароля в `.env`, не в git. Импорт и job API закрыты. Preview остаётся публичным для демо.

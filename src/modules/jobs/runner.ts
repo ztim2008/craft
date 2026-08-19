@@ -3,6 +3,7 @@ import { projectDir } from "@/lib/storage";
 import { collectProjectAssets } from "@/modules/assets/collectProject";
 import { launchCrawlerBrowser } from "@/modules/crawler/browser";
 import { crawlSite } from "@/modules/crawler/crawlSite";
+import { buildPageModel } from "@/modules/pageModel/buildPageModel";
 import { getImportJob, patchImportJob } from "./store";
 
 const running = new Set<string>();
@@ -70,6 +71,11 @@ export async function collectAndFinish(
     pages,
     projectRoot: root,
   });
+  const model = await buildPageModel({
+    jobId,
+    sourceUrl: origin,
+    pages,
+  });
   const networkHits = pages.reduce((sum, page) => sum + page.network.length, 0);
   await patchImportJob(jobId, {
     pages,
@@ -80,6 +86,7 @@ export async function collectAndFinish(
     assetsFailed: assets.failed,
     assetsFound: assets.downloaded,
     previewUrl: `/preview/${jobId}/`,
+    pageModelCounts: model.counts,
     warnings: [...previousWarnings, ...assets.warnings],
   });
 }
