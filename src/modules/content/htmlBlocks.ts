@@ -47,13 +47,34 @@ function wrapBlock(block: HtmlBlock): string {
   return `<!--craft-block:${block.id}-->${block.html}<!--/craft-block:${block.id}-->`;
 }
 
+function insertSlot(html: string, position: HtmlBlock["position"], chunk: string): string {
+  if (position === "head") {
+    if (/<\/head>/i.test(html)) return html.replace(/<\/head>/i, `${chunk}\n</head>`);
+    return chunk + html;
+  }
+  if (position === "bodyStart") {
+    if (/<body\b[^>]*>/i.test(html)) return html.replace(/<body\b[^>]*>/i, (m) => `${m}\n${chunk}`);
+    return chunk + html;
+  }
+  if (position === "bodyEnd") {
+    if (/<\/body>/i.test(html)) return html.replace(/<\/body>/i, `${chunk}\n</body>`);
+    return html + chunk;
+  }
+  return html;
+}
+
 export function applyHtmlBlocks(html: string, blocks: HtmlBlock[]): string {
   let next = stripHtmlBlocks(html);
   for (const block of blocks) {
-    if (!block.sectionId || !block.html.trim()) continue;
+    if (!String(block.html || "").trim()) continue;
+    const wrapped = wrapBlock(block);
+    if (block.position === "head" || block.position === "bodyStart" || block.position === "bodyEnd") {
+      next = insertSlot(next, block.position, wrapped);
+      continue;
+    }
+    if (!block.sectionId) continue;
     const range = findElementRange(next, block.sectionId);
     if (!range) continue;
-    const wrapped = wrapBlock(block);
     if (block.position === "before") {
       next = `${next.slice(0, range.start)}${wrapped}${next.slice(range.start)}`;
     } else {

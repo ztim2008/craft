@@ -1,6 +1,6 @@
 import type { FieldPatch } from "@/modules/content/types";
 
-const TAGS = "div|p|h1|h2|h3|h4|h5|span|a|button|li|label";
+const TAGS = "div|p|h1|h2|h3|h4|h5|h6|span|a|button|li|label|nav|header|ul";
 
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

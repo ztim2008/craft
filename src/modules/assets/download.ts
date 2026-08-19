@@ -67,6 +67,19 @@ export async function downloadAsset(
       };
     }
     const mimeType = response.headers.get("content-type") || "application/octet-stream";
+    const mimeBase = mimeType.split(";")[0].trim().toLowerCase();
+    if (mimeBase === "text/html" || mimeBase === "application/xhtml+xml") {
+      return {
+        originalUrl,
+        localPath: "",
+        hash: "",
+        mimeType,
+        extension: "",
+        size: 0,
+        status: "skipped",
+        error: "HTML-страница, не ассет",
+      };
+    }
     const buffer = Buffer.from(await response.arrayBuffer());
     if (buffer.length > ASSET_LIMITS.maxFileBytes) {
       return {

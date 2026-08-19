@@ -4,8 +4,21 @@ import path from "node:path";
 import { PROJECT_ROOT, projectDir } from "@/lib/storage";
 import { getContent } from "@/modules/content/store";
 import { applyContent } from "@/modules/content/applyContent";
+import { pagePathFromRel } from "@/modules/content/applySeo";
 import { injectFormBridge } from "@/modules/forms/formBridge";
 import { rewriteForExport, htmlPathToLoc, sitemapXml } from "./rewriteForExport";
+import type { HostingKind } from "@/modules/clients/types";
+import { deployInstructionTxt } from "./deployReadme";
+
+export type ExportPackageOptions = {
+  clientName?: string;
+  domain?: string;
+  plan?: string;
+  adminPassword?: string;
+  nodePort?: number;
+  hosting?: HostingKind;
+  includeEditor?: boolean;
+};
 
 const PORTABLE_DIR = path.join(PROJECT_ROOT, "src/modules/export/portable");
 
@@ -34,51 +47,17 @@ async function walkFiles(dir: string, exts: Set<string>): Promise<string[]> {
   return out;
 }
 
-function readme(): string {
-  return `# Пакет сайта (Craft export)
-
-- \`public/\` — готовый сайт
-- \`data/source/\` — HTML до правок (для повторной публикации)
-- \`data/content.json\` — тексты, формы, HTML-блоки
-- \`data/page-model.json\` — карта секций для редактора
-- \`server.mjs\` — сайт + формы + редактор
-- \`admin.html\` — редактор страниц
-
-## Запуск
-
-Нужен Node.js 18+.
-
-\`\`\`bash
-cp .env.example .env
-# задайте ADMIN_PASSWORD
-node server.mjs
-\`\`\`
-
-- Сайт: http://127.0.0.1:3000/
-- Редактор: http://127.0.0.1:3000/admin
-
-Проксируйте домен на этот порт (Beget / Timeweb / VPS).
-
-В редакторе: правите тексты → Сохранить (черновик) → Опубликовать (запись в public/).
-
-## Формы
-
-У формы в редакторе укажите email. Заявки: \`data/leads.jsonl\`.
-
-## Домен
-
-В \`public/sitemap.xml\` замените \`YOUR-DOMAIN.RU\`.
-
-Техподдержка в базовую поставку не входит.
-`;
-}
-
-export async function buildExportZip(jobId: string, sourceUrl: string): Promise<string> {
+export async function buildExportZip(
+  jobId: string,
+  sourceUrl: string,
+  siteOrigin = "https://YOUR-DOMAIN.RU",
+  options: ExportPackageOptions = {},
+): Promise<string> {
   const root = projectDir(jobId);
   const siteRoot = path.join(root, "site");
   const staging = path.join(root, ".export-staging");
   const zipPath = path.join(root, "export.zip");
-  const siteOrigin = "https://YOUR-DOMAIN.RU";
+  const origin = siteOrigin.replace(/\/+$/, "") || "https://YOUR-DOMAIN.RU";
 
   await rm(staging, { recursive: true, force: true });
   await mkdir(path.join(staging, "public"), { recursive: true });
@@ -90,28 +69,28 @@ export async function buildExportZip(jobId: string, sourceUrl: string): Promise<
   const htmlFiles = await walkFiles(publicRoot, new Set([".html"]));
   for (const file of htmlFiles) {
     let html = await readFile(file, "utf8");
-    html = rewriteForExport(html, jobId, siteOrigin);
+    html = rewriteForExport(html, jobId, origin);
     html = injectFormBridge(html, "/api/form");
     const rel = path.relative(publicRoot, file);
     const sourceFile = path.join(staging, "data", "source", rel);
     await mkdir(path.dirname(sourceFile), { recursive: true });
     await writeFile(sourceFile, html, "utf8");
-    html = applyContent(html, overlay);
+    html = applyContent(html, overlay, pagePathFromRel(rel));
     await writeFile(file, html, "utf8");
   }
   const textFiles = await walkFiles(publicRoot, new Set([".css", ".js", ".xml", ".txt"]));
   for (const file of textFiles) {
     const raw = await readFile(file, "utf8");
-    const next = rewriteForExport(raw, jobId, siteOrigin);
+    const next = rewriteForExport(raw, jobId, origin);
     if (next !== raw) await writeFile(file, next, "utf8");
   }
 
   const sitemapFile = path.join(staging, "public", "sitemap.xml");
   const locs = htmlFiles.map((file) => htmlPathToLoc(publicRoot, file));
-  await writeFile(sitemapFile, sitemapXml(siteOrigin, locs.length ? locs : ["/"]), "utf8");
+  await writeFile(sitemapFile, sitemapXml(origin, locs.length ? locs : ["/"]), "utf8");
   await writeFile(
     path.join(staging, "public", "robots.txt"),
-    `User-agent: *\nAllow: /\nSitemap: ${siteOrigin}/sitemap.xml\n`,
+    `User-agent: *\nAllow: /\nSitemap: ${origin}/sitemap.xml\n`,
     "utf8",
   );
 
@@ -125,10 +104,23 @@ export async function buildExportZip(jobId: string, sourceUrl: string): Promise<
   await cp(path.join(PORTABLE_DIR, "server.mjs"), path.join(staging, "server.mjs"));
   await cp(path.join(PORTABLE_DIR, "patch.cjs"), path.join(staging, "patch.cjs"));
   await cp(path.join(PORTABLE_DIR, "admin.html"), path.join(staging, "admin.html"));
-  await writeFile(path.join(staging, "README-deploy.md"), readme(), "utf8");
+  const port = options.nodePort && options.nodePort > 0 ? options.nodePort : 3000;
+  const password = options.adminPassword?.trim() || "смените-пароль";
+  const instruction = deployInstructionTxt({
+    siteOrigin: origin,
+    clientName: options.clientName,
+    domain: options.domain,
+    plan: options.plan,
+    adminPassword: password,
+    nodePort: port,
+    hosting: options.hosting,
+    includeEditor: options.includeEditor,
+    sourceUrl,
+  });
+  await writeFile(path.join(staging, "INSTRUKTSIYA.txt"), instruction, "utf8");
   await writeFile(
     path.join(staging, ".env.example"),
-    `PORT=3000\nSITE_ORIGIN=${siteOrigin}\nADMIN_PASSWORD=смените-пароль\n# Source: ${sourceUrl}\n`,
+    `PORT=${port}\nSITE_ORIGIN=${origin}\nADMIN_PASSWORD=${password}\n# Source: ${sourceUrl}\n`,
     "utf8",
   );
 

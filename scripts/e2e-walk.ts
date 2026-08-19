@@ -165,8 +165,8 @@ async function main() {
     }
 
     const payAuth = await fetch(`http://127.0.0.1:3040/api/demo/${jobId}/export`);
-    assert(payAuth.status === 401 || payAuth.status === 403, "zip gated");
-    report.push("user: ZIP без оплаты закрыт");
+    assert(payAuth.status === 410, "public zip gone");
+    report.push("user: ZIP с демо закрыт");
 
     const orderRes = await fetch(`http://127.0.0.1:3040/api/demo/${jobId}/order`, {
       method: "POST",
@@ -177,22 +177,18 @@ async function main() {
         email: "e2e@example.ru",
       }),
     });
-    const orderJson = (await orderRes.json()) as { orderId?: string; status?: string; downloadToken?: string; error?: string };
+    const orderJson = (await orderRes.json()) as { orderId?: string; status?: string; error?: string };
     assert(orderRes.ok || orderRes.status === 201, orderJson.error || "order");
     if (orderJson.status !== "paid") {
       const pay = await fetch(`http://127.0.0.1:3040/api/admin/orders/${orderJson.orderId}/pay`, {
         method: "POST",
         headers: { cookie },
       });
-      const paid = (await pay.json()) as { downloadToken?: string; error?: string };
-      assert(pay.ok && paid.downloadToken, paid.error || "mark paid");
-      orderJson.downloadToken = paid.downloadToken;
+      assert(pay.ok, "mark paid");
     }
-    const zip = await fetch(
-      `http://127.0.0.1:3040/api/demo/${jobId}/export?token=${encodeURIComponent(orderJson.downloadToken || "")}`,
-    );
-    assert(zip.ok && (zip.headers.get("content-type") || "").includes("zip"), "paid download");
-    report.push("user+operator: заявка → оплачено → ZIP");
+    const zipGone = await fetch(`http://127.0.0.1:3040/api/demo/${jobId}/export?token=nope`);
+    assert(zipGone.status === 410, "paid demo still no zip");
+    report.push("user+operator: заявка → оплачено, ZIP не с /demo");
   } finally {
     server.kill();
   }

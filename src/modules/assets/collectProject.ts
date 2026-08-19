@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { PageSnapshot } from "@/modules/crawler/types";
-import { shouldDownloadAsset, isCssUrl } from "./classify";
+import { shouldDownloadAsset, isCssUrl, isSameOriginHtmlPage } from "./classify";
 import {
   extractCssUrls,
   extractHtmlAssetCandidates,
@@ -9,7 +9,13 @@ import {
 } from "./collectUrls";
 import { downloadAsset, mapPool } from "./download";
 import { injectPreviewBase, previewAssetHref } from "./previewBase";
-import { pageOutputPath, relativeFromCss, rewriteUrls } from "./rewrite";
+import {
+  importedPagePathSet,
+  pageOutputPath,
+  relativeFromCss,
+  rewriteUnimportedPageHrefs,
+  rewriteUrls,
+} from "./rewrite";
 import { ASSET_LIMITS, type AssetCollectResult, type StoredAsset } from "./types";
 
 function addCandidate(
@@ -73,6 +79,8 @@ export async function collectProjectAssets(input: {
       if (asset.status === "ok") {
         downloaded += 1;
         totalBytes += asset.size;
+      } else if (asset.status === "skipped") {
+        skipped += 1;
       } else {
         failed += 1;
         warnings.push(`${url}: ${asset.error || "fail"}`);
@@ -104,7 +112,7 @@ export async function collectProjectAssets(input: {
     replacementsAbs.push({ from: originalUrl, to: asset.localPath });
     try {
       const parsed = new URL(originalUrl);
-      if (parsed.host === pageHost) {
+      if (parsed.host === pageHost && !isSameOriginHtmlPage(parsed, pageHost)) {
         replacementsAbs.push({ from: parsed.pathname + parsed.search, to: asset.localPath });
       }
     } catch {
@@ -156,15 +164,21 @@ export async function collectProjectAssets(input: {
     const rootedTrim = rooted1 === "/" ? "/" : rooted1.replace(/\/+$/, "");
     const rootedSlash = rootedTrim === "/" ? "/" : `${rootedTrim}/`;
 
-    const candidates: string[] = Array.from(new Set([abs1, abs2, rootedTrim, rootedSlash]));
+    const candidates: string[] = Array.from(new Set([abs1, abs2, rootedTrim, rootedSlash])).filter(
+      (from) => from && from !== "/" && from.length > 1,
+    );
     for (const from of candidates) {
-      if (!from) continue;
       const key = `${from}=>${previewPath}`;
       if (seenPageReplacements.has(key)) continue;
       seenPageReplacements.add(key);
       pageLinkReplacements.push({ from, to: previewPath });
     }
   }
+  const homePreview = previewPathFor("/");
+  pageLinkReplacements.push(
+    { from: `href="/"`, to: `href="${homePreview}"` },
+    { from: `href='/'`, to: `href='${homePreview}'` },
+  );
 
   for (const page of input.pages) {
     const html = await readFile(page.htmlFile, "utf8");
@@ -173,8 +187,13 @@ export async function collectProjectAssets(input: {
       from,
       to: previewAssetHref(jobId, to),
     }));
-    let rewritten = rewriteUrls(html, assetReplacements);
-    rewritten = rewriteUrls(rewritten, pageLinkReplacements);
+    let rewritten = rewriteUrls(html, pageLinkReplacements);
+    rewritten = rewriteUrls(rewritten, assetReplacements);
+    rewritten = rewriteUnimportedPageHrefs(
+      rewritten,
+      input.origin,
+      importedPagePathSet(input.pages.map((item) => item.path)),
+    );
     rewritten = injectPreviewBase(rewritten, jobId);
 
     // SEO: canonical for preview.

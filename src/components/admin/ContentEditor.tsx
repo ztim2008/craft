@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { ContentOverlay, FieldPatch, FormPatch, HtmlBlock } from "@/modules/content/types";
+import type { ContentOverlay, FieldPatch, FormPatch, HtmlBlock, HtmlBlockPosition } from "@/modules/content/types";
 import type { PageModel } from "@/modules/pageModel/types";
 
 export function ContentEditor({
@@ -20,7 +20,7 @@ export function ContentEditor({
   const [htmlBlocks, setHtmlBlocks] = useState<HtmlBlock[]>(initial.htmlBlocks || []);
   const [draftHtml, setDraftHtml] = useState("");
   const [draftSection, setDraftSection] = useState("");
-  const [draftPosition, setDraftPosition] = useState<"before" | "after">("after");
+  const [draftPosition, setDraftPosition] = useState<HtmlBlockPosition>("after");
   const [status, setStatus] = useState<string | null>(null);
   const [pending, setPending] = useState<"save" | "publish" | null>(null);
 
@@ -237,11 +237,14 @@ export function ContentEditor({
             <span className="text-xs uppercase text-[#50575e]">Позиция</span>
             <select
               value={draftPosition}
-              onChange={(e) => setDraftPosition(e.target.value as "before" | "after")}
+              onChange={(e) => setDraftPosition(e.target.value as HtmlBlockPosition)}
               className="mt-1 w-full rounded border border-[#8c8f94] px-3 py-2"
             >
+              <option value="after">После секции (карта, отзывы, виджет)</option>
               <option value="before">Перед секцией</option>
-              <option value="after">После секции</option>
+              <option value="head">В head</option>
+              <option value="bodyStart">После body</option>
+              <option value="bodyEnd">Перед /body</option>
             </select>
           </label>
         </div>
@@ -255,12 +258,13 @@ export function ContentEditor({
         <button
           type="button"
           onClick={() => {
-            if (!draftSection || !draftHtml.trim()) return;
+            const slot = draftPosition === "head" || draftPosition === "bodyStart" || draftPosition === "bodyEnd";
+            if (!draftHtml.trim() || (!slot && !draftSection)) return;
             setHtmlBlocks((prev) => [
               ...prev,
               {
                 id: `hb-${Date.now().toString(36)}`,
-                sectionId: draftSection,
+                sectionId: slot ? "" : draftSection,
                 position: draftPosition,
                 html: draftHtml,
               },
@@ -279,7 +283,7 @@ export function ContentEditor({
               <li key={block.id} className="rounded border border-[#dcdcde] p-3">
                 <div className="flex items-center justify-between gap-2">
                   <span>
-                    {block.position === "before" ? "перед" : "после"} · {block.sectionId}
+                    {block.position} · {block.sectionId || "сайт"}
                   </span>
                   <button
                     type="button"

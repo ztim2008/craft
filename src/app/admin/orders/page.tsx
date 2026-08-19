@@ -3,6 +3,8 @@ import { formatRub } from "@/modules/billing/types";
 import { planCopy } from "@/modules/billing/plans";
 import { getImportJob } from "@/modules/jobs/store";
 import { MarkPaidButton } from "@/components/admin/MarkPaidButton";
+import { CreateClientFromOrderButton } from "@/components/admin/CreateClientFromOrderButton";
+import { findClientByOrder } from "@/modules/clients/store";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +14,8 @@ export default async function AdminOrdersPage() {
   const rows = await Promise.all(
     orders.map(async (order) => {
       const job = await getImportJob(order.jobId);
-      return { order, sourceUrl: job?.sourceUrl || order.jobId, jobStatus: job?.status };
+      const client = await findClientByOrder(order.id);
+      return { order, sourceUrl: job?.sourceUrl || order.jobId, jobStatus: job?.status, client };
     }),
   );
 
@@ -21,8 +24,7 @@ export default async function AdminOrdersPage() {
       <div>
         <h1 className="text-2xl font-semibold">Заявки</h1>
         <p className="mt-1 text-sm text-[#50575e]">
-          Оплата пока вручную (перевод / счёт). ЮKassa подключим отдельно. После «Оплачено» клиент
-          скачивает ZIP на странице демо.
+          Оплата вручную. ZIP и инструкцию отдаёте с карточки клиента, не с публичного демо.
         </p>
       </div>
       <div className="overflow-hidden rounded border border-[#c3c4c7] bg-white">
@@ -37,7 +39,7 @@ export default async function AdminOrdersPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map(({ order, sourceUrl, jobStatus }) => {
+            {rows.map(({ order, sourceUrl, jobStatus, client }) => {
               const plan = planCopy(order.plan);
               return (
                 <tr key={order.id} className="border-t border-[#dcdcde] align-top">
@@ -61,6 +63,21 @@ export default async function AdminOrdersPage() {
                     <Link className="block text-[#2271b1] hover:underline" href={`/admin/jobs/${order.jobId}`}>
                       Контент
                     </Link>
+                    {client ? (
+                      <Link className="block text-[#2271b1] hover:underline" href={`/admin/clients/${client.id}`}>
+                        Карточка клиента
+                      </Link>
+                    ) : (
+                      <CreateClientFromOrderButton
+                        name={order.name}
+                        email={order.email}
+                        phone={order.phone}
+                        plan={order.plan}
+                        sourceUrl={sourceUrl}
+                        jobId={order.jobId}
+                        orderId={order.id}
+                      />
+                    )}
                     {order.status !== "paid" ? <MarkPaidButton orderId={order.id} /> : (
                       <span className="text-xs text-[#50575e]">токен выдан</span>
                     )}

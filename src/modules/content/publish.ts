@@ -3,6 +3,7 @@ import path from "node:path";
 import { projectDir } from "@/lib/storage";
 import { getContent, saveContent } from "./store";
 import { applyContent } from "./applyContent";
+import { pagePathFromRel } from "./applySeo";
 
 async function walkHtml(dir: string): Promise<string[]> {
   const out: string[] = [];
@@ -30,7 +31,8 @@ export async function publishContent(jobId: string): Promise<{ files: number }> 
   const files = await walkHtml(siteRoot);
   for (const file of files) {
     const html = await readFile(file, "utf8");
-    await writeFile(file, applyContent(html, overlay), "utf8");
+    const rel = path.relative(siteRoot, file);
+    await writeFile(file, applyContent(html, overlay, pagePathFromRel(rel)), "utf8");
   }
   await saveContent(jobId, {
     ...overlay,

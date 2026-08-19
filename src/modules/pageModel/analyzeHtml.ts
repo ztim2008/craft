@@ -1,5 +1,6 @@
 import { attr, looksLikePhone, stripTags } from "./html";
 import { sectionLabel, sectionTypeFromClass } from "./labels";
+import { elementRange } from "@/modules/dom/tagRange";
 import type {
   PageModelField,
   PageModelForm,
@@ -7,35 +8,83 @@ import type {
   PageModelSection,
 } from "./types";
 
-const SECTION_RE = /<section\b([^>]*)>([\s\S]*?)<\/section>/gi;
-const NODE_RE =
-  /<(div|p|h1|h2|h3|h4|h5|span|a|button|img|li)\b([^>]*\bid=(["'])n-[0-9a-f-]+\3[^>]*)(?:\/>|>([\s\S]*?)<\/\1>)/gi;
+const OPEN_RE =
+  /<([a-zA-Z][a-zA-Z0-9]*)\b([^>]*\bid=(["'])(n-[0-9a-f-]+)\3[^>]*)(\/?)>/gi;
+const SECTION_OPEN_RE = /<section\b([^>]*)>/gi;
 const INPUT_RE = /<input\b([^>]*)\/?>/gi;
 const FORM_RE = /<form\b([^>]*)>([\s\S]*?)<\/form>/gi;
 const IMG_RE = /<img\b([^>]*)\/?>/i;
 
-function fieldLabel(type: string, value: string, placeholder: string, name: string): string {
-  if (placeholder) return placeholder;
-  if (name && !/^n-/i.test(name)) return name;
+const SKIP_TYPES = new Set([
+  "block-wrapper",
+  "grid",
+  "grid-col",
+  "background",
+  "bg-fade",
+  "shape",
+  "list",
+  "list-item",
+  "form",
+  "menu",
+  "toggle-list",
+  "input",
+  "icon",
+  "video",
+]);
+
+const FIELD_TYPES = new Set([
+  "text",
+  "button",
+  "link",
+  "image",
+  "logo",
+  "menu-item",
+  "social",
+  "header-menu",
+  "timer",
+]);
+
+function fieldLabel(type: string, value: string, title: string): string {
+  if (title && !title.startsWith("CDN_")) return title;
   if (type === "phone") return "Телефон";
-  if (type === "link") return "Ссылка";
+  if (type === "link" || type === "menu-item") return "Ссылка";
   if (type === "button") return "Кнопка";
   if (type === "image") return "Изображение";
   const short = value.slice(0, 42);
   return short || "Текст";
 }
 
-function extractFields(sectionHtml: string): PageModelField[] {
+function mapType(dataType: string, text: string): PageModelField["type"] {
+  if (dataType === "image" || dataType === "logo") return "image";
+  if (dataType === "link" || dataType === "menu-item" || dataType === "social") return "link";
+  if (dataType === "button") return "button";
+  if (looksLikePhone(text)) return "phone";
+  if (text.length > 140) return "textarea";
+  return "text";
+}
+
+export function extractFields(html: string): PageModelField[] {
   const fields: PageModelField[] = [];
   const seen = new Set<string>();
-  for (const match of sectionHtml.matchAll(NODE_RE)) {
+  const re = new RegExp(OPEN_RE.source, "gi");
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(html))) {
+    const tag = match[1];
     const attrs = match[2] || "";
-    const inner = match[4] || "";
-    const dataType = attr(attrs, "data-type");
-    const nodeId = attr(attrs, "id");
+    const nodeId = match[4] || attr(attrs, "id");
+    const selfClose = Boolean(match[5]);
     if (!nodeId || seen.has(nodeId)) continue;
-    if (!["text", "button", "link", "image", "logo"].includes(dataType)) continue;
-    seen.add(nodeId);
+    const dataType = attr(attrs, "data-type");
+    if (!dataType || SKIP_TYPES.has(dataType)) continue;
+    if (!FIELD_TYPES.has(dataType)) continue;
+
+    const openTag = match[0];
+    let inner = "";
+    if (!selfClose && !/^img$/i.test(tag) && !/^input$/i.test(tag)) {
+      const range = elementRange(html, tag, match.index, openTag);
+      if (!range) continue;
+      inner = html.slice(match.index + openTag.length, range.end).replace(new RegExp(`</${tag}\\s*>$`, "i"), "");
+    }
 
     const text = stripTags(inner);
     const href = attr(attrs, "href");
@@ -44,20 +93,16 @@ function extractFields(sectionHtml: string): PageModelField[] {
       const img = inner.match(IMG_RE);
       imgSrc = img ? attr(img[1] || "", "src") : attr(attrs, "src");
     }
-    if (dataType === "text" && !text) continue;
+    if ((dataType === "text" || dataType === "timer" || dataType === "header-menu") && !text) continue;
     if (dataType === "button" && !text && !href) continue;
+    if ((dataType === "menu-item" || dataType === "link" || dataType === "social") && !text && !href) continue;
 
-    let type: PageModelField["type"] = "text";
-    if (dataType === "image" || dataType === "logo") type = "image";
-    else if (dataType === "link") type = "link";
-    else if (dataType === "button") type = "button";
-    else if (looksLikePhone(text)) type = "phone";
-    else if (text.length > 140) type = "textarea";
-
+    seen.add(nodeId);
+    const type = mapType(dataType, text);
     fields.push({
       nodeId,
       type,
-      label: fieldLabel(type, text, "", attr(attrs, "data-title")),
+      label: fieldLabel(type, type === "image" ? imgSrc : text, attr(attrs, "data-title")),
       value: type === "image" ? imgSrc : text,
       href: href || undefined,
     });
@@ -101,11 +146,15 @@ function extractForms(sectionHtml: string): PageModelForm[] {
 
 export function analyzeHtml(html: string): PageModelSection[] {
   const sections: PageModelSection[] = [];
-  for (const match of html.matchAll(SECTION_RE)) {
+  const re = new RegExp(SECTION_OPEN_RE.source, "gi");
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(html))) {
     const attrs = match[1] || "";
-    const inner = match[2] || "";
     const className = attr(attrs, "class");
     if (!/\bcli-block\b/.test(className)) continue;
+    const range = elementRange(html, "section", match.index, match[0]);
+    if (!range) continue;
+    const inner = html.slice(match.index + match[0].length, range.end).replace(/<\/section\s*>$/i, "");
     const id = attr(attrs, "id") || attr(attrs, "data-root-id");
     if (!id) continue;
     const type = sectionTypeFromClass(className);
@@ -117,6 +166,7 @@ export function analyzeHtml(html: string): PageModelSection[] {
       fields: extractFields(inner),
       forms: extractForms(inner),
     });
+    re.lastIndex = range.end;
   }
   return sections;
 }

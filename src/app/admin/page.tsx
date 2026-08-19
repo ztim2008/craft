@@ -8,17 +8,25 @@ export default async function AdminHomePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-end justify-between">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Обзор</h1>
           <p className="mt-1 text-sm text-[#50575e]">Импорты и Page Model</p>
         </div>
-        <Link
-          href="/admin/import"
-          className="rounded bg-[#2271b1] px-4 py-2 text-sm font-medium text-white"
-        >
-          Новый импорт
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/admin/clients"
+            className="rounded bg-[#2271b1] px-4 py-2 text-sm font-medium text-white"
+          >
+            Клиенты
+          </Link>
+          <Link
+            href="/admin/import"
+            className="rounded border border-[#8c8f94] bg-white px-4 py-2 text-sm"
+          >
+            Новый импорт
+          </Link>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded border border-[#c3c4c7] bg-white">

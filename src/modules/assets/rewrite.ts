@@ -1,4 +1,5 @@
 import path from "node:path";
+import { isSameOriginHtmlPage } from "./classify";
 
 export function pageOutputPath(pagePath: string): string {
   const clean = pagePath === "/" ? "/" : pagePath.replace(/\/+$/, "");
@@ -39,4 +40,50 @@ export function rewriteUrls(
     next = next.split(from).join(to);
   }
   return next;
+}
+
+export function normalizePagePath(pathname: string): string {
+  if (!pathname || pathname === "/") return "/";
+  const trimmed = pathname.replace(/\/+$/, "");
+  return trimmed || "/";
+}
+
+export function importedPagePathSet(paths: string[]): Set<string> {
+  const set = new Set<string>();
+  for (const raw of paths) {
+    set.add(normalizePagePath(raw));
+  }
+  return set;
+}
+
+/** Ссылки на страницы, которых нет в импорте, оставляем на живом источнике (не 404 preview). */
+export function rewriteUnimportedPageHrefs(
+  html: string,
+  sourceOrigin: string,
+  importedPaths: Set<string>,
+): string {
+  let origin: URL;
+  try {
+    origin = new URL(sourceOrigin);
+  } catch {
+    return html;
+  }
+  const originRoot = origin.origin;
+  return html.replace(/\b(href|action)\s*=\s*(["'])([^"']*)\2/gi, (full, attr, quote, raw) => {
+    const value = String(raw).trim();
+    if (!value || value.startsWith("#") || /^(mailto:|tel:|javascript:|data:)/i.test(value)) {
+      return full;
+    }
+    let url: URL;
+    try {
+      url = new URL(value, `${originRoot}/`);
+    } catch {
+      return full;
+    }
+    if (!isSameOriginHtmlPage(url, origin.hostname)) return full;
+    const path = normalizePagePath(url.pathname);
+    if (importedPaths.has(path)) return full;
+    const abs = `${originRoot}${url.pathname}${url.search}${url.hash}`;
+    return `${attr}=${quote}${abs}${quote}`;
+  });
 }

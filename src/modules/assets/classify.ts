@@ -53,8 +53,22 @@ export function shouldSkipAsset(url: URL): boolean {
   return SKIP_PATH_HINTS.some((hint) => href.includes(hint));
 }
 
+const ASSET_PATH_PREFIXES = ["/static/", "/css/", "/js/", "/fonts/", "/uploads/", "/images/"];
+const ASSET_EXT_RE =
+  /\.(css|js|mjs|cjs|map|png|jpe?g|webp|gif|svg|ico|woff2?|ttf|otf|eot|mp4|webm|mp3|wav|json|xml|txt|pdf)$/i;
+
+/** Same-origin HTML pages must stay links, not hashed .bin downloads. */
+export function isSameOriginHtmlPage(url: URL, pageOriginHost: string): boolean {
+  if (url.hostname.toLowerCase() !== pageOriginHost.toLowerCase()) return false;
+  const pathname = url.pathname || "/";
+  if (ASSET_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return false;
+  if (ASSET_EXT_RE.test(pathname)) return false;
+  return true;
+}
+
 export function shouldDownloadAsset(url: URL, pageOriginHost: string): boolean {
   if (shouldSkipAsset(url)) return false;
+  if (isSameOriginHtmlPage(url, pageOriginHost)) return false;
   const host = url.hostname.toLowerCase();
   if (host === pageOriginHost.toLowerCase()) return true;
   return DOWNLOAD_HOST_SUFFIXES.some(

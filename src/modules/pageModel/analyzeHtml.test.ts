@@ -24,6 +24,20 @@ describe("analyzeHtml", () => {
     assert.equal(sections[0].forms[0].fields[0].name, "Имя");
     assert.equal(sections[1].type, "cover");
   });
+
+  it("finds nested text nodes inside layout wrappers", () => {
+    const html = `
+      <section id="n-aaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa" class="cli-block cli-cover">
+        <div id="n-bbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" data-type="grid">
+          <div id="n-cccc-cccc-cccc-cccc-cccccccccccc" data-type="text">Первый</div>
+          <div id="n-dddd-dddd-dddd-dddd-dddddddddddd" data-type="text">Второй</div>
+        </div>
+      </section>
+    `;
+    const sections = analyzeHtml(html);
+    assert.equal(sections[0].fields.length, 2);
+    assert.deepEqual(sections[0].fields.map((f) => f.value).sort(), ["Второй", "Первый"]);
+  });
 });
 
 describe("looksLikePhone", () => {

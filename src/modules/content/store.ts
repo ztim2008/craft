@@ -18,6 +18,9 @@ export async function getContent(jobId: string): Promise<ContentOverlay> {
       fields: parsed.fields || {},
       forms: parsed.forms || {},
       htmlBlocks: parsed.htmlBlocks || [],
+      site: parsed.site || {},
+      pages: parsed.pages || {},
+      sections: parsed.sections || { order: [], hidden: [], removed: [], inserts: [] },
     };
   } catch {
     return emptyContent();
@@ -32,6 +35,9 @@ export async function saveContent(jobId: string, overlay: ContentOverlay): Promi
     fields: overlay.fields || {},
     forms: overlay.forms || {},
     htmlBlocks: overlay.htmlBlocks || [],
+    site: overlay.site || {},
+    pages: overlay.pages || {},
+    sections: overlay.sections || { order: [], hidden: [], removed: [], inserts: [] },
   };
   await mkdir(projectDir(jobId), { recursive: true });
   await writeFile(contentPath(jobId), JSON.stringify(next, null, 2), "utf8");

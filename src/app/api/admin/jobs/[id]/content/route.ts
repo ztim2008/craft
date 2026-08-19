@@ -41,6 +41,9 @@ export async function PUT(request: Request, context: RouteContext) {
     fields: body.fields || {},
     forms: body.forms || {},
     htmlBlocks: body.htmlBlocks || [],
+    site: body.site !== undefined ? body.site : current.site || {},
+    pages: body.pages !== undefined ? body.pages : current.pages || {},
+    sections: body.sections !== undefined ? body.sections : current.sections,
   });
   return Response.json(saved);
 }

@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 
 const NAV = [
   { href: "/admin", label: "Обзор" },
+  { href: "/admin/clients", label: "Клиенты" },
   { href: "/admin/import", label: "Импорт" },
   { href: "/admin/orders", label: "Заявки" },
   { href: "/admin/settings", label: "Настройки" },
@@ -28,7 +29,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </div>
         <nav className="flex-1 p-2 text-sm">
           {NAV.map((item) => {
-            const active = pathname === item.href;
+            const active =
+              item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}

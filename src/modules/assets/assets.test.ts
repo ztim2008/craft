@@ -6,7 +6,7 @@ import {
   extractHtmlAssetCandidates,
   resolveAssetUrl,
 } from "./collectUrls";
-import { pageOutputPath, relativeFromCss, relativeFromPage, rewriteUrls } from "./rewrite";
+import { pageOutputPath, relativeFromCss, relativeFromPage, rewriteUnimportedPageHrefs, importedPagePathSet, rewriteUrls } from "./rewrite";
 import { injectPreviewBase, previewAssetHref, previewBaseHref } from "./previewBase";
 
 describe("classify", () => {
@@ -20,6 +20,8 @@ describe("classify", () => {
       shouldDownloadAsset(new URL("https://sx7238.craftum.io/static/a.css"), host),
       true,
     );
+    assert.equal(shouldDownloadAsset(new URL("https://sx7238.craftum.io/about"), host), false);
+    assert.equal(shouldDownloadAsset(new URL("https://sx7238.craftum.io/contacts/"), host), false);
     assert.equal(shouldSkipAsset(new URL("https://www.youtube.com/embed/x")), true);
     assert.equal(shouldSkipAsset(new URL("https://craftum.com/")), true);
   });
@@ -69,6 +71,19 @@ describe("rewrite", () => {
   it("keeps css url() in same assets folder without double assets/", () => {
     assert.equal(relativeFromCss("assets/a.css", "assets/b.webp"), "./b.webp");
     assert.equal(relativeFromCss("assets/a.css", "assets/nested/b.webp"), "./nested/b.webp");
+  });
+
+  it("points unimported pages at the live Craftum origin", () => {
+    const html =
+      `<a href="/">home</a><a href="/about/">about</a><a href="https://sx7238.craftum.io/contacts/">c</a>`;
+    const out = rewriteUnimportedPageHrefs(
+      html,
+      "https://sx7238.craftum.io/",
+      importedPagePathSet(["/"]),
+    );
+    assert.match(out, /href="\/"/);
+    assert.match(out, /href="https:\/\/sx7238\.craftum\.io\/about\/"/);
+    assert.match(out, /href="https:\/\/sx7238\.craftum\.io\/contacts\/"/);
   });
 });
 

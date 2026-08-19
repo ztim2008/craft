@@ -7,30 +7,80 @@
   <style>
     :root { color-scheme: light; }
     * { box-sizing: border-box; }
-    body { margin: 0; font: 14px/1.45 system-ui, sans-serif; background: #f0f0f1; color: #1d2327; }
-    .layout { display: flex; min-height: 100vh; }
-    aside { width: 200px; background: #1d2327; color: #f0f0f1; padding: 16px; }
-    aside a, aside button { display: block; width: 100%; color: inherit; background: none; border: 0; text-align: left; padding: 8px 10px; border-radius: 4px; cursor: pointer; text-decoration: none; font: inherit; }
-    aside a:hover, aside button:hover, aside .on { background: #2271b1; }
-    main { flex: 1; padding: 24px; }
-    .card { background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-    input, textarea, select { width: 100%; padding: 8px 10px; border: 1px solid #8c8f94; border-radius: 6px; font: inherit; }
-    textarea { min-height: 72px; font-family: ui-monospace, monospace; }
+    html, body, #app { margin: 0; height: 100%; }
+    body { font: 14px/1.45 system-ui, sans-serif; background: #f0f0f1; color: #1d2327; }
+    .login { max-width: 360px; margin: 10vh auto; background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 16px; }
+    .shell { display: grid; grid-template-rows: 52px minmax(0, 1fr); height: 100%; }
+    .top { display: flex; align-items: center; gap: 8px; padding: 0 12px; background: #1d2327; color: #f0f0f1; }
+    .top h1 { font-size: 15px; margin: 0 8px 0 0; font-weight: 600; }
+    .top .grow { flex: 1; }
+    .top button, .top a { border: 0; background: transparent; color: inherit; font: inherit; padding: 8px 10px; border-radius: 4px; cursor: pointer; text-decoration: none; }
+    .top button:disabled { opacity: 0.4; cursor: default; }
+    .top button:hover, .top a:hover, .top .on { background: #2271b1; }
+    .primary { background: #2271b1 !important; color: #fff !important; }
+    .ghost { background: #fff !important; color: #2271b1 !important; }
+    .work { display: grid; grid-template-columns: 240px minmax(0, 1fr) 320px; min-height: 0; }
+    .pages { overflow: hidden; background: #fff; border-right: 1px solid #dcdcde; padding: 12px; display: flex; flex-direction: column; min-height: 0; }
+    .side { overflow: auto; background: #fff; border-left: 1px solid #dcdcde; padding: 12px; }
+    #page-list { flex: none; max-height: 32%; overflow: auto; }
+    #outline-list { flex: 1; min-height: 0; overflow: auto; margin-top: 4px; }
+    .out-btn { display: block; width: 100%; text-align: left; border: 1px solid transparent; background: #fff; padding: 7px 8px; border-radius: 6px; cursor: pointer; font: inherit; margin-bottom: 4px; }
+    .out-btn:hover { background: #f0f0f1; }
+    .out-btn.on { border-color: #2271b1; background: #f0f6fc; }
+    .out-btn.is-hidden { opacity: 0.55; }
+    .out-btn.is-insert { border-left: 3px solid #dba617; }
+    .stage { min-width: 0; min-height: 0; background: #c3c4c7; display: flex; flex-direction: column; }
+    .stage-bar { display: flex; align-items: center; gap: 6px; padding: 8px 10px; background: #fff; border-bottom: 1px solid #dcdcde; }
+    .stage-bar button { border: 1px solid #c3c4c7; background: #fff; color: #1d2327; font: inherit; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+    .stage-bar .grow { flex: 1; }
+    .stage-frame { flex: 1; min-height: 0; display: flex; justify-content: center; overflow: auto; }
+    .stage-frame[data-vp="desktop"] iframe { width: 100%; height: 100%; }
+    .stage-frame[data-vp="mobile"] iframe { width: 390px; height: 100%; flex: none; background: #fff; box-shadow: 0 0 0 1px #8c8f94; }
+    .stage iframe { border: 0; background: #fff; }
+    .modal { position: fixed; inset: 0; background: rgba(29,35,39,.45); display: none; align-items: center; justify-content: center; z-index: 20; padding: 16px; }
+    .modal.on { display: flex; }
+    .modal .card { width: min(640px, 100%); max-height: 90vh; overflow: auto; }
+    .modal .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+    .modal button { font: inherit; padding: 8px 12px; border-radius: 6px; border: 1px solid #c3c4c7; background: #fff; cursor: pointer; }
+    .panel { flex: 1; overflow: auto; padding: 16px; }
+    .page-btn { display: block; width: 100%; text-align: left; border: 1px solid transparent; background: #fff; padding: 8px 10px; border-radius: 6px; cursor: pointer; font: inherit; margin-bottom: 6px; }
+    .page-btn:hover { background: #f0f0f1; }
+    .page-btn.on { border-color: #2271b1; background: #f0f6fc; }
+    .path { color: #50575e; font-size: 12px; }
     label { display: block; margin: 10px 0; }
     label span { display: block; font-size: 11px; text-transform: uppercase; color: #50575e; margin-bottom: 4px; }
-    button.primary { background: #2271b1; color: #fff; border: 0; padding: 8px 14px; border-radius: 6px; cursor: pointer; }
-    button.ghost { background: #fff; border: 1px solid #2271b1; color: #2271b1; padding: 8px 14px; border-radius: 6px; cursor: pointer; }
-    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    input, textarea, select { width: 100%; padding: 8px 10px; border: 1px solid #8c8f94; border-radius: 6px; font: inherit; }
+    textarea { min-height: 88px; font-family: ui-monospace, monospace; }
     .muted { color: #50575e; font-size: 13px; }
     .err { color: #d63638; }
     .ok { color: #00a32a; }
-    details { border: 1px solid #dcdcde; border-radius: 6px; padding: 8px 12px; margin: 8px 0; }
+    .card { background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+    pre { white-space: pre-wrap; font-size: 12px; }
+    .hint { font-size: 13px; color: #50575e; margin: 0 0 12px; }
   </style>
 </head>
 <body>
   <div id="app"></div>
   <script>
-    const state = { view: "content", content: null, model: null, leads: [], status: "", error: "", authed: false };
+    const state = {
+      view: "edit",
+      content: null,
+      model: null,
+      leads: [],
+      status: "",
+      error: "",
+      authed: false,
+      pagePath: "/",
+      selectedId: "",
+      canvasPath: "",
+      listening: false,
+      viewport: "desktop",
+      insertAfterId: "",
+      selectedSection: "",
+      selectedSectionInsert: false,
+      outlineLock: 0,
+      history: { past: [], future: [], coalesce: "", timer: 0, applying: false },
+    };
 
     function el(html) {
       const box = document.createElement("div");
@@ -38,9 +88,44 @@
       return box.firstElementChild;
     }
 
+    function pages() {
+      return (state.model && state.model.pages) || [];
+    }
+
+    function currentPage() {
+      return pages().find((page) => page.path === state.pagePath) || pages()[0] || null;
+    }
+
+    function allFields() {
+      const out = [];
+      pages().forEach((page) => {
+        (page.sections || []).forEach((section) => {
+          (section.fields || []).forEach((field) => {
+            out.push(Object.assign({ pagePath: page.path, sectionLabel: section.label, sectionId: section.id }, field));
+          });
+        });
+      });
+      return out;
+    }
+
+    function fieldById(id) {
+      return allFields().find((field) => field.nodeId === id) || null;
+    }
+
+    function uniqueLinks() {
+      const seen = new Set();
+      return allFields().filter((field) => {
+        if (field.type !== "link" && field.type !== "button") return false;
+        if (seen.has(field.nodeId)) return false;
+        seen.add(field.nodeId);
+        return true;
+      });
+    }
+
     async function api(path, opts) {
       const res = await fetch(path, Object.assign({ credentials: "same-origin" }, opts));
-      const data = await res.json().catch(() => ({}));
+      const type = res.headers.get("content-type") || "";
+      const data = type.includes("json") ? await res.json().catch(() => ({})) : {};
       if (!res.ok) throw new Error(data.error || "Ошибка");
       return data;
     }
@@ -71,6 +156,13 @@
         if (!state.content.fields) state.content.fields = {};
         if (!state.content.forms) state.content.forms = {};
         if (!state.content.htmlBlocks) state.content.htmlBlocks = [];
+        if (!state.content.site) state.content.site = {};
+        if (!state.content.pages) state.content.pages = {};
+        if (!state.content.sections) state.content.sections = { order: [], hidden: [], removed: [], inserts: [] };
+        state.history = { past: [], future: [], coalesce: "", timer: 0, applying: false };
+        if (!pages().some((page) => page.path === state.pagePath) && pages()[0]) {
+          state.pagePath = pages()[0].path;
+        }
       } catch (err) {
         state.authed = false;
         if (err.message !== "Нужна авторизация") state.error = err.message;
@@ -78,10 +170,109 @@
       render();
     }
 
+    function overlaySlice() {
+      const c = state.content || {};
+      return JSON.parse(JSON.stringify({
+        fields: c.fields || {},
+        forms: c.forms || {},
+        htmlBlocks: c.htmlBlocks || [],
+        site: c.site || {},
+        pages: c.pages || {},
+        sections: c.sections || { order: [], hidden: [], removed: [], inserts: [] },
+      }));
+    }
+
+    function assignOverlay(data) {
+      if (!state.content) return;
+      state.content.fields = JSON.parse(JSON.stringify(data.fields || {}));
+      state.content.forms = JSON.parse(JSON.stringify(data.forms || {}));
+      state.content.htmlBlocks = JSON.parse(JSON.stringify(data.htmlBlocks || []));
+      state.content.site = JSON.parse(JSON.stringify(data.site || {}));
+      state.content.pages = JSON.parse(JSON.stringify(data.pages || {}));
+      state.content.sections = JSON.parse(JSON.stringify(data.sections || { order: [], hidden: [], removed: [], inserts: [] }));
+    }
+
+    function paintHistory() {
+      const undo = document.getElementById("undo");
+      const redo = document.getElementById("redo");
+      if (undo) undo.disabled = !state.history.past.length;
+      if (redo) redo.disabled = !state.history.future.length;
+    }
+
+    function recordChange(coalesceKey) {
+      const hist = state.history;
+      if (hist.applying || !state.content) return;
+      const key = coalesceKey || "";
+      if (key && hist.coalesce === key) return;
+      hist.past.push(overlaySlice());
+      if (hist.past.length > 50) hist.past.shift();
+      hist.future = [];
+      hist.coalesce = key;
+      if (hist.timer) window.clearTimeout(hist.timer);
+      hist.timer = window.setTimeout(() => {
+        hist.coalesce = "";
+      }, 700);
+      paintHistory();
+    }
+
+    async function applyHistory(data) {
+      const hist = state.history;
+      hist.applying = true;
+      hist.coalesce = "";
+      assignOverlay(data);
+      hist.applying = false;
+      paintInspector();
+      paintOutline();
+      if (state.view !== "edit" && state.view !== "sections") fillPanel();
+      paintHistory();
+      await save();
+      state.status = "Черновик восстановлен";
+      paintStatus();
+    }
+
+    async function undoOverlay() {
+      const hist = state.history;
+      if (!hist.past.length) return;
+      hist.future.push(overlaySlice());
+      await applyHistory(hist.past.pop());
+    }
+
+    async function redoOverlay() {
+      const hist = state.history;
+      if (!hist.future.length) return;
+      hist.past.push(overlaySlice());
+      await applyHistory(hist.future.pop());
+    }
+
     function setField(id, original, next) {
-      const same = (next.value || "") === original && !next.href;
+      recordChange("field:" + id);
+      const href = next.href || "";
+      const same = (next.value || "") === original && !href;
       if (same) delete state.content.fields[id];
       else state.content.fields[id] = next;
+      const frame = document.getElementById("canvas");
+      if (frame && frame.contentWindow) {
+        frame.contentWindow.postMessage(
+          { source: "craft-host", nodeId: id, patch: next },
+          "*",
+        );
+      }
+    }
+
+    function selectField(id) {
+      state.selectedId = id;
+      const field = fieldById(id);
+      if (field && field.pagePath) state.pagePath = field.pagePath;
+      if (field && field.sectionId) {
+        state.selectedSection = field.sectionId;
+        state.selectedSectionInsert = false;
+        paintOutline();
+      }
+      paintInspector();
+      const frame = document.getElementById("canvas");
+      if (frame && frame.contentWindow) {
+        frame.contentWindow.postMessage({ source: "craft-host", highlight: id }, "*");
+      }
     }
 
     async function save() {
@@ -94,13 +285,17 @@
             fields: state.content.fields,
             forms: state.content.forms,
             htmlBlocks: state.content.htmlBlocks,
+            site: state.content.site || {},
+            pages: state.content.pages || {},
+            sections: state.content.sections || { order: [], hidden: [], removed: [], inserts: [] },
           }),
         });
         state.status = "Черновик сохранён";
+        reloadCanvas(true);
       } catch (err) {
         state.error = err.message;
       }
-      render();
+      paintStatus();
     }
 
     async function publish() {
@@ -111,12 +306,637 @@
       } catch (err) {
         state.error = err.message;
       }
-      render();
+      paintStatus();
+    }
+
+    function canvasUrl() {
+      const page = currentPage();
+      return "/api/admin/page-html?path=" + encodeURIComponent(page ? page.path : "/");
+    }
+
+    function reloadCanvas(force) {
+      const frame = document.getElementById("canvas");
+      if (!frame || (state.view !== "edit" && state.view !== "sections")) return;
+      const next = canvasUrl();
+      if (force || state.canvasPath !== next) {
+        state.canvasPath = next;
+        frame.src = next;
+      }
+    }
+
+    function paintStatus() {
+      const node = document.getElementById("status");
+      if (!node) return;
+      node.className = state.error ? "err" : "ok";
+      node.textContent = state.error || state.status || "";
+    }
+
+    function paintPages() {
+      const nav = document.getElementById("page-list");
+      if (!nav) return;
+      nav.innerHTML = "";
+      const list = pages();
+      if (!list.length) {
+        nav.appendChild(el('<p class="muted">page-model.json не найден</p>'));
+        paintOutline();
+        return;
+      }
+      list.forEach((page) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "page-btn" + (page.path === state.pagePath ? " on" : "");
+        const title = document.createElement("div");
+        title.textContent = page.title || page.path;
+        const pathLine = document.createElement("div");
+        pathLine.className = "path";
+        pathLine.textContent = page.path;
+        btn.appendChild(title);
+        btn.appendChild(pathLine);
+        btn.addEventListener("click", () => {
+          state.pagePath = page.path;
+          state.view = "edit";
+          paintPages();
+          paintNav();
+          showStage();
+          reloadCanvas(true);
+        });
+        nav.appendChild(btn);
+      });
+      const site = document.createElement("a");
+      site.href = currentPage() ? currentPage().path : "/";
+      site.target = "_blank";
+      site.className = "muted";
+      site.textContent = "Открыть на сайте";
+      site.style.display = "inline-block";
+      site.style.marginTop = "8px";
+      nav.appendChild(site);
+      paintOutline();
+    }
+
+    function outlineItems() {
+      if (!state.content) return [];
+      const layout = ensureSections();
+      const page = currentPage();
+      const byId = {};
+      ((page && page.sections) || []).forEach((sec) => {
+        byId[sec.id] = sec;
+      });
+      const items = [];
+      const inserts = layout.inserts || [];
+      inserts.filter((item) => !item.afterId).forEach((item) => {
+        items.push({ id: item.id, label: "Вставка HTML", insert: true, hidden: false });
+      });
+      layout.order.filter((id) => !layout.removed.includes(id)).forEach((id) => {
+        const meta = byId[id] || {};
+        items.push({
+          id,
+          label: meta.label || id,
+          insert: false,
+          hidden: layout.hidden.includes(id),
+        });
+        inserts.filter((item) => item.afterId === id).forEach((item) => {
+          items.push({ id: item.id, label: "Вставка HTML", insert: true, hidden: false });
+        });
+      });
+      return items;
+    }
+
+    function paintOutline() {
+      const nav = document.getElementById("outline-list");
+      if (!nav) return;
+      nav.innerHTML = "";
+      const items = outlineItems();
+      if (!items.length) {
+        nav.appendChild(el('<p class="muted">Нет секций в модели</p>'));
+        return;
+      }
+      items.forEach((item) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "out-btn"
+          + (item.id === state.selectedSection ? " on" : "")
+          + (item.hidden ? " is-hidden" : "")
+          + (item.insert ? " is-insert" : "");
+        btn.textContent = (item.hidden ? "Скрыта · " : "") + item.label;
+        btn.title = item.id;
+        btn.addEventListener("click", () => focusSection(item.id, item.insert));
+        nav.appendChild(btn);
+      });
+      const on = nav.querySelector(".out-btn.on");
+      if (on && on.scrollIntoView) on.scrollIntoView({ block: "nearest" });
+    }
+
+    function focusSection(id, insert) {
+      state.selectedSection = id;
+      state.selectedSectionInsert = Boolean(insert);
+      state.outlineLock = Date.now() + 1500;
+      paintOutline();
+      if (state.view !== "edit" && state.view !== "sections") {
+        state.view = "edit";
+        paintNav();
+        showStage();
+        reloadCanvas(true);
+        return;
+      }
+      const frame = document.getElementById("canvas");
+      if (frame && frame.contentWindow) {
+        frame.contentWindow.postMessage(
+          { source: "craft-host", revealSection: { id: id, insert: Boolean(insert) } },
+          "*",
+        );
+      }
+    }
+
+    function paintNav() {
+      document.querySelectorAll("[data-nav]").forEach((btn) => {
+        btn.classList.toggle("on", btn.getAttribute("data-nav") === state.view);
+      });
+    }
+
+    function showStage() {
+      const frame = document.getElementById("canvas");
+      const panel = document.getElementById("panel");
+      const stageBar = document.getElementById("stage-bar");
+      const stageFrame = document.getElementById("stage-frame");
+      if (!frame || !panel) return;
+      const live = state.view === "edit" || state.view === "sections";
+      frame.style.display = live ? "block" : "none";
+      if (stageBar) stageBar.style.display = live ? "flex" : "none";
+      if (stageFrame) stageFrame.style.display = live ? "flex" : "none";
+      panel.style.display = live ? "none" : "block";
+      if (!live) fillPanel();
+      paintViewport();
+    }
+
+    function paintViewport() {
+      const frameWrap = document.getElementById("stage-frame");
+      if (frameWrap) frameWrap.setAttribute("data-vp", state.viewport);
+      document.querySelectorAll("[data-vp-btn]").forEach((btn) => {
+        btn.classList.toggle("on", btn.getAttribute("data-vp-btn") === state.viewport);
+      });
+    }
+
+    function openInsertModal(afterId) {
+      state.insertAfterId = afterId || "";
+      const modal = document.getElementById("insert-modal");
+      const area = document.getElementById("insert-html");
+      const hint = document.getElementById("insert-hint");
+      if (!modal || !area) return;
+      area.value = "";
+      if (hint) {
+        hint.textContent = state.insertAfterId
+          ? "HTML вставится сразу после выбранной секции."
+          : "HTML вставится в начало страницы, перед первой секцией.";
+      }
+      modal.classList.add("on");
+      area.focus();
+    }
+
+    function closeInsertModal() {
+      const modal = document.getElementById("insert-modal");
+      if (modal) modal.classList.remove("on");
+    }
+
+    async function applySectionAction(payload) {
+      const layout = ensureSections();
+      const id = payload.id;
+      const action = payload.action;
+      if (payload.insert) {
+        if (action === "remove") {
+          recordChange();
+          layout.inserts = (layout.inserts || []).filter((item) => item.id !== id);
+          await save();
+        } else if (action === "insert") {
+          const item = (layout.inserts || []).find((block) => block.id === id);
+          openInsertModal(item && item.afterId);
+        }
+        return;
+      }
+      if (action === "insert") {
+        openInsertModal(id);
+        return;
+      }
+      if (action === "up") {
+        const from = layout.order.indexOf(id);
+        if (from < 1) return;
+        recordChange();
+        const swap = layout.order[from - 1];
+        layout.order[from - 1] = id;
+        layout.order[from] = swap;
+      } else if (action === "down") {
+        const from = layout.order.indexOf(id);
+        if (from < 0 || from >= layout.order.length - 1) return;
+        recordChange();
+        const swap = layout.order[from + 1];
+        layout.order[from + 1] = id;
+        layout.order[from] = swap;
+      } else if (action === "hide") {
+        recordChange();
+        if (layout.hidden.includes(id)) layout.hidden = layout.hidden.filter((x) => x !== id);
+        else layout.hidden.push(id);
+      } else if (action === "remove") {
+        if (!confirm("Удалить секцию из патча? HTML на диске останется, на сайте её не будет.")) return;
+        recordChange();
+        layout.removed.push(id);
+        layout.order = layout.order.filter((x) => x !== id);
+      } else {
+        return;
+      }
+      await save();
+    }
+
+    async function confirmInsertHtml() {
+      const area = document.getElementById("insert-html");
+      const html = area ? area.value.trim() : "";
+      if (!html) return;
+      recordChange();
+      const layout = ensureSections();
+      layout.inserts.push({
+        id: "sec-" + Date.now().toString(36),
+        afterId: state.insertAfterId || undefined,
+        html,
+      });
+      closeInsertModal();
+      await save();
+    }
+
+    function currentPageSeo() {
+      const path = (currentPage() && currentPage().path) || "/";
+      if (!state.content.pages) state.content.pages = {};
+      if (!state.content.pages[path]) state.content.pages[path] = {};
+      return { path, seo: state.content.pages[path] };
+    }
+
+    function ensureSections() {
+      if (!state.content.sections) state.content.sections = { order: [], hidden: [], removed: [], inserts: [] };
+      const s = state.content.sections;
+      if (!Array.isArray(s.order)) s.order = [];
+      if (!Array.isArray(s.hidden)) s.hidden = [];
+      if (!Array.isArray(s.removed)) s.removed = [];
+      if (!Array.isArray(s.inserts)) s.inserts = [];
+      const ids = ((currentPage() && currentPage().sections) || []).map((sec) => sec.id);
+      if (!s.order.length) s.order = ids.slice();
+      ids.forEach((id) => {
+        if (!s.order.includes(id) && !s.removed.includes(id)) s.order.push(id);
+      });
+      return s;
+    }
+
+    function labeledInput(caption, multiline, getter, setter) {
+      const lab = el("<label><span></span></label>");
+      lab.querySelector("span").textContent = caption;
+      const input = document.createElement(multiline ? "textarea" : "input");
+      input.value = getter() || "";
+      input.addEventListener("input", () => {
+        recordChange("input:" + caption);
+        setter(input.value);
+      });
+      lab.appendChild(input);
+      return lab;
+    }
+
+    function fillPanel() {
+      const panel = document.getElementById("panel");
+      if (!panel) return;
+      panel.innerHTML = "";
+      if (state.view === "leads") {
+        if (!state.leads.length) panel.appendChild(el('<div class="card muted">Пока нет заявок.</div>'));
+        state.leads.forEach((lead) => {
+          const card = el('<div class="card"><div class="muted"></div><pre></pre></div>');
+          card.querySelector(".muted").textContent = (lead.at || "") + " · " + (lead.formId || "");
+          card.querySelector("pre").textContent = JSON.stringify(lead.fields, null, 2);
+          panel.appendChild(card);
+        });
+        return;
+      }
+      if (state.view === "sections") {
+        panel.appendChild(el('<p class="hint">Управление секциями на канвасе: наведите на блок. HTML вставляется во всплывающем окне.</p>'));
+        return;
+      }
+      if (state.view === "seo") {
+        if (!state.content.site) state.content.site = {};
+        const site = state.content.site;
+        const page = currentPageSeo();
+        panel.appendChild(el('<p class="hint">Как в WordPress: общие настройки сайта и SEO текущей страницы. Сохраните черновик и опубликуйте.</p>'));
+        const siteCard = el('<div class="card"><h2>Весь сайт</h2></div>');
+        siteCard.appendChild(labeledInput("Title по умолчанию", false, () => site.defaultTitle, (v) => { site.defaultTitle = v; }));
+        siteCard.appendChild(labeledInput("Description по умолчанию", true, () => site.defaultDescription, (v) => { site.defaultDescription = v; }));
+        siteCard.appendChild(labeledInput("Favicon URL (иконка вкладки, png/ico/svg)", false, () => site.faviconUrl, (v) => { site.faviconUrl = v; }));
+        siteCard.appendChild(labeledInput("Open Graph картинка по умолчанию (URL 1200×630)", false, () => site.ogImage, (v) => { site.ogImage = v; }));
+        siteCard.appendChild(labeledInput("Яндекс.Метрика, номер счётчика", false, () => site.yandexMetrikaId, (v) => { site.yandexMetrikaId = v; }));
+        siteCard.appendChild(labeledInput("Google Analytics / GTM (G-… или GTM-…)", false, () => site.googleAnalyticsId, (v) => { site.googleAnalyticsId = v; }));
+        siteCard.appendChild(labeledInput("Яндекс.Вебмастер, verification", false, () => site.yandexVerification, (v) => { site.yandexVerification = v; }));
+        siteCard.appendChild(labeledInput("Google Search Console, verification", false, () => site.googleVerification, (v) => { site.googleVerification = v; }));
+        siteCard.appendChild(labeledInput("HTML в &lt;head&gt; (скрипты, meta)", true, () => site.headHtml, (v) => { site.headHtml = v; }));
+        siteCard.appendChild(labeledInput("HTML сразу после &lt;body&gt;", true, () => site.bodyStartHtml, (v) => { site.bodyStartHtml = v; }));
+        siteCard.appendChild(labeledInput("HTML перед &lt;/body&gt; (виджеты)", true, () => site.bodyEndHtml, (v) => { site.bodyEndHtml = v; }));
+        siteCard.appendChild(labeledInput("JSON-LD (разметка организации)", true, () => site.jsonLd, (v) => { site.jsonLd = v; }));
+        panel.appendChild(siteCard);
+        const pageCard = el('<div class="card"><h2></h2></div>');
+        pageCard.querySelector("h2").textContent = "Страница " + page.path;
+        pageCard.appendChild(labeledInput("Title", false, () => page.seo.title, (v) => { page.seo.title = v; }));
+        pageCard.appendChild(labeledInput("Description", true, () => page.seo.description, (v) => { page.seo.description = v; }));
+        pageCard.appendChild(labeledInput("OG title", false, () => page.seo.ogTitle, (v) => { page.seo.ogTitle = v; }));
+        pageCard.appendChild(labeledInput("OG description", true, () => page.seo.ogDescription, (v) => { page.seo.ogDescription = v; }));
+        pageCard.appendChild(labeledInput("OG image URL", false, () => page.seo.ogImage, (v) => { page.seo.ogImage = v; }));
+        pageCard.appendChild(labeledInput("Canonical URL", false, () => page.seo.canonical, (v) => { page.seo.canonical = v; }));
+        pageCard.appendChild(labeledInput("Robots (index,follow / noindex,nofollow)", false, () => page.seo.robots, (v) => { page.seo.robots = v; }));
+        pageCard.appendChild(labeledInput("HTML в head этой страницы", true, () => page.seo.headHtml, (v) => { page.seo.headHtml = v; }));
+        pageCard.appendChild(labeledInput("HTML перед /body этой страницы", true, () => page.seo.bodyEndHtml, (v) => { page.seo.bodyEndHtml = v; }));
+        panel.appendChild(pageCard);
+        return;
+      }
+      if (state.view === "menu") {
+        panel.appendChild(el('<p class="hint">Правка ссылки пишется в общий черновик. Если шапка с тем же id на всех страницах — после публикации обновится везде.</p>'));
+        const links = uniqueLinks();
+        links.forEach((field) => panel.appendChild(fieldInput(field)));
+        if (!links.length) panel.appendChild(el('<div class="card muted">Отдельных ссылок в модели нет — кликните пункт меню на живой странице.</div>'));
+        return;
+      }
+      if (state.view === "fields") {
+        panel.appendChild(el('<p class="hint">Запасной список полей, если клик по блоку не попал в разметку.</p>'));
+        const page = currentPage();
+        (page && page.sections ? page.sections : []).forEach((section) => {
+          const card = el('<div class="card"><h3></h3></div>');
+          card.querySelector("h3").textContent = section.label;
+          section.fields.forEach((field) => card.appendChild(fieldInput(field)));
+          (section.forms || []).forEach((form) => card.appendChild(formInput(form)));
+          panel.appendChild(card);
+        });
+        return;
+      }
+      if (state.view === "blocks") {
+        const sections = pages().flatMap((page) => (page.sections || []).map((section) => ({ page, section })));
+        const box = el(`<div class="card">
+          <h2>Новый блок</h2>
+          <label><span>Секция</span><select id="sec"></select></label>
+          <label><span>Позиция</span><select id="pos">
+            <option value="after">После секции (карта, отзывы, виджет)</option>
+            <option value="before">До секции</option>
+            <option value="head">В &lt;head&gt;</option>
+            <option value="bodyStart">Сразу после &lt;body&gt;</option>
+            <option value="bodyEnd">Перед &lt;/body&gt;</option>
+          </select></label>
+          <label><span>HTML / style / script</span><textarea id="html"></textarea></label>
+          <button class="primary" type="button" id="add">Добавить</button>
+        </div>`);
+        const select = box.querySelector("#sec");
+        sections.forEach((item) => {
+          const opt = document.createElement("option");
+          opt.value = item.section.id;
+          opt.textContent = item.page.path + " · " + item.section.label;
+          select.appendChild(opt);
+        });
+        box.querySelector("#add").addEventListener("click", () => {
+          const html = box.querySelector("#html").value.trim();
+          const pos = box.querySelector("#pos").value;
+          const slot = pos === "head" || pos === "bodyStart" || pos === "bodyEnd";
+          if (!html || (!slot && !select.value)) return;
+          recordChange();
+          state.content.htmlBlocks.push({
+            id: "hb-" + Date.now().toString(36),
+            sectionId: slot ? "" : select.value,
+            position: pos,
+            html,
+          });
+          fillPanel();
+        });
+        panel.appendChild(box);
+        state.content.htmlBlocks.forEach((block, index) => {
+          const card = el('<div class="card"><div class="muted"></div><pre></pre><button type="button">Удалить</button></div>');
+          card.querySelector(".muted").textContent = block.position + " · " + block.sectionId;
+          card.querySelector("pre").textContent = block.html;
+          card.querySelector("button").addEventListener("click", () => {
+            recordChange();
+            state.content.htmlBlocks.splice(index, 1);
+            fillPanel();
+          });
+          panel.appendChild(card);
+        });
+      }
+    }
+
+    function formInput(form) {
+      const lab = el("<label><span></span></label>");
+      lab.querySelector("span").textContent = "форма · " + form.label + " · email заявок (необязательно)";
+      const input = document.createElement("input");
+      input.type = "email";
+      input.placeholder = "owner@domain.ru";
+      input.value = (state.content.forms[form.id] && state.content.forms[form.id].email) || "";
+      input.addEventListener("input", () => {
+        recordChange("form:" + form.id);
+        state.content.forms[form.id] = { email: input.value };
+      });
+      lab.appendChild(input);
+      return lab;
+    }
+
+    function fieldInput(field) {
+      const patch = state.content.fields[field.nodeId] || {};
+      const value = patch.value != null ? patch.value : field.value;
+      const href = patch.href != null ? patch.href : (field.href || "");
+      const wrap = el("<label><span></span></label>");
+      wrap.querySelector("span").textContent = field.type + " · " + field.label;
+      const input = document.createElement(field.type === "textarea" ? "textarea" : "input");
+      if (field.type === "image") input.placeholder = "URL картинки";
+      input.value = value;
+      input.addEventListener("input", () => {
+        const next = { value: input.value };
+        if (href) next.href = href;
+        if (field.type === "image") next.src = input.value;
+        setField(field.nodeId, field.value, next);
+      });
+      wrap.appendChild(input);
+      if (field.type === "link" || field.type === "phone" || field.type === "button") {
+        const hrefInput = document.createElement("input");
+        hrefInput.value = href;
+        hrefInput.placeholder = "href / tel:";
+        hrefInput.style.marginTop = "6px";
+        hrefInput.addEventListener("input", () => {
+          setField(field.nodeId, field.value, { value: input.value, href: hrefInput.value });
+        });
+        wrap.appendChild(hrefInput);
+      }
+      return wrap;
+    }
+
+    function paintInspector() {
+      const box = document.getElementById("inspector");
+      if (!box) return;
+      box.innerHTML = "";
+      const field = fieldById(state.selectedId);
+      box.appendChild(el(state.view === "sections"
+        ? '<p class="hint">Наведите на секцию на канвасе: вверх, вниз, скрыть, удалить. «+ HTML» открывает окно вставки кода.</p>'
+        : '<p class="hint">Кликните текст, кнопку или пункт меню на странице. Наведите на секцию — панель управления блоком.</p>'));
+      if (!field) {
+        box.appendChild(el('<div class="card muted">Блок не размечен в модели. Запасной список — «Все поля», или HTML-блок.</div>'));
+        const page = currentPage();
+        (page && page.sections ? page.sections : []).forEach((section) => {
+          (section.forms || []).forEach((form) => box.appendChild(formInput(form)));
+        });
+      } else {
+        const head = el('<div class="card"><div class="muted"></div></div>');
+        head.querySelector(".muted").textContent = (field.pagePath || "") + " · " + (field.sectionLabel || "");
+        box.appendChild(head);
+        box.appendChild(fieldInput(field));
+      }
+      const pageSeo = currentPageSeo();
+      const seo = el('<div class="card"><div class="muted">SEO этой страницы</div></div>');
+      seo.appendChild(labeledInput("Title", false, () => pageSeo.seo.title, (v) => { pageSeo.seo.title = v; }));
+      seo.appendChild(labeledInput("Description", true, () => pageSeo.seo.description, (v) => { pageSeo.seo.description = v; }));
+      seo.appendChild(labeledInput("OG image", false, () => pageSeo.seo.ogImage, (v) => { pageSeo.seo.ogImage = v; }));
+      box.appendChild(seo);
+    }
+
+    function mountShell() {
+      if (document.getElementById("shell")) return;
+      const root = el(`<div class="shell" id="shell">
+        <header class="top">
+          <h1>Редактор страниц</h1>
+          <button data-nav="edit" type="button">Страница</button>
+          <button data-nav="sections" type="button">Секции</button>
+          <button data-nav="seo" type="button">SEO / сайт</button>
+          <button data-nav="menu" type="button">Меню</button>
+          <button data-nav="leads" type="button">Заявки</button>
+          <button data-nav="blocks" type="button">HTML-блоки</button>
+          <button data-nav="fields" type="button">Все поля</button>
+          <span class="grow"></span>
+          <span id="status"></span>
+          <button id="undo" type="button" disabled title="Ctrl+Z">Отменить</button>
+          <button id="redo" type="button" disabled title="Ctrl+Shift+Z">Повторить</button>
+          <button class="primary" id="save" type="button">Сохранить</button>
+          <button class="ghost" id="pub" type="button">Опубликовать</button>
+          <button data-nav="out" type="button">Выйти</button>
+        </header>
+        <div class="work">
+          <aside class="pages">
+            <div class="muted" style="margin-bottom:8px">Страницы</div>
+            <div id="page-list"></div>
+            <div class="muted" style="margin:12px 0 8px">Секции</div>
+            <div id="outline-list"></div>
+          </aside>
+          <div class="stage">
+            <div class="stage-bar" id="stage-bar">
+              <button data-vp-btn="desktop" type="button">Компьютер</button>
+              <button data-vp-btn="mobile" type="button">Телефон</button>
+              <span class="grow"></span>
+              <button id="insert-start" type="button">+ секция в начало</button>
+            </div>
+            <div class="stage-frame" id="stage-frame" data-vp="desktop">
+              <iframe id="canvas" title="Страница"></iframe>
+            </div>
+            <div class="panel" id="panel" style="display:none"></div>
+          </div>
+          <aside class="side" id="inspector"></aside>
+        </div>
+        <div class="modal" id="insert-modal">
+          <div class="card">
+            <h2 style="margin:0 0 8px;font-size:16px">Вставить секцию HTML</h2>
+            <p class="hint" id="insert-hint">Код вставится патчем поверх страницы, не как блок конструктора.</p>
+            <label><span>HTML</span><textarea id="insert-html" placeholder="section.cli-block или любой HTML-виджет"></textarea></label>
+            <div class="row">
+              <button type="button" id="insert-cancel">Отмена</button>
+              <button class="primary" type="button" id="insert-ok">Вставить</button>
+            </div>
+          </div>
+        </div>
+      </div>`);
+      document.getElementById("app").innerHTML = "";
+      const modal = root.querySelector("#insert-modal");
+      document.getElementById("app").appendChild(root);
+      if (modal) document.getElementById("app").appendChild(modal);
+      root.querySelectorAll("[data-nav]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          if (btn.getAttribute("data-nav") === "out") {
+            await api("/api/admin/logout", { method: "POST" });
+            state.authed = false;
+            render();
+            return;
+          }
+          state.view = btn.getAttribute("data-nav");
+          paintNav();
+          showStage();
+          if (state.view === "edit" || state.view === "sections") reloadCanvas(false);
+        });
+      });
+      root.querySelector("#save").addEventListener("click", save);
+      root.querySelector("#pub").addEventListener("click", publish);
+      root.querySelector("#undo").addEventListener("click", () => undoOverlay());
+      root.querySelector("#redo").addEventListener("click", () => redoOverlay());
+      root.querySelectorAll("[data-vp-btn]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.viewport = btn.getAttribute("data-vp-btn");
+          paintViewport();
+        });
+      });
+      document.getElementById("insert-start").addEventListener("click", () => openInsertModal(""));
+      document.getElementById("insert-cancel").addEventListener("click", closeInsertModal);
+      document.getElementById("insert-ok").addEventListener("click", () => confirmInsertHtml());
+      document.getElementById("insert-modal").addEventListener("click", (ev) => {
+        if (ev.target.id === "insert-modal") closeInsertModal();
+      });
+      if (!state.listening) {
+        state.listening = true;
+        window.addEventListener("message", (event) => {
+          if (!event.data || event.data.source !== "craft-canvas") return;
+          if (event.data.outline && event.data.outline.id) {
+            if (event.data.outline.spy && Date.now() < state.outlineLock) return;
+            state.selectedSection = event.data.outline.id;
+            state.selectedSectionInsert = Boolean(event.data.outline.insert);
+            paintOutline();
+            return;
+          }
+          if (event.data.history === "undo") {
+            undoOverlay();
+            return;
+          }
+          if (event.data.history === "redo") {
+            redoOverlay();
+            return;
+          }
+          if (event.data.sectionAction) {
+            applySectionAction(event.data.sectionAction);
+            return;
+          }
+          if (event.data.nodeId) selectField(event.data.nodeId);
+        });
+        window.addEventListener("keydown", (event) => {
+          if (!state.authed) return;
+          const modal = document.getElementById("insert-modal");
+          if (modal && modal.classList.contains("on")) return;
+          const key = (event.key || "").toLowerCase();
+          if (!(event.ctrlKey || event.metaKey)) return;
+          if (key === "z") {
+            event.preventDefault();
+            if (event.shiftKey) redoOverlay();
+            else undoOverlay();
+          } else if (key === "y") {
+            event.preventDefault();
+            redoOverlay();
+          }
+        });
+      }
+      const frame = root.querySelector("#canvas");
+      frame.addEventListener("load", () => {
+        if (!frame.contentWindow) return;
+        if (state.view === "sections") {
+          frame.contentWindow.postMessage({ source: "craft-host", sectionChrome: true }, "*");
+        }
+        if (state.selectedSection) {
+          frame.contentWindow.postMessage({
+            source: "craft-host",
+            revealSection: { id: state.selectedSection, insert: state.selectedSectionInsert },
+          }, "*");
+        }
+        if (state.selectedId) {
+          frame.contentWindow.postMessage({ source: "craft-host", highlight: state.selectedId }, "*");
+        }
+      });
     }
 
     function renderLogin() {
       document.getElementById("app").innerHTML = "";
-      const box = el(`<main style="max-width:360px;margin:10vh auto" class="card">
+      const box = el(`<main class="login">
         <h1>Редактор страниц</h1>
         <p class="muted">Пароль из файла .env (ADMIN_PASSWORD)</p>
         <form>
@@ -130,136 +950,20 @@
       document.getElementById("app").appendChild(box);
     }
 
-    function fieldInput(field) {
-      const patch = state.content.fields[field.nodeId] || {};
-      const value = patch.value != null ? patch.value : field.value;
-      const href = patch.href != null ? patch.href : (field.href || "");
-      const wrap = el(`<label><span>${field.type} · ${field.label}</span></label>`);
-      const input = document.createElement(field.type === "textarea" ? "textarea" : "input");
-      input.value = value;
-      input.addEventListener("input", () => setField(field.nodeId, field.value, { value: input.value, href: href || undefined }));
-      wrap.appendChild(input);
-      if (field.type === "link" || field.type === "phone" || field.type === "button") {
-        const hrefInput = document.createElement("input");
-        hrefInput.value = href;
-        hrefInput.placeholder = "href / tel:";
-        hrefInput.style.marginTop = "6px";
-        hrefInput.addEventListener("input", () => setField(field.nodeId, field.value, { value: input.value, href: hrefInput.value }));
-        wrap.appendChild(hrefInput);
-      }
-      return wrap;
-    }
-
-    function renderContent() {
-      const pages = (state.model && state.model.pages) || [];
-      const root = el(`<div class="layout">
-        <aside>
-          <div style="font-weight:600;margin-bottom:12px">Craft</div>
-          <button data-nav="content" class="${state.view === "content" ? "on" : ""}">Контент</button>
-          <button data-nav="blocks" class="${state.view === "blocks" ? "on" : ""}">HTML-блоки</button>
-          <button data-nav="leads" class="${state.view === "leads" ? "on" : ""}">Заявки</button>
-          <a href="/" target="_blank">Смотреть сайт</a>
-          <button data-nav="out">Выйти</button>
-        </aside>
-        <main>
-          <div class="row">
-            <h1 style="margin:0 12px 0 0">Редактор страниц</h1>
-            <button class="primary" id="save">Сохранить</button>
-            <button class="ghost" id="pub">Опубликовать</button>
-          </div>
-          <p class="muted">${(state.model && state.model.sourceUrl) || ""}</p>
-          <p class="${state.error ? "err" : "ok"}">${state.error || state.status || ""}</p>
-          <div id="body"></div>
-        </main>
-      </div>`);
-      root.querySelectorAll("[data-nav]").forEach((btn) => {
-        btn.addEventListener("click", async () => {
-          if (btn.dataset.nav === "out") {
-            await api("/api/admin/logout", { method: "POST" });
-            state.authed = false;
-            render();
-            return;
-          }
-          state.view = btn.dataset.nav;
-          render();
-        });
-      });
-      root.querySelector("#save").addEventListener("click", save);
-      root.querySelector("#pub").addEventListener("click", publish);
-      const body = root.querySelector("#body");
-      if (state.view === "leads") {
-        if (!state.leads.length) body.appendChild(el(`<div class="card muted">Пока нет заявок.</div>`));
-        state.leads.forEach((lead) => {
-          body.appendChild(el(`<div class="card"><div class="muted">${lead.at} · ${lead.formId}</div><pre>${JSON.stringify(lead.fields, null, 2)}</pre></div>`));
-        });
-      } else if (state.view === "blocks") {
-        const sections = pages.flatMap((page) => page.sections.map((section) => ({ page, section })));
-        const box = el(`<div class="card">
-          <h2>Новый блок</h2>
-          <label><span>Секция</span><select id="sec"></select></label>
-          <label><span>Позиция</span><select id="pos"><option value="after">После</option><option value="before">До</option></select></label>
-          <label><span>HTML / style / script</span><textarea id="html"></textarea></label>
-          <button class="primary" type="button" id="add">Добавить</button>
-        </div>`);
-        const select = box.querySelector("#sec");
-        sections.forEach((item) => {
-          const opt = document.createElement("option");
-          opt.value = item.section.id;
-          opt.textContent = item.page.path + " · " + item.section.label;
-          select.appendChild(opt);
-        });
-        box.querySelector("#add").addEventListener("click", () => {
-          const html = box.querySelector("#html").value.trim();
-          if (!html || !select.value) return;
-          state.content.htmlBlocks.push({
-            id: "hb-" + Date.now().toString(36),
-            sectionId: select.value,
-            position: box.querySelector("#pos").value,
-            html,
-          });
-          render();
-        });
-        body.appendChild(box);
-        state.content.htmlBlocks.forEach((block, index) => {
-          const card = el(`<div class="card"><div class="row"><strong>${block.position} · ${block.sectionId}</strong><button type="button">Удалить</button></div><pre>${block.html.replace(/</g, "&lt;")}</pre></div>`);
-          card.querySelector("button").addEventListener("click", () => {
-            state.content.htmlBlocks.splice(index, 1);
-            render();
-          });
-          body.appendChild(card);
-        });
-      } else {
-        pages.forEach((page) => {
-          const art = el(`<article class="card"><h2>${page.title || page.path} <span class="muted">${page.path}</span></h2></article>`);
-          page.sections.forEach((section) => {
-            const det = el(`<details open><summary>${section.label} · ${section.fields.length} полей</summary><div class="sec"></div></details>`);
-            const sec = det.querySelector(".sec");
-            section.fields.forEach((field) => sec.appendChild(fieldInput(field)));
-            section.forms.forEach((form) => {
-              const lab = el(`<label><span>form · ${form.label} · email заявок</span></label>`);
-              const input = document.createElement("input");
-              input.type = "email";
-              input.placeholder = "owner@domain.ru";
-              input.value = (state.content.forms[form.id] && state.content.forms[form.id].email) || "";
-              input.addEventListener("input", () => {
-                state.content.forms[form.id] = { email: input.value };
-              });
-              lab.appendChild(input);
-              sec.appendChild(lab);
-            });
-            art.appendChild(det);
-          });
-          body.appendChild(art);
-        });
-        if (!pages.length) body.appendChild(el(`<div class="card">page-model.json не найден — поля не размечены.</div>`));
-      }
-      document.getElementById("app").innerHTML = "";
-      document.getElementById("app").appendChild(root);
-    }
-
     function render() {
-      if (!state.authed) renderLogin();
-      else renderContent();
+      if (!state.authed) {
+        renderLogin();
+        return;
+      }
+      mountShell();
+      paintNav();
+      paintPages();
+      paintOutline();
+      paintStatus();
+      paintHistory();
+      paintInspector();
+      showStage();
+      if (state.view === "edit" || state.view === "sections") reloadCanvas(false);
     }
 
     load();

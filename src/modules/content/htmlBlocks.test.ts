@@ -17,4 +17,15 @@ describe("applyHtmlBlocks", () => {
     assert.equal((twice.match(/<!--craft-block:hb-1-->/g) || []).length, 1);
     assert.doesNotMatch(twice, /craft-block:hb-2/);
   });
+
+  it("inserts head and bodyEnd widgets without a section", () => {
+    const html = `<html><head><title>t</title></head><body><p>x</p></body></html>`;
+    const out = applyHtmlBlocks(html, [
+      { id: "h1", sectionId: "", position: "head", html: "<meta name='widget' content='1'>" },
+      { id: "b1", sectionId: "", position: "bodyEnd", html: "<div id='map'>map</div>" },
+    ]);
+    assert.match(out, /<!--craft-block:h1-->/);
+    assert.match(out, /<\/head>/);
+    assert.match(out, /id='map'>map/);
+  });
 });

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { rewriteForExport, htmlPathToLoc, sitemapXml } from "./rewriteForExport";
+import { rewriteForExport, htmlPathToLoc, sitemapXml, hasPreviewPathLeak } from "./rewriteForExport";
 
 describe("rewriteForExport", () => {
   it("strips preview prefixes and sets base href", () => {
@@ -10,6 +10,15 @@ describe("rewriteForExport", () => {
     assert.match(out, /<base href="\/">/);
     assert.match(out, /href="\/assets\/a.css"/);
     assert.match(out, /href="\/about-me\/"/);
+    assert.doesNotMatch(out, /preview/);
+    assert.equal(hasPreviewPathLeak(html), true);
+    assert.equal(hasPreviewPathLeak(out), false);
+  });
+
+  it("strips preview prefixes even if jobId argument mismatches HTML", () => {
+    const html = `<link href="/preview/6e4ac91c-b0a5-4664-82ac-fd7d1ffed95d/assets/a.css">`;
+    const out = rewriteForExport(html, "00000000-0000-0000-0000-000000000000", "https://demo.example");
+    assert.match(out, /href="\/assets\/a.css"/);
     assert.doesNotMatch(out, /preview/);
   });
 });

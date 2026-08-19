@@ -10,27 +10,27 @@
 
 ## Главный принцип
 
+Craft не редактирует страницу. Craft редактирует **Patch Model** поверх существующего HTML (ADR-0029).
+
 ```
-Крафтум → Playwright → Original DOM → Site Analyzer → Page Model
+Крафтум → Playwright → Original DOM → Analyzer → Page Model
                                               │
-                                   ┌──────────┴──────────┐
-                                   ▼                     ▼
-                             DOM mappings              Puck
-                                   │                     │
-                                   └──────────┬──────────┘
-                                              ▼
+                                    DOM mappings (n-…, cli-block)
+                                              │
+                                         Patch Model
+                                    (поля, секции, SEO, HTML-слоты)
+                                              │
                                          DOM Patcher
                                               ▼
-                                        Legacy HTML
-                                              ▼
-                                      original CSS/JS
+                                        Legacy HTML + CSS/JS
                                               ▼
                                            сайт 1:1
 ```
 
-- **Puck** — UI для правки полей, не движок страницы.
-- **Legacy HTML** — единственный renderer в MVP.
-- **Page Model** — контракт между DOM и редактором. Не зависит от Puck.
+- **Live editor** — iframe своего HTML, клик по узлу модели, не React canvas.
+- **Puck / GrapesJS** — не renderer. Не конструктор «собрать страницу из компонентов».
+- **Секции** — порядок / скрыть / удалить / вставка HTML, не библиотека блоков.
+- **Page Model** — контракт DOM ↔ редактор.
 
 ## Слои
 
@@ -73,6 +73,7 @@
 - Jobs: `storage/jobs/{id}.json`
 - Playwright только в этом проекте, не связан с Profi/leads
 
-## Чего нет в этом репо
+## Два контура
 
-Конструктор `nordic-builder.ru`, leads, Payload, AI-классификатор.
+- **Посетитель** на `craft.nordic-builder.ru`: 1 страница → preview. Не полный сайт.
+- **Оператор** в `/admin`: миграция по тарифу, домен, ZIP. Полигон выкладки — `demo.nordic-builder.ru`, не конструктор nordic-builder.ru.

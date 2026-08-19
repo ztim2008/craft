@@ -31,13 +31,7 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   const overlay = await getContent(id);
-  const to = resolveFormEmail(overlay, body.formId || "");
-  if (!to) {
-    return Response.json(
-      { error: "В админке не указан email для заявок (Контент → форма)" },
-      { status: 400 },
-    );
-  }
+  const to = resolveFormEmail(overlay, body.formId || "") || undefined;
 
   const lead = {
     id: createId(),
@@ -50,23 +44,17 @@ export async function POST(request: Request, context: RouteContext) {
   };
 
   let emailed = false;
-  try {
-    const mail = await sendLeadEmail({
-      to,
-      subject: `Заявка с сайта: ${job.sourceUrl}`,
-      text: formatLeadText(lead),
-    });
-    emailed = mail.sent;
-  } catch (error) {
-    await appendLead(id, lead);
-    return Response.json(
-      {
-        error: `Заявка сохранена, но email не ушёл: ${
-          error instanceof Error ? error.message : "ошибка SMTP"
-        }`,
-      },
-      { status: 502 },
-    );
+  if (to) {
+    try {
+      const mail = await sendLeadEmail({
+        to,
+        subject: `Заявка с сайта: ${job.sourceUrl}`,
+        text: formatLeadText(lead),
+      });
+      emailed = mail.sent;
+    } catch {
+      emailed = false;
+    }
   }
 
   lead.emailed = emailed;
@@ -75,6 +63,6 @@ export async function POST(request: Request, context: RouteContext) {
   return Response.json({
     ok: true,
     emailed,
-    message: emailed ? "Заявка отправлена на email" : "Заявка сохранена в админке (SMTP не настроен)",
+    message: emailed ? "Заявка отправлена на email и в админку" : "Заявка сохранена в админке",
   });
 }

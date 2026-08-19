@@ -1,7 +1,7 @@
 import { lstat, readFile } from "node:fs/promises";
 import path from "node:path";
 import { projectDir } from "@/lib/storage";
-import { injectPreviewBase } from "@/modules/assets/previewBase";
+import { injectDemoLeadBar, injectPreviewBase } from "@/modules/assets/previewBase";
 import { getImportJob } from "@/modules/jobs/store";
 
 export const runtime = "nodejs";
@@ -71,8 +71,11 @@ export async function GET(
     const { getContent } = await import("@/modules/content/store");
     const { applyContent } = await import("@/modules/content/applyContent");
     const overlay = await getContent(id);
-    let html = applyContent(raw.toString("utf8"), overlay);
+    const rel = path.relative(siteRoot, file);
+    const { pagePathFromRel } = await import("@/modules/content/applySeo");
+    let html = applyContent(raw.toString("utf8"), overlay, pagePathFromRel(rel));
     html = injectPreviewBase(html, id);
+    if (job.homepageOnly) html = injectDemoLeadBar(html, id);
     const { injectFormBridge } = await import("@/modules/forms/formBridge");
     html = injectFormBridge(html, `/api/preview/${id}/form`);
     return new Response(html, {
