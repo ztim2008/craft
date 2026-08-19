@@ -55,3 +55,13 @@ WordPress-style: sidebar, overview, content, forms, HTML blocks, publish. Оди
 ## ADR-0014 · HTML blocks
 
 Разрешены style и script (owner-only). AI: OpenAI, output HTML + style tag.
+
+## ADR-0015 · SEO в export с первого дня
+
+В `site/` сразу: `sitemap.xml`, `robots.txt`, `canonical` в `<head>`.  
+Preview использует `https://craft.nordic-builder.ru/preview/{jobId}/...`.  
+На хостинге клиента host подставляется из настроек админки (title/description/OG — Phase admin).
+
+## ADR-0016 · Sitemap.xml как источник URL
+
+При multi-page crawl сначала читаем `/sitemap.xml` (и вложенные sitemapindex), затем добираем ссылки с страниц. Same-origin only.

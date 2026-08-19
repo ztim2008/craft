@@ -124,24 +124,98 @@ export async function collectProjectAssets(input: {
   }
 
   const jobId = path.basename(input.projectRoot);
+  const previewOrigin = "https://craft.nordic-builder.ru";
+
+  function normalizeUrl(raw: string): string {
+    try {
+      const url = new URL(raw);
+      url.hash = "";
+      if (url.pathname !== "/" && url.pathname.endsWith("/")) {
+        url.pathname = url.pathname.slice(0, -1);
+      }
+      return url.toString();
+    } catch {
+      return raw;
+    }
+  }
+
+  function previewPathFor(pagePath: string): string {
+    const outRel = pageOutputPath(pagePath);
+    return `/preview/${jobId}/${outRel === "index.html" ? "" : outRel.replace(/index\.html$/, "")}`;
+  }
+
+  // Preview-only: переписываем ссылки на другие страницы на локальные `/preview/{jobId}/...`,
+  // чтобы навигация по меню/карточкам работала внутри preview.
+  const pageLinkReplacements: Array<{ from: string; to: string }> = [];
+  const seenPageReplacements = new Set<string>();
+  for (const page of input.pages) {
+    const previewPath = previewPathFor(page.path);
+    const abs1 = page.finalUrl;
+    const abs2 = normalizeUrl(page.finalUrl);
+    const rooted1 = page.path;
+    const rootedTrim = rooted1 === "/" ? "/" : rooted1.replace(/\/+$/, "");
+    const rootedSlash = rootedTrim === "/" ? "/" : `${rootedTrim}/`;
+
+    const candidates: string[] = Array.from(new Set([abs1, abs2, rootedTrim, rootedSlash]));
+    for (const from of candidates) {
+      if (!from) continue;
+      const key = `${from}=>${previewPath}`;
+      if (seenPageReplacements.has(key)) continue;
+      seenPageReplacements.add(key);
+      pageLinkReplacements.push({ from, to: previewPath });
+    }
+  }
 
   for (const page of input.pages) {
     const html = await readFile(page.htmlFile, "utf8");
     const outRel = pageOutputPath(page.path);
-    const htmlReplacements = replacementsAbs.map(({ from, to }) => ({
+    const assetReplacements = replacementsAbs.map(({ from, to }) => ({
       from,
       to: previewAssetHref(jobId, to),
     }));
-    const rewritten = injectPreviewBase(
-      rewriteUrls(html, htmlReplacements),
-      jobId,
-    );
+    let rewritten = rewriteUrls(html, assetReplacements);
+    rewritten = rewriteUrls(rewritten, pageLinkReplacements);
+    rewritten = injectPreviewBase(rewritten, jobId);
+
+    // SEO: canonical for preview.
+    const canonicalUrl = `${previewOrigin}${previewPathFor(page.path)}`;
+    if (!/<link[^>]+rel=(["'])canonical\\1/i.test(rewritten)) {
+      if (/<\/head>/i.test(rewritten)) {
+        rewritten = rewritten.replace(
+          /<\/head>/i,
+          `<link rel="canonical" href="${canonicalUrl}">\n</head>`,
+        );
+      } else if (/<head[^>]*>/i.test(rewritten)) {
+        rewritten = rewritten.replace(
+          /<head[^>]*>/i,
+          (match) => `${match}\n<link rel="canonical" href="${canonicalUrl}">`,
+        );
+      }
+    }
     const outAbs = path.join(siteRoot, outRel);
     await mkdir(path.dirname(outAbs), { recursive: true });
     await writeFile(outAbs, rewritten, "utf8");
     page.localHtmlFile = outAbs;
     page.previewPath = `/preview/${jobId}/${outRel === "index.html" ? "" : outRel.replace(/index\.html$/, "")}`;
   }
+
+  // SEO: sitemap + robots for preview (and export потом можно параметризовать host).
+  const sitemapLocs = input.pages.map((p) => `${previewOrigin}${previewPathFor(p.path)}`);
+  const sitemapXml =
+    `<?xml version="1.0" encoding="UTF-8"?>\n` +
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+    sitemapLocs
+      .map(
+        (loc) =>
+          `  <url>\n    <loc>${loc}</loc>\n  </url>`,
+      )
+      .join("\n") +
+    `\n</urlset>\n`;
+  await writeFile(path.join(siteRoot, "sitemap.xml"), sitemapXml, "utf8");
+
+  const robotsTxt =
+    `User-agent: *\nAllow: /\nSitemap: ${previewOrigin}/preview/${jobId}/sitemap.xml\n`;
+  await writeFile(path.join(siteRoot, "robots.txt"), robotsTxt, "utf8");
 
   return {
     assets: [...byUrl.values()],

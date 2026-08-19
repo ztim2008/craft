@@ -4,6 +4,7 @@ import { isSameOrigin } from "@/modules/security/urlGuard";
 import { crawlPage } from "./crawlPage";
 import type { ImportJob, PageSnapshot } from "./types";
 import { CRAWL_LIMITS } from "./types";
+import { tryFetchSitemapUrls } from "./sitemap";
 
 function normalizeQueueUrl(raw: string): string {
   const url = new URL(raw);
@@ -22,13 +23,28 @@ export async function crawlSite(
 ): Promise<Pick<ImportJob, "pages" | "discoveredLinks" | "pagesFound" | "pagesProcessed" | "assetsFound" | "networkHits" | "warnings">> {
   const started = Date.now();
   const origin = new URL(job.sourceUrl).origin;
-  const queued: string[] = [normalizeQueueUrl(job.sourceUrl)];
+  let queued: string[] = [normalizeQueueUrl(job.sourceUrl)];
   const visited = new Set<string>();
   const ignored = new Set<string>();
   const pages: PageSnapshot[] = [];
   const discovered = new Set<string>();
   const warnings: string[] = [];
   const maxPages = job.homepageOnly ? 1 : Math.min(job.maxPages, CRAWL_LIMITS.maxPages);
+
+  if (!job.homepageOnly && maxPages > 1) {
+    try {
+      const sitemapUrls = await tryFetchSitemapUrls(origin, maxPages);
+      if (sitemapUrls.length) {
+        const home = normalizeQueueUrl(job.sourceUrl);
+        queued = Array.from(new Set([home, ...sitemapUrls.map(normalizeQueueUrl)])).slice(
+          0,
+          maxPages,
+        );
+      }
+    } catch {
+      // ignore sitemap errors, fallback to crawl from homepage
+    }
+  }
 
   while (queued.length > 0 && pages.length < maxPages) {
     if (Date.now() - started > CRAWL_LIMITS.maxTotalTimeMs) {

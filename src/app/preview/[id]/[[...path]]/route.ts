@@ -24,6 +24,8 @@ const MIME: Record<string, string> = {
   ".otf": "font/otf",
   ".mp4": "video/mp4",
   ".webm": "video/webm",
+  ".xml": "application/xml; charset=utf-8",
+  ".txt": "text/plain; charset=utf-8",
 };
 
 function safeFile(root: string, parts: string[]): string | null {
