@@ -1,7 +1,7 @@
-export function formBridgeScript(jobId: string): string {
+export function formBridgeScript(endpoint: string): string {
   return `<script>
 (function(){
-  var JOB=${JSON.stringify(jobId)};
+  var ENDPOINT=${JSON.stringify(endpoint)};
   function collect(form){
     var fields={};
     form.querySelectorAll("input,textarea,select").forEach(function(el){
@@ -15,7 +15,7 @@ export function formBridgeScript(jobId: string): string {
   async function send(form){
     var payload={formId:form.id||"",fields:collect(form),page:location.pathname};
     try{
-      var res=await fetch("/api/preview/"+JOB+"/form",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
+      var res=await fetch(ENDPOINT,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
       var data=await res.json();
       if(!res.ok) throw new Error(data.error||"Ошибка отправки");
       alert(data.message||"Заявка отправлена");
@@ -46,8 +46,9 @@ export function formBridgeScript(jobId: string): string {
 </script>`;
 }
 
-export function injectFormBridge(html: string, jobId: string): string {
-  const script = formBridgeScript(jobId);
-  if (/<\/body>/i.test(html)) return html.replace(/<\/body>/i, `${script}</body>`);
-  return html + script;
+export function injectFormBridge(html: string, endpoint: string): string {
+  const stripped = html.replace(/<script>\s*\(function\(\)\{\s*var (JOB|ENDPOINT)=[\s\S]*?<\/script>/i, "");
+  const script = formBridgeScript(endpoint);
+  if (/<\/body>/i.test(stripped)) return stripped.replace(/<\/body>/i, `${script}</body>`);
+  return stripped + script;
 }

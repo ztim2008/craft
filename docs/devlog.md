@@ -70,17 +70,25 @@
 | 1 | Crawler (1 page) | ✅ готово | devlog 2026-08-19 |
 | 2 | Asset collector + preview | ✅ готово | devlog 2026-08-19 |
 | 2.1 | Fix preview paths (base + absolute assets) | ✅ готово | devlog 2026-08-19 |
-| 3 | Page Model v1 | 📋 запланировано | — |
-| 4 | Export bundle (zip + README deploy) | 📋 запланировано | — |
-| 5 | Admin MVP (WP-style) | 📋 запланировано | [admin-spec.md](./admin-spec.md) |
-| 6 | DOM Patcher + Publish | 📋 запланировано | — |
-| 7 | Forms (email + модель Sheets/TG) | 📋 запланировано | — |
+| 3 | Page Model v1 | ✅ готово | — |
+| 4 | Export bundle (zip + README deploy) | ✅ готово | admin «Скачать пакет» |
+| 5 | Admin MVP (WP-style) | ✅ готово | [admin-spec.md](./admin-spec.md) |
+| 6 | DOM Patcher + Publish | ✅ готово | — |
+| 7 | Forms (email; TG/Sheets позже) | ✅ готово | — |
 | 8 | HTML-блоки + slots | 📋 запланировано | — |
-| 9 | Multi-page import (sitemap) | 📋 запланировано | — |
+| 9 | Multi-page import (sitemap) | ✅ готово | — |
 | 10 | AI-секции (OpenAI) | 📋 запланировано | — |
 | 11 | Demo funnel + оплата + CTA | 📋 запланировано | [product-plan.md](./product-plan.md) |
 
 **Легенда:** ✅ готово · 🔄 в работе · 📋 запланировано · ⏸ отложено
+
+---
+
+## 2026-08-19 · Export bundle
+
+Кнопка «Скачать пакет» в `/admin/jobs/{id}`. Zip: `public/` без `/preview/{id}/`, `data/content.json`, `page-model.json`, `server.mjs` (`POST /api/form`), README Beget/Timeweb/VPS.
+
+Следующее: Phase 8 HTML-блоки, затем demo funnel. Telegram/Sheets — позже.
 
 ---
 

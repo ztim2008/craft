@@ -16,8 +16,8 @@ describe("resolveFormEmail", () => {
 
 describe("injectFormBridge", () => {
   it("injects script before body close", () => {
-    const html = injectFormBridge("<html><body>x</body></html>", "11111111-1111-1111-1111-111111111111");
-    assert.match(html, /\/api\/preview\/"\+JOB\+"\/form/);
+    const html = injectFormBridge("<html><body>x</body></html>", "/api/preview/11111111-1111-1111-1111-111111111111/form");
+    assert.match(html, /\/api\/preview\/11111111-1111-1111-1111-111111111111\/form/);
     assert.match(html, /<\/script><\/body>/);
   });
 });

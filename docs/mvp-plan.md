@@ -47,34 +47,32 @@ URL: ma-maniere-ballet.ru, kc3748.craftum.io, madlenmartynova.ru, sx7238.craftum
 
 ---
 
-## Phase 4 — Export bundle 📋
+## Phase 4 — Export bundle ✅
 
-- zip после оплаты: site + data + admin skeleton + api + README
-- Deploy guide: Beget / Timeweb / VPS (Node)
-
----
-
-## Phase 5 — Admin MVP (WP-style) 📋
-
-Экраны: см. [admin-spec.md](./admin-spec.md)
-
-- Login (1 owner)
-- Обзор, Контент, Формы, Опубликовать
+- Кнопка «Скачать пакет» в админке
+- zip: public site + content.json + page-model + server.mjs + README (Beget/Timeweb/VPS)
 
 ---
 
-## Phase 6 — DOM Patcher + Publish 📋
+## Phase 5 — Admin MVP (WP-style) ✅
 
-- Apply `content.json` → patch HTML
-- HTML block slots (after/before section)
+- Login (1 owner), `/admin`, контент, формы, опубликовать
+- HTML-блоки — Phase 8
 
 ---
 
-## Phase 7 — Forms 📋
+## Phase 6 — DOM Patcher + Publish ✅
 
-- Submit → `/api/form-submit`
-- Email (MVP)
-- Model for Telegram + Google Sheets (later)
+- Apply `content.json` → patch HTML в preview и Publish
+- HTML block slots — Phase 8
+
+---
+
+## Phase 7 — Forms ✅ (email)
+
+- Preview: intercept → `POST /api/preview/{id}/form`
+- Email через SMTP, иначе leads.jsonl
+- Telegram + Google Sheets — после HTML-блоков / funnel
 
 ---
 

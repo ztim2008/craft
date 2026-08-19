@@ -69,3 +69,7 @@ Preview использует `https://craft.nordic-builder.ru/preview/{jobId}/..
 ## ADR-0017 · Админка сервиса Craft
 
 Один владелец. Сессия cookie HMAC. Email/hash пароля в `.env`, не в git. Импорт и job API закрыты. Preview остаётся публичным для демо.
+
+## ADR-0018 · Export без Next.js админки
+
+В zip клиенту: `public/` (patched HTML), `data/content.json`, `page-model.json`, zero-dep `server.mjs` (статика + `POST /api/form`), README (Beget/Timeweb/VPS). Полная Next-админка в пакет не кладётся. Пути `/preview/{jobId}/` переписываются в `/`. Домен в sitemap/canonical — плейсхолдер `YOUR-DOMAIN.RU`.

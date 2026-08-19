@@ -74,7 +74,7 @@ export async function GET(
     let html = patchHtml(raw.toString("utf8"), overlay.fields);
     html = injectPreviewBase(html, id);
     const { injectFormBridge } = await import("@/modules/forms/formBridge");
-    html = injectFormBridge(html, id);
+    html = injectFormBridge(html, `/api/preview/${id}/form`);
     return new Response(html, {
       headers: {
         "content-type": MIME[ext],

@@ -32,6 +32,10 @@
 | 8 | Настройки | site title, admin email, смена пароля |
 | 9 | Опубликовать | DOM patch → public/ |
 
+## Operator export
+
+В админке сервиса на задаче: кнопка «Скачать пакет» → `GET /api/admin/jobs/{id}/export` (нужна сессия). Zip для хостинга клиента, не SaaS.
+
 ## Publish flow
 
 1. Редактирование → `content.json` (черновик)

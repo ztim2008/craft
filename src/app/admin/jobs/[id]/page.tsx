@@ -31,6 +31,12 @@ export default async function AdminJobModelPage({
         </div>
         <div className="flex gap-2">
           <RebuildModelButton jobId={id} />
+          <a
+            href={`/api/admin/jobs/${id}/export`}
+            className="rounded bg-[#1d2327] px-4 py-2 text-sm font-medium text-white"
+          >
+            Скачать пакет
+          </a>
           <Link
             href={`/jobs/${id}`}
             className="rounded border border-[#8c8f94] bg-white px-4 py-2 text-sm"
