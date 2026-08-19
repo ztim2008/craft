@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { formatRub, getPlan } from "./plans";
+import { parseAmountRub } from "./pricingStore";
 import { canDownload } from "./orders";
 
 describe("getPlan", () => {
@@ -8,6 +9,14 @@ describe("getPlan", () => {
     assert.equal(getPlan("basic")?.id, "basic");
     assert.equal(getPlan("pro")?.name, "Pro");
     assert.equal(getPlan("vip"), null);
+  });
+});
+
+describe("parseAmountRub", () => {
+  it("accepts integers and rejects junk", () => {
+    assert.equal(parseAmountRub("14900"), 14900);
+    assert.equal(parseAmountRub(0), null);
+    assert.equal(parseAmountRub("x"), null);
   });
 });
 

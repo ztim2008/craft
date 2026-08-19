@@ -1,5 +1,5 @@
 import { createOrder, listOrdersForJob } from "@/modules/billing/orders";
-import { getPlan } from "@/modules/billing/plans";
+import { getLivePlan } from "@/modules/billing/plans";
 import { allowRate, clientIp } from "@/modules/billing/rateLimit";
 import { getImportJob } from "@/modules/jobs/store";
 import { sendLeadEmail } from "@/modules/forms/sendEmail";
@@ -39,7 +39,7 @@ export async function POST(request: Request, context: RouteContext) {
   } catch {
     return Response.json({ error: "Ожидался JSON" }, { status: 400 });
   }
-  const plan = getPlan(body.plan || "");
+  const plan = await getLivePlan(body.plan || "");
   if (!plan) return Response.json({ error: "Выберите Basic или Pro" }, { status: 400 });
   const name = (body.name || "").trim();
   const email = (body.email || "").trim().toLowerCase();

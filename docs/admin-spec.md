@@ -38,6 +38,8 @@
 
 Публичная воронка: заявка на `/` → `/admin/orders` → «Оплачено» → клиент качает ZIP по токену с `/demo/{id}`.
 
+Цены Basic/Pro: `/admin/settings`.
+
 ## Publish flow
 
 1. Редактирование → `content.json` (черновик)

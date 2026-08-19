@@ -1,5 +1,6 @@
 import { listOrders } from "@/modules/billing/orders";
-import { formatRub, getPlan } from "@/modules/billing/plans";
+import { formatRub } from "@/modules/billing/types";
+import { planCopy } from "@/modules/billing/plans";
 import { getImportJob } from "@/modules/jobs/store";
 import { MarkPaidButton } from "@/components/admin/MarkPaidButton";
 import Link from "next/link";
@@ -37,7 +38,7 @@ export default async function AdminOrdersPage() {
           </thead>
           <tbody>
             {rows.map(({ order, sourceUrl, jobStatus }) => {
-              const plan = getPlan(order.plan);
+              const plan = planCopy(order.plan);
               return (
                 <tr key={order.id} className="border-t border-[#dcdcde] align-top">
                   <td className="px-4 py-3">

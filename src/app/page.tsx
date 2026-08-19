@@ -1,9 +1,12 @@
 import { DemoImportForm } from "@/components/funnel/DemoImportForm";
-import { formatRub, PLANS } from "@/modules/billing/plans";
+import { formatRub } from "@/modules/billing/types";
+import { listPlans } from "@/modules/billing/plans";
 import Link from "next/link";
 
-export default function HomePage() {
-  const plans = [PLANS.basic, PLANS.pro];
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const plans = await listPlans();
 
   return (
     <main className="mx-auto w-full max-w-5xl px-6 py-12">

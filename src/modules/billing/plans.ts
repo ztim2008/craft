@@ -1,19 +1,13 @@
-export type PlanId = "basic" | "pro";
+import { priceFor } from "./pricingStore";
+import type { Plan, PlanId } from "./types";
 
-export type Plan = {
-  id: PlanId;
-  name: string;
-  amountRub: number;
-  pages: string;
-  summary: string;
-  features: string[];
-};
+export type { Plan, PlanId } from "./types";
+export { formatRub } from "./types";
 
-export const PLANS: Record<PlanId, Plan> = {
+const COPY: Record<PlanId, Omit<Plan, "amountRub">> = {
   basic: {
     id: "basic",
     name: "Basic",
-    amountRub: Number(process.env.PRICE_BASIC_RUB || 9900),
     pages: "1 страница",
     summary: "Демо, которое вы уже видели, плюс пакет на свой хостинг.",
     features: [
@@ -26,7 +20,6 @@ export const PLANS: Record<PlanId, Plan> = {
   pro: {
     id: "pro",
     name: "Pro",
-    amountRub: Number(process.env.PRICE_PRO_RUB || 19900),
     pages: "весь сайт",
     summary: "Все страницы сайта + тот же пакет на хостинг.",
     features: [
@@ -38,11 +31,24 @@ export const PLANS: Record<PlanId, Plan> = {
   },
 };
 
-export function getPlan(id: string): Plan | null {
-  if (id === "basic" || id === "pro") return PLANS[id];
-  return null;
+export function planCopy(id: string): Omit<Plan, "amountRub"> | null {
+  if (id !== "basic" && id !== "pro") return null;
+  return COPY[id];
 }
 
-export function formatRub(amount: number): string {
-  return new Intl.NumberFormat("ru-RU").format(amount) + " ₽";
+export async function getLivePlan(id: string): Promise<Plan | null> {
+  const copy = planCopy(id);
+  if (!copy) return null;
+  return { ...copy, amountRub: await priceFor(copy.id) };
+}
+
+export async function listPlans(): Promise<Plan[]> {
+  const plans = await Promise.all([getLivePlan("basic"), getLivePlan("pro")]);
+  return plans.filter((plan): plan is Plan => Boolean(plan));
+}
+
+export function getPlan(id: string): Plan | null {
+  const copy = planCopy(id);
+  if (!copy) return null;
+  return { ...copy, amountRub: copy.id === "pro" ? 19900 : 9900 };
 }

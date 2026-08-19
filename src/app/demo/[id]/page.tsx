@@ -1,7 +1,7 @@
 "use client";
 
 import { OrderForm } from "@/components/funnel/OrderForm";
-import { PLANS } from "@/modules/billing/plans";
+import type { Plan } from "@/modules/billing/types";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -25,18 +25,26 @@ type DemoPayload = {
 export default function DemoPage() {
   const params = useParams<{ id: string }>();
   const [demo, setDemo] = useState<DemoPayload | null>(null);
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      const response = await fetch(`/api/demo/${params.id}`, { cache: "no-store" });
-      const data = (await response.json()) as DemoPayload & { error?: string };
-      if (!response.ok) {
+      const [demoRes, plansRes] = await Promise.all([
+        fetch(`/api/demo/${params.id}`, { cache: "no-store" }),
+        fetch("/api/plans", { cache: "no-store" }),
+      ]);
+      const data = (await demoRes.json()) as DemoPayload & { error?: string };
+      const plansData = (await plansRes.json()) as { plans?: Plan[] };
+      if (!demoRes.ok) {
         if (!cancelled) setError(data.error || "Не найдено");
         return;
       }
-      if (!cancelled) setDemo(data);
+      if (!cancelled) {
+        setDemo(data);
+        if (plansData.plans?.length) setPlans(plansData.plans);
+      }
     }
     load();
     const timer = setInterval(load, 2500);
@@ -127,8 +135,10 @@ export default function DemoPage() {
               Заявка уже есть ({demo.order.plan}). Ждём подтверждение оплаты — обновите страницу
               позже.
             </div>
+          ) : plans.length ? (
+            <OrderForm jobId={demo.id} plans={plans} />
           ) : (
-            <OrderForm jobId={demo.id} plans={[PLANS.basic, PLANS.pro]} selected={PLANS.basic} />
+            <p className="text-sm text-zinc-500">Загрузка тарифов…</p>
           )}
         </section>
       ) : null}

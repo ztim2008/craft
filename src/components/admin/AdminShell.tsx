@@ -7,6 +7,7 @@ const NAV = [
   { href: "/admin", label: "Обзор" },
   { href: "/admin/import", label: "Импорт" },
   { href: "/admin/orders", label: "Заявки" },
+  { href: "/admin/settings", label: "Настройки" },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {

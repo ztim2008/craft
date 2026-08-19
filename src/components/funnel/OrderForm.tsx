@@ -1,18 +1,16 @@
 "use client";
 
-import { formatRub, type Plan } from "@/modules/billing/plans";
+import { formatRub, type Plan } from "@/modules/billing/types";
 import { useState, type FormEvent } from "react";
 
 export function OrderForm({
   jobId,
   plans,
-  selected,
 }: {
   jobId: string;
   plans: Plan[];
-  selected: Plan;
 }) {
-  const [planId, setPlanId] = useState(selected.id);
+  const [planId, setPlanId] = useState(plans[0]?.id || "basic");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
