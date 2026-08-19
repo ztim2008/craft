@@ -70,7 +70,7 @@ export default function JobPage() {
   return (
     <main className="mx-auto w-full max-w-4xl space-y-8 px-6 py-12">
       <div>
-        <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-800">
+        <Link href="/admin/import" className="text-sm text-zinc-500 hover:text-zinc-800">
           ← Новый импорт
         </Link>
         <h1 className="mt-3 text-2xl font-semibold">Импорт</h1>

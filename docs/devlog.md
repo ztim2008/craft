@@ -78,7 +78,7 @@
 | 8 | HTML-блоки + slots | ✅ готово | — |
 | 9 | Multi-page import (sitemap) | ✅ готово | — |
 | 10 | AI-секции (OpenAI) | 📋 запланировано | — |
-| 11 | Demo funnel + оплата + CTA | 📋 запланировано | [product-plan.md](./product-plan.md) |
+| 11 | Demo funnel + оплата + CTA | ✅ готово | заявка, ZIP по токену; ЮKassa позже |
 
 **Легенда:** ✅ готово · 🔄 в работе · 📋 запланировано · ⏸ отложено
 
@@ -88,7 +88,7 @@
 
 Кнопка «Скачать пакет» в `/admin/jobs/{id}`. Zip: `public/` без `/preview/{id}/`, `data/content.json`, `page-model.json`, `server.mjs` (`POST /api/form`), README Beget/Timeweb/VPS.
 
-Следующее: demo funnel + оплата. Telegram/Sheets — позже.
+Следующее: AI-секции или ЮKassa, когда воронка проверится на живых заявках.
 
 ---
 

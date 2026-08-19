@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
 
@@ -38,6 +39,11 @@ function LoginForm() {
     >
       <h1 className="text-xl font-semibold text-[#1d2327]">Craft Admin</h1>
       <p className="text-sm text-[#50575e]">Вход владельца миграционного сервиса</p>
+      <p className="text-sm text-[#50575e]">
+        <Link href="/" className="text-[#2271b1] hover:underline">
+          На сайт
+        </Link>
+      </p>
       <label className="block space-y-1 text-sm">
         <span>Email</span>
         <input

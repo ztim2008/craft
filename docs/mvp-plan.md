@@ -96,11 +96,11 @@ URL: ma-maniere-ballet.ru, kc3748.craftum.io, madlenmartynova.ru, sx7238.craftum
 
 ---
 
-## Phase 11 — Demo funnel + payments 📋
+## Phase 11 — Demo funnel + payments ✅
 
-- CTA after preview
-- Basic / Pro pricing
-- Manual or automated payment flow
+- Публичная главная: URL → демо 1 страницы → preview
+- Basic 9 900 ₽ / Pro 19 900 ₽, заявка
+- Выдача ZIP после ручной отметки «Оплачено» (ЮKassa — позже)
 
 ---
 

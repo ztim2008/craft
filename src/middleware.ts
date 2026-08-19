@@ -2,17 +2,19 @@ import { NextResponse, type NextRequest } from "next/server";
 import { readSessionEmail, sessionCookieName } from "@/modules/adminAuth/session";
 
 function isPublic(pathname: string): boolean {
-  if (pathname === "/login") return true;
+  if (pathname === "/" || pathname === "/login") return true;
+  if (pathname.startsWith("/demo/")) return true;
   if (pathname.startsWith("/preview/")) return true;
   if (pathname.startsWith("/_next/")) return true;
   if (pathname === "/favicon.ico") return true;
   if (pathname.startsWith("/api/admin/login")) return true;
   if (pathname.startsWith("/api/preview/")) return true;
+  if (pathname.startsWith("/api/demo")) return true;
   return false;
 }
 
 function needsAuth(pathname: string): boolean {
-  if (pathname === "/" || pathname.startsWith("/admin")) return true;
+  if (pathname.startsWith("/admin")) return true;
   if (pathname.startsWith("/jobs")) return true;
   if (pathname.startsWith("/api/import")) return true;
   if (pathname.startsWith("/api/admin")) return true;

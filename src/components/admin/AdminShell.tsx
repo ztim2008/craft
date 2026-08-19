@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 const NAV = [
   { href: "/admin", label: "Обзор" },
   { href: "/admin/import", label: "Импорт" },
+  { href: "/admin/orders", label: "Заявки" },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
@@ -51,7 +52,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <div className="min-w-0 flex-1">
         <header className="flex items-center justify-between border-b border-[#c3c4c7] bg-white px-6 py-3 text-sm">
           <span>Kraftum Migration Engine</span>
-          <Link href="/admin" className="text-[#2271b1] hover:underline">
+          <Link href="/" className="text-[#2271b1] hover:underline">
             На сайт
           </Link>
         </header>
