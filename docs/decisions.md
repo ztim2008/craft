@@ -72,12 +72,18 @@ Preview использует `https://craft.nordic-builder.ru/preview/{jobId}/..
 
 ## ADR-0018 · Export без Next.js админки
 
-В zip клиенту: `public/` (patched HTML), `data/content.json`, `page-model.json`, zero-dep `server.mjs` (статика + `POST /api/form`), README (Beget/Timeweb/VPS). Полная Next-админка в пакет не кладётся. Пути `/preview/{jobId}/` переписываются в `/`. Домен в sitemap/canonical — плейсхолдер `YOUR-DOMAIN.RU`.
+В zip клиенту: `public/`, `data/`, `admin.html`, `patch.cjs`, `server.mjs`. Редактор страниц на хостинге клиента. Пути `/preview/{jobId}/` → `/`.
 
 ## ADR-0019 · HTML-блоки в исходный DOM
 
 Блок вставляется before/after секции `id="n-…"`. Style и script разрешены (owner-only). Маркеры `<!--craft-block:id-->`, чтобы повторный патч не дублировал вставку. React страницу не рендерит.
 
-## ADR-0020 · Оплата после воронки
+## ADR-0021 · Редактор в пакете клиента
+
+В zip: `server.mjs` + `admin.html` + `patch.cjs`. Тот же DOM patch, что на Craft. Логин паролем из `.env`. Next.js в пакет не кладём. Оригинал HTML — `data/source/`, публикация пересобирает `public/`.
 
 Сначала публичное демо и заявка Basic/Pro. ZIP по токену после отметки «Оплачено» в админке. ЮKassa не в этом этапе: эквайринг не должен блокировать проверку импорта и пакета.
+
+## ADR-0021 · Редактор в пакете клиента
+
+В zip: `server.mjs` + `admin.html` + `patch.cjs`. Тот же DOM patch, что на Craft. Логин паролем из `.env`. Next.js в пакет не кладём. Оригинал HTML — `data/source/`, публикация пересобирает `public/`.

@@ -26,7 +26,7 @@ export default async function AdminJobModelPage({
           <Link href="/admin" className="text-sm text-[#2271b1] hover:underline">
             ← Обзор
           </Link>
-          <h1 className="mt-2 text-2xl font-semibold">Контент</h1>
+          <h1 className="mt-2 text-2xl font-semibold">Редактор страниц</h1>
           <p className="text-sm text-[#50575e]">{job?.sourceUrl || id}</p>
         </div>
         <div className="flex gap-2">

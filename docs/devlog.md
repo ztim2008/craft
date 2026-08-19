@@ -88,7 +88,7 @@
 
 Кнопка «Скачать пакет» в `/admin/jobs/{id}`. Zip: `public/` без `/preview/{id}/`, `data/content.json`, `page-model.json`, `server.mjs` (`POST /api/form`), README Beget/Timeweb/VPS.
 
-Следующее: AI-секции или ЮKassa, когда воронка проверится на живых заявках.
+Следующее: прогон воронки на живых заявках; ЮKassa и AI — после.
 
 ---
 

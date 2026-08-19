@@ -1,11 +1,13 @@
 import { spawn } from "node:child_process";
 import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { projectDir } from "@/lib/storage";
+import { PROJECT_ROOT, projectDir } from "@/lib/storage";
 import { getContent } from "@/modules/content/store";
 import { applyContent } from "@/modules/content/applyContent";
 import { injectFormBridge } from "@/modules/forms/formBridge";
 import { rewriteForExport, htmlPathToLoc, sitemapXml } from "./rewriteForExport";
+
+const PORTABLE_DIR = path.join(PROJECT_ROOT, "src/modules/export/portable");
 
 function runZip(cwd: string, zipFile: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -32,131 +34,40 @@ async function walkFiles(dir: string, exts: Set<string>): Promise<string[]> {
   return out;
 }
 
-function serverScript(): string {
-  return `#!/usr/bin/env node
-const http = require("http");
-const fs = require("fs");
-const path = require("path");
-const { randomUUID } = require("crypto");
-
-const PORT = Number(process.env.PORT || 3000);
-const ROOT = path.join(__dirname, "public");
-const DATA = path.join(__dirname, "data");
-const MIME = {
-  ".html": "text/html; charset=utf-8",
-  ".css": "text/css; charset=utf-8",
-  ".js": "text/javascript; charset=utf-8",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".webp": "image/webp",
-  ".gif": "image/gif",
-  ".svg": "image/svg+xml",
-  ".ico": "image/x-icon",
-  ".woff": "font/woff",
-  ".woff2": "font/woff2",
-  ".xml": "application/xml; charset=utf-8",
-  ".txt": "text/plain; charset=utf-8",
-};
-
-function send(res, status, body, type) {
-  res.writeHead(status, { "content-type": type || "text/plain; charset=utf-8" });
-  res.end(body);
-}
-
-function readContent() {
-  try {
-    return JSON.parse(fs.readFileSync(path.join(DATA, "content.json"), "utf8"));
-  } catch {
-    return { forms: {} };
-  }
-}
-
-function resolveEmail(content, formId) {
-  const direct = content.forms && content.forms[formId] && content.forms[formId].email;
-  if (direct) return String(direct).trim();
-  const all = Object.values(content.forms || {}).map((f) => f && f.email).find(Boolean);
-  return all ? String(all).trim() : "";
-}
-
-const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url || "/", "http://localhost");
-  if (req.method === "POST" && url.pathname === "/api/form") {
-    let raw = "";
-    for await (const chunk of req) raw += chunk;
-    let body = {};
-    try { body = JSON.parse(raw || "{}"); } catch { return send(res, 400, JSON.stringify({ error: "JSON" }), "application/json"); }
-    const fields = body.fields || {};
-    const filled = Object.values(fields).some((v) => String(v || "").trim());
-    if (!filled) return send(res, 400, JSON.stringify({ error: "Заполните поля формы" }), "application/json");
-    const to = resolveEmail(readContent(), body.formId || "");
-    if (!to) return send(res, 400, JSON.stringify({ error: "В data/content.json не указан email формы" }), "application/json");
-    const lead = { id: randomUUID(), at: new Date().toISOString(), formId: body.formId || "", page: body.page || "/", fields, to, emailed: false };
-    fs.mkdirSync(DATA, { recursive: true });
-    fs.appendFileSync(path.join(DATA, "leads.jsonl"), JSON.stringify(lead) + "\\n");
-    send(res, 200, JSON.stringify({ ok: true, emailed: false, message: "Заявка сохранена в data/leads.jsonl" }), "application/json");
-    return;
-  }
-  let file = path.join(ROOT, decodeURIComponent(url.pathname));
-  if (url.pathname === "/") file = path.join(ROOT, "index.html");
-  const rel = path.resolve(file);
-  if (!rel.startsWith(path.resolve(ROOT))) return send(res, 403, "Forbidden");
-  fs.stat(rel, (err, st) => {
-    if (err) return send(res, 404, "Not found");
-    const target = st.isDirectory() ? path.join(rel, "index.html") : rel;
-    fs.readFile(target, (e2, buf) => {
-      if (e2) return send(res, 404, "Not found");
-      const ext = path.extname(target).toLowerCase();
-      send(res, 200, buf, MIME[ext] || "application/octet-stream");
-    });
-  });
-});
-
-server.listen(PORT, () => console.log("Site http://127.0.0.1:" + PORT));
-`;
-}
-
 function readme(): string {
   return `# Пакет сайта (Craft export)
 
-Что внутри:
+- \`public/\` — готовый сайт
+- \`data/source/\` — HTML до правок (для повторной публикации)
+- \`data/content.json\` — тексты, формы, HTML-блоки
+- \`data/page-model.json\` — карта секций для редактора
+- \`server.mjs\` — сайт + формы + редактор
+- \`admin.html\` — редактор страниц
 
-- \`public/\` — HTML, CSS, картинки, sitemap.xml, robots.txt
-- \`data/content.json\` — правки текстов и email форм
-- \`data/page-model.json\` — карта секций (для будущей админки на хостинге)
-- \`server.mjs\` — раздача сайта + приём заявок \`POST /api/form\`
-
-## Beget / Timeweb / VPS
+## Запуск
 
 Нужен Node.js 18+.
 
 \`\`\`bash
-cd эта_папка
+cp .env.example .env
+# задайте ADMIN_PASSWORD
 node server.mjs
 \`\`\`
 
-По умолчанию порт 3000. Через nginx проксируйте домен на \`127.0.0.1:3000\`.
+- Сайт: http://127.0.0.1:3000/
+- Редактор: http://127.0.0.1:3000/admin
 
-\`\`\`
-PORT=3000 node server.mjs
-\`\`\`
+Проксируйте домен на этот порт (Beget / Timeweb / VPS).
+
+В редакторе: правите тексты → Сохранить (черновик) → Опубликовать (запись в public/).
 
 ## Формы
 
-В \`data/content.json\` у формы должен быть email:
+У формы в редакторе укажите email. Заявки: \`data/leads.jsonl\`.
 
-\`\`\`json
-"forms": {
-  "n-...": { "email": "owner@domain.ru" }
-}
-\`\`\`
+## Домен
 
-Заявки пишутся в \`data/leads.jsonl\`. Письма на SMTP подключаются отдельно (на Craft-сервере уже есть, на вашем хостинге — по желанию).
-
-## Свой домен
-
-В \`public/sitemap.xml\` и \`robots.txt\` замените \`YOUR-DOMAIN.RU\` на ваш домен.
-В HTML canonical тоже: \`YOUR-DOMAIN.RU\`.
+В \`public/sitemap.xml\` замените \`YOUR-DOMAIN.RU\`.
 
 Техподдержка в базовую поставку не входит.
 `;
@@ -171,7 +82,7 @@ export async function buildExportZip(jobId: string, sourceUrl: string): Promise<
 
   await rm(staging, { recursive: true, force: true });
   await mkdir(path.join(staging, "public"), { recursive: true });
-  await mkdir(path.join(staging, "data"), { recursive: true });
+  await mkdir(path.join(staging, "data", "source"), { recursive: true });
   await cp(siteRoot, path.join(staging, "public"), { recursive: true });
 
   const overlay = await getContent(jobId);
@@ -179,9 +90,13 @@ export async function buildExportZip(jobId: string, sourceUrl: string): Promise<
   const htmlFiles = await walkFiles(publicRoot, new Set([".html"]));
   for (const file of htmlFiles) {
     let html = await readFile(file, "utf8");
-    html = applyContent(html, overlay);
     html = rewriteForExport(html, jobId, siteOrigin);
     html = injectFormBridge(html, "/api/form");
+    const rel = path.relative(publicRoot, file);
+    const sourceFile = path.join(staging, "data", "source", rel);
+    await mkdir(path.dirname(sourceFile), { recursive: true });
+    await writeFile(sourceFile, html, "utf8");
+    html = applyContent(html, overlay);
     await writeFile(file, html, "utf8");
   }
   const textFiles = await walkFiles(publicRoot, new Set([".css", ".js", ".xml", ".txt"]));
@@ -207,11 +122,13 @@ export async function buildExportZip(jobId: string, sourceUrl: string): Promise<
   } catch {
     // optional
   }
-  await writeFile(path.join(staging, "server.mjs"), serverScript(), "utf8");
+  await cp(path.join(PORTABLE_DIR, "server.mjs"), path.join(staging, "server.mjs"));
+  await cp(path.join(PORTABLE_DIR, "patch.cjs"), path.join(staging, "patch.cjs"));
+  await cp(path.join(PORTABLE_DIR, "admin.html"), path.join(staging, "admin.html"));
   await writeFile(path.join(staging, "README-deploy.md"), readme(), "utf8");
   await writeFile(
     path.join(staging, ".env.example"),
-    `PORT=3000\nSITE_ORIGIN=${siteOrigin}\n# Source: ${sourceUrl}\n`,
+    `PORT=3000\nSITE_ORIGIN=${siteOrigin}\nADMIN_PASSWORD=смените-пароль\n# Source: ${sourceUrl}\n`,
     "utf8",
   );
 

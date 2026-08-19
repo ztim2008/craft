@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Редактор страниц</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 14px/1.45 system-ui, sans-serif; background: #f0f0f1; color: #1d2327; }
+    .layout { display: flex; min-height: 100vh; }
+    aside { width: 200px; background: #1d2327; color: #f0f0f1; padding: 16px; }
+    aside a, aside button { display: block; width: 100%; color: inherit; background: none; border: 0; text-align: left; padding: 8px 10px; border-radius: 4px; cursor: pointer; text-decoration: none; font: inherit; }
+    aside a:hover, aside button:hover, aside .on { background: #2271b1; }
+    main { flex: 1; padding: 24px; }
+    .card { background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    input, textarea, select { width: 100%; padding: 8px 10px; border: 1px solid #8c8f94; border-radius: 6px; font: inherit; }
+    textarea { min-height: 72px; font-family: ui-monospace, monospace; }
+    label { display: block; margin: 10px 0; }
+    label span { display: block; font-size: 11px; text-transform: uppercase; color: #50575e; margin-bottom: 4px; }
+    button.primary { background: #2271b1; color: #fff; border: 0; padding: 8px 14px; border-radius: 6px; cursor: pointer; }
+    button.ghost { background: #fff; border: 1px solid #2271b1; color: #2271b1; padding: 8px 14px; border-radius: 6px; cursor: pointer; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .muted { color: #50575e; font-size: 13px; }
+    .err { color: #d63638; }
+    .ok { color: #00a32a; }
+    details { border: 1px solid #dcdcde; border-radius: 6px; padding: 8px 12px; margin: 8px 0; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    const state = { view: "content", content: null, model: null, leads: [], status: "", error: "", authed: false };
+
+    function el(html) {
+      const box = document.createElement("div");
+      box.innerHTML = html.trim();
+      return box.firstElementChild;
+    }
+
+    async function api(path, opts) {
+      const res = await fetch(path, Object.assign({ credentials: "same-origin" }, opts));
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Ошибка");
+      return data;
+    }
+
+    async function login(ev) {
+      ev.preventDefault();
+      state.error = "";
+      try {
+        await api("/api/admin/login", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ password: ev.target.password.value }),
+        });
+        await load();
+      } catch (err) {
+        state.error = err.message;
+        render();
+      }
+    }
+
+    async function load() {
+      try {
+        const data = await api("/api/admin/state");
+        state.authed = true;
+        state.content = data.content;
+        state.model = data.model;
+        state.leads = data.leads || [];
+        if (!state.content.fields) state.content.fields = {};
+        if (!state.content.forms) state.content.forms = {};
+        if (!state.content.htmlBlocks) state.content.htmlBlocks = [];
+      } catch (err) {
+        state.authed = false;
+        if (err.message !== "Нужна авторизация") state.error = err.message;
+      }
+      render();
+    }
+
+    function setField(id, original, next) {
+      const same = (next.value || "") === original && !next.href;
+      if (same) delete state.content.fields[id];
+      else state.content.fields[id] = next;
+    }
+
+    async function save() {
+      state.error = "";
+      try {
+        state.content = await api("/api/admin/content", {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            fields: state.content.fields,
+            forms: state.content.forms,
+            htmlBlocks: state.content.htmlBlocks,
+          }),
+        });
+        state.status = "Черновик сохранён";
+      } catch (err) {
+        state.error = err.message;
+      }
+      render();
+    }
+
+    async function publish() {
+      await save();
+      try {
+        const data = await api("/api/admin/publish", { method: "POST" });
+        state.status = "Опубликовано файлов: " + data.files;
+      } catch (err) {
+        state.error = err.message;
+      }
+      render();
+    }
+
+    function renderLogin() {
+      document.getElementById("app").innerHTML = "";
+      const box = el(`<main style="max-width:360px;margin:10vh auto" class="card">
+        <h1>Редактор страниц</h1>
+        <p class="muted">Пароль из файла .env (ADMIN_PASSWORD)</p>
+        <form>
+          <label><span>Пароль</span><input name="password" type="password" required></label>
+          <p class="err"></p>
+          <button class="primary" type="submit">Войти</button>
+        </form>
+      </main>`);
+      if (state.error) box.querySelector(".err").textContent = state.error;
+      box.querySelector("form").addEventListener("submit", login);
+      document.getElementById("app").appendChild(box);
+    }
+
+    function fieldInput(field) {
+      const patch = state.content.fields[field.nodeId] || {};
+      const value = patch.value != null ? patch.value : field.value;
+      const href = patch.href != null ? patch.href : (field.href || "");
+      const wrap = el(`<label><span>${field.type} · ${field.label}</span></label>`);
+      const input = document.createElement(field.type === "textarea" ? "textarea" : "input");
+      input.value = value;
+      input.addEventListener("input", () => setField(field.nodeId, field.value, { value: input.value, href: href || undefined }));
+      wrap.appendChild(input);
+      if (field.type === "link" || field.type === "phone" || field.type === "button") {
+        const hrefInput = document.createElement("input");
+        hrefInput.value = href;
+        hrefInput.placeholder = "href / tel:";
+        hrefInput.style.marginTop = "6px";
+        hrefInput.addEventListener("input", () => setField(field.nodeId, field.value, { value: input.value, href: hrefInput.value }));
+        wrap.appendChild(hrefInput);
+      }
+      return wrap;
+    }
+
+    function renderContent() {
+      const pages = (state.model && state.model.pages) || [];
+      const root = el(`<div class="layout">
+        <aside>
+          <div style="font-weight:600;margin-bottom:12px">Craft</div>
+          <button data-nav="content" class="${state.view === "content" ? "on" : ""}">Контент</button>
+          <button data-nav="blocks" class="${state.view === "blocks" ? "on" : ""}">HTML-блоки</button>
+          <button data-nav="leads" class="${state.view === "leads" ? "on" : ""}">Заявки</button>
+          <a href="/" target="_blank">Смотреть сайт</a>
+          <button data-nav="out">Выйти</button>
+        </aside>
+        <main>
+          <div class="row">
+            <h1 style="margin:0 12px 0 0">Редактор страниц</h1>
+            <button class="primary" id="save">Сохранить</button>
+            <button class="ghost" id="pub">Опубликовать</button>
+          </div>
+          <p class="muted">${(state.model && state.model.sourceUrl) || ""}</p>
+          <p class="${state.error ? "err" : "ok"}">${state.error || state.status || ""}</p>
+          <div id="body"></div>
+        </main>
+      </div>`);
+      root.querySelectorAll("[data-nav]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          if (btn.dataset.nav === "out") {
+            await api("/api/admin/logout", { method: "POST" });
+            state.authed = false;
+            render();
+            return;
+          }
+          state.view = btn.dataset.nav;
+          render();
+        });
+      });
+      root.querySelector("#save").addEventListener("click", save);
+      root.querySelector("#pub").addEventListener("click", publish);
+      const body = root.querySelector("#body");
+      if (state.view === "leads") {
+        if (!state.leads.length) body.appendChild(el(`<div class="card muted">Пока нет заявок.</div>`));
+        state.leads.forEach((lead) => {
+          body.appendChild(el(`<div class="card"><div class="muted">${lead.at} · ${lead.formId}</div><pre>${JSON.stringify(lead.fields, null, 2)}</pre></div>`));
+        });
+      } else if (state.view === "blocks") {
+        const sections = pages.flatMap((page) => page.sections.map((section) => ({ page, section })));
+        const box = el(`<div class="card">
+          <h2>Новый блок</h2>
+          <label><span>Секция</span><select id="sec"></select></label>
+          <label><span>Позиция</span><select id="pos"><option value="after">После</option><option value="before">До</option></select></label>
+          <label><span>HTML / style / script</span><textarea id="html"></textarea></label>
+          <button class="primary" type="button" id="add">Добавить</button>
+        </div>`);
+        const select = box.querySelector("#sec");
+        sections.forEach((item) => {
+          const opt = document.createElement("option");
+          opt.value = item.section.id;
+          opt.textContent = item.page.path + " · " + item.section.label;
+          select.appendChild(opt);
+        });
+        box.querySelector("#add").addEventListener("click", () => {
+          const html = box.querySelector("#html").value.trim();
+          if (!html || !select.value) return;
+          state.content.htmlBlocks.push({
+            id: "hb-" + Date.now().toString(36),
+            sectionId: select.value,
+            position: box.querySelector("#pos").value,
+            html,
+          });
+          render();
+        });
+        body.appendChild(box);
+        state.content.htmlBlocks.forEach((block, index) => {
+          const card = el(`<div class="card"><div class="row"><strong>${block.position} · ${block.sectionId}</strong><button type="button">Удалить</button></div><pre>${block.html.replace(/</g, "&lt;")}</pre></div>`);
+          card.querySelector("button").addEventListener("click", () => {
+            state.content.htmlBlocks.splice(index, 1);
+            render();
+          });
+          body.appendChild(card);
+        });
+      } else {
+        pages.forEach((page) => {
+          const art = el(`<article class="card"><h2>${page.title || page.path} <span class="muted">${page.path}</span></h2></article>`);
+          page.sections.forEach((section) => {
+            const det = el(`<details open><summary>${section.label} · ${section.fields.length} полей</summary><div class="sec"></div></details>`);
+            const sec = det.querySelector(".sec");
+            section.fields.forEach((field) => sec.appendChild(fieldInput(field)));
+            section.forms.forEach((form) => {
+              const lab = el(`<label><span>form · ${form.label} · email заявок</span></label>`);
+              const input = document.createElement("input");
+              input.type = "email";
+              input.placeholder = "owner@domain.ru";
+              input.value = (state.content.forms[form.id] && state.content.forms[form.id].email) || "";
+              input.addEventListener("input", () => {
+                state.content.forms[form.id] = { email: input.value };
+              });
+              lab.appendChild(input);
+              sec.appendChild(lab);
+            });
+            art.appendChild(det);
+          });
+          body.appendChild(art);
+        });
+        if (!pages.length) body.appendChild(el(`<div class="card">page-model.json не найден — поля не размечены.</div>`));
+      }
+      document.getElementById("app").innerHTML = "";
+      document.getElementById("app").appendChild(root);
+    }
+
+    function render() {
+      if (!state.authed) renderLogin();
+      else renderContent();
+    }
+
+    load();
+  </script>
+</body>
+</html>

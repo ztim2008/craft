@@ -41,11 +41,14 @@
 
 ```
 export.zip
-├── site/              # HTML + assets (патченный)
-├── data/content.json  # редактируемые данные
-├── admin/             # WP-style панель, 1 владелец
-├── api/               # form-submit, publish
-└── README-deploy.md   # Beget / Timeweb / VPS
+├── public/            # HTML + assets
+├── data/source/       # HTML до правок клиента
+├── data/content.json
+├── data/page-model.json
+├── admin.html         # редактор страниц
+├── patch.cjs
+├── server.mjs         # сайт + POST /api/form + /admin
+└── README-deploy.md
 ```
 
 ## Формы

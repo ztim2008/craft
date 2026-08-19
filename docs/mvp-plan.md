@@ -50,7 +50,7 @@ URL: ma-maniere-ballet.ru, kc3748.craftum.io, madlenmartynova.ru, sx7238.craftum
 ## Phase 4 — Export bundle ✅
 
 - Кнопка «Скачать пакет» в админке
-- zip: public site + content.json + page-model + server.mjs + README (Beget/Timeweb/VPS)
+- zip: public + source HTML + content.json + page-model + server.mjs + **редактор /admin**
 
 ---
 
@@ -104,6 +104,9 @@ URL: ma-maniere-ballet.ru, kc3748.craftum.io, madlenmartynova.ru, sx7238.craftum
 
 ---
 
-## Phase 12 — Regression 📋
+## Phase 12 — Regression ✅
 
-- Прогон боевых URL из Phase 0 + sx7238
+- `npm run e2e`: воронка, патч оператора, ZIP-редактор клиента, форма, ZIP после оплаты
+- Живой импорт новых URL — по мере заявок
+
+---
