@@ -24,11 +24,15 @@
 
 ### План на 2026-08-20 · утверждён
 
-См. [plan-2026-08-20.md](./plan-2026-08-20.md): приёмка полигона → **добавить страницу** (клон каркаса + пункт меню). Не ЮKassa / AI / Agent API / sx7238.
+См. [plan-2026-08-20.md](./plan-2026-08-20.md): **приёмка полигона**, затем **добавить страницу**. GitHub с VPS уже работает. Промпт: [prompt-2026-08-20.md](./prompt-2026-08-20.md).
+
+### GitHub (19.08 ночь)
+
+Deploy key `craft-vps` (write). `origin` = `git@github.com-craft:ztim2008/craft.git`. `ea91678` на `origin/main`.
 
 ### Не коммитить
 
-`.env`, `storage/`, `www.zip` (558 МБ дамп).
+`.env`, `storage/`, `www.zip` (558 МБ дамп). Приватный SSH-ключ и `~/.ssh/config` не в репозитории.
 
 ---
 
@@ -73,7 +77,7 @@
 1. Виджет `pic` (`n-48c73e33` и клоны): fingerprint / apply-to-similar — **сделано** (вкладка «Виджеты», `similarWidgets.ts`)
 2. Не включать debug-полосу без запроса
 3. ЮKassa / AI / Agent API — не сейчас
-4. Git commit — только если попросят
+4. Git commit — только если попросят. Push с VPS: ключ craft-vps, см. GitHub setup.
 
 ### Документы
 
@@ -180,35 +184,15 @@
 
 Репозиторий: **https://github.com/ztim2008/craft**
 
-Локально: branch `main`, commit `5a69e21`, remote `origin` → `git@github.com:ztim2008/craft.git`
-
-### Push с сервера (нужен доступ ztim2008)
-
-На сервере SSH-ключ привязан к аккаунту `bilarius1-tech` — push в `ztim2008/craft` отклонён. Варианты:
-
-**A) С вашего ПК** (если залогинены в ztim2008):
+С VPS (с 19.08): `origin` → `git@github.com-craft:ztim2008/craft.git`  
+SSH Host `github.com-craft` → `~/.ssh/id_ed25519_github_craft` (deploy key **craft-vps**, write).  
+Обычный `github.com` в ssh config — ключ proektmap, для craft не использовать.
 
 ```bash
-git clone git@github.com:ztim2008/craft.git
-# или добавить remote к копии с сервера через scp/rsync
-git push -u origin main
+git push origin main
 ```
 
-**B) Deploy key на сервере** для `ztim2008/craft`:
-
-1. GitHub → repo → Settings → Deploy keys → Add
-2. Публичный ключ с сервера (сгенерировать отдельный для craft)
-3. `git push -u origin main`
-
-**C) Personal Access Token (HTTPS)**:
-
-```bash
-git remote set-url origin https://github.com/ztim2008/craft.git
-git push -u origin main
-# username: ztim2008, password: ghp_...
-```
-
-**Не коммитить:** `.env*`, `storage/` (уже в `.gitignore`).
+Без `--force`. Не коммитить `.env*`, `storage/`, `www.zip`, приватные ключи.
 
 ---
 

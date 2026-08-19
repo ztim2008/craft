@@ -60,6 +60,14 @@ pm2 restart craft-demo-polygon
 
 На полигоне rewrite также в `server.mjs` при `page-html` и publish, источник — `page-model.sourceUrl`.
 
+## GitHub с этого VPS
+
+- Репо: https://github.com/ztim2008/craft
+- `origin`: `git@github.com-craft:ztim2008/craft.git`
+- SSH Host `github.com-craft` → ключ `~/.ssh/id_ed25519_github_craft` (deploy key **craft-vps**, write)
+- Обычный `Host github.com` — ключ proektmap / `bilarius1-tech`, для craft не использовать
+- `git push origin main` без `--force`. Не коммитить приватный ключ и `~/.ssh/config`
+
 ## Не делать
 
 - Не делать Puck renderer
