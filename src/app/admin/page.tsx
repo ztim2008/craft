@@ -45,7 +45,7 @@ export default async function AdminHomePage() {
                 </td>
                 <td className="px-4 py-2">
                   <Link className="text-[#2271b1] hover:underline" href={`/admin/jobs/${job.id}`}>
-                    Page Model
+                    Контент
                   </Link>
                   {" · "}
                   <Link className="text-[#2271b1] hover:underline" href={`/jobs/${job.id}`}>

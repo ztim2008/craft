@@ -60,14 +60,23 @@ export async function GET(
     }
     const raw = await readFile(file);
     const ext = path.extname(file).toLowerCase();
-    const body =
-      ext === ".html"
-        ? injectPreviewBase(raw.toString("utf8"), id)
-        : new Uint8Array(raw);
-    return new Response(body, {
+    if (ext !== ".html") {
+      return new Response(new Uint8Array(raw), {
+        headers: {
+          "content-type": MIME[ext] || "application/octet-stream",
+          "cache-control": "private, max-age=60",
+        },
+      });
+    }
+    const { getContent } = await import("@/modules/content/store");
+    const { patchHtml } = await import("@/modules/content/patchHtml");
+    const overlay = await getContent(id);
+    let html = patchHtml(raw.toString("utf8"), overlay.fields);
+    html = injectPreviewBase(html, id);
+    return new Response(html, {
       headers: {
-        "content-type": MIME[ext] || "application/octet-stream",
-        "cache-control": "private, max-age=60",
+        "content-type": MIME[ext],
+        "cache-control": "private, max-age=0, must-revalidate",
       },
     });
   } catch {
