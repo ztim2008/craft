@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { ContentOverlay, FieldPatch, FormPatch } from "@/modules/content/types";
+import type { ContentOverlay, FieldPatch, FormPatch, HtmlBlock } from "@/modules/content/types";
 import type { PageModel } from "@/modules/pageModel/types";
 
 export function ContentEditor({
@@ -17,6 +17,10 @@ export function ContentEditor({
 }) {
   const [fields, setFields] = useState<Record<string, FieldPatch>>(initial.fields);
   const [forms, setForms] = useState<Record<string, FormPatch>>(initial.forms);
+  const [htmlBlocks, setHtmlBlocks] = useState<HtmlBlock[]>(initial.htmlBlocks || []);
+  const [draftHtml, setDraftHtml] = useState("");
+  const [draftSection, setDraftSection] = useState("");
+  const [draftPosition, setDraftPosition] = useState<"before" | "after">("after");
   const [status, setStatus] = useState<string | null>(null);
   const [pending, setPending] = useState<"save" | "publish" | null>(null);
 
@@ -53,7 +57,7 @@ export function ContentEditor({
       const response = await fetch(`/api/admin/jobs/${jobId}/content`, {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ fields, forms }),
+        body: JSON.stringify({ fields, forms, htmlBlocks }),
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(data.error || "Не сохранилось");
@@ -110,7 +114,7 @@ export function ContentEditor({
           </a>
         ) : null}
         <span className="text-xs text-[#50575e]">
-          правок: {counts.dirty} · формы: {counts.forms}
+          правок: {counts.dirty} · формы: {counts.forms} · HTML-блоки: {htmlBlocks.length}
         </span>
       </div>
       {status ? (
@@ -205,6 +209,94 @@ export function ContentEditor({
           ))}
         </article>
       ))}
+
+      <section className="space-y-3 rounded border border-[#c3c4c7] bg-white p-4">
+        <h2 className="font-medium">HTML-блоки</h2>
+        <p className="text-sm text-[#50575e]">
+          Вставка своего HTML / style / script до или после секции Craftum. Не пересобирает страницу в React.
+        </p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <label className="text-sm">
+            <span className="text-xs uppercase text-[#50575e]">Секция</span>
+            <select
+              value={draftSection}
+              onChange={(e) => setDraftSection(e.target.value)}
+              className="mt-1 w-full rounded border border-[#8c8f94] px-3 py-2"
+            >
+              <option value="">Выберите секцию</option>
+              {model.pages.flatMap((page) =>
+                page.sections.map((section) => (
+                  <option key={`${page.path}:${section.id}`} value={section.id}>
+                    {page.path} · {section.label}
+                  </option>
+                )),
+              )}
+            </select>
+          </label>
+          <label className="text-sm">
+            <span className="text-xs uppercase text-[#50575e]">Позиция</span>
+            <select
+              value={draftPosition}
+              onChange={(e) => setDraftPosition(e.target.value as "before" | "after")}
+              className="mt-1 w-full rounded border border-[#8c8f94] px-3 py-2"
+            >
+              <option value="before">Перед секцией</option>
+              <option value="after">После секции</option>
+            </select>
+          </label>
+        </div>
+        <textarea
+          value={draftHtml}
+          onChange={(e) => setDraftHtml(e.target.value)}
+          rows={8}
+          placeholder="<style>…</style> или разметка"
+          className="w-full rounded border border-[#8c8f94] px-3 py-2 font-mono text-xs"
+        />
+        <button
+          type="button"
+          onClick={() => {
+            if (!draftSection || !draftHtml.trim()) return;
+            setHtmlBlocks((prev) => [
+              ...prev,
+              {
+                id: `hb-${Date.now().toString(36)}`,
+                sectionId: draftSection,
+                position: draftPosition,
+                html: draftHtml,
+              },
+            ]);
+            setDraftHtml("");
+          }}
+          className="rounded bg-[#1d2327] px-4 py-2 text-sm font-medium text-white"
+        >
+          Добавить блок
+        </button>
+        {htmlBlocks.length === 0 ? (
+          <p className="text-sm text-[#50575e]">Пока нет блоков.</p>
+        ) : (
+          <ul className="space-y-2 text-sm">
+            {htmlBlocks.map((block) => (
+              <li key={block.id} className="rounded border border-[#dcdcde] p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span>
+                    {block.position === "before" ? "перед" : "после"} · {block.sectionId}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setHtmlBlocks((prev) => prev.filter((item) => item.id !== block.id))}
+                    className="text-xs text-[#d63638]"
+                  >
+                    Удалить
+                  </button>
+                </div>
+                <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap text-xs text-[#50575e]">
+                  {block.html}
+                </pre>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

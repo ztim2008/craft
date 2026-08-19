@@ -76,10 +76,10 @@ URL: ma-maniere-ballet.ru, kc3748.craftum.io, madlenmartynova.ru, sx7238.craftum
 
 ---
 
-## Phase 8 — HTML blocks 📋
+## Phase 8 — HTML blocks ✅
 
-- Custom HTML + style + script in slots
-- Agent blocks / extensions
+- Custom HTML + style + script before/after `cli-block`
+- Сохраняется в `content.json`, патч в preview / publish / export
 
 ---
 

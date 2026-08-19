@@ -40,6 +40,7 @@ export async function PUT(request: Request, context: RouteContext) {
     publishedAt: current.publishedAt,
     fields: body.fields || {},
     forms: body.forms || {},
+    htmlBlocks: body.htmlBlocks || [],
   });
   return Response.json(saved);
 }

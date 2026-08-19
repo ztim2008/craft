@@ -2,7 +2,7 @@ import { readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { projectDir } from "@/lib/storage";
 import { getContent, saveContent } from "./store";
-import { patchHtml } from "./patchHtml";
+import { applyContent } from "./applyContent";
 
 async function walkHtml(dir: string): Promise<string[]> {
   const out: string[] = [];
@@ -30,7 +30,7 @@ export async function publishContent(jobId: string): Promise<{ files: number }> 
   const files = await walkHtml(siteRoot);
   for (const file of files) {
     const html = await readFile(file, "utf8");
-    await writeFile(file, patchHtml(html, overlay.fields), "utf8");
+    await writeFile(file, applyContent(html, overlay), "utf8");
   }
   await saveContent(jobId, {
     ...overlay,

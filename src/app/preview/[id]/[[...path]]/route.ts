@@ -69,9 +69,9 @@ export async function GET(
       });
     }
     const { getContent } = await import("@/modules/content/store");
-    const { patchHtml } = await import("@/modules/content/patchHtml");
+    const { applyContent } = await import("@/modules/content/applyContent");
     const overlay = await getContent(id);
-    let html = patchHtml(raw.toString("utf8"), overlay.fields);
+    let html = applyContent(raw.toString("utf8"), overlay);
     html = injectPreviewBase(html, id);
     const { injectFormBridge } = await import("@/modules/forms/formBridge");
     html = injectFormBridge(html, `/api/preview/${id}/form`);

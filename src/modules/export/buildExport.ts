@@ -3,7 +3,7 @@ import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { projectDir } from "@/lib/storage";
 import { getContent } from "@/modules/content/store";
-import { patchHtml } from "@/modules/content/patchHtml";
+import { applyContent } from "@/modules/content/applyContent";
 import { injectFormBridge } from "@/modules/forms/formBridge";
 import { rewriteForExport, htmlPathToLoc, sitemapXml } from "./rewriteForExport";
 
@@ -179,7 +179,7 @@ export async function buildExportZip(jobId: string, sourceUrl: string): Promise<
   const htmlFiles = await walkFiles(publicRoot, new Set([".html"]));
   for (const file of htmlFiles) {
     let html = await readFile(file, "utf8");
-    html = patchHtml(html, overlay.fields);
+    html = applyContent(html, overlay);
     html = rewriteForExport(html, jobId, siteOrigin);
     html = injectFormBridge(html, "/api/form");
     await writeFile(file, html, "utf8");

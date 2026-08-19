@@ -75,7 +75,7 @@
 | 5 | Admin MVP (WP-style) | ✅ готово | [admin-spec.md](./admin-spec.md) |
 | 6 | DOM Patcher + Publish | ✅ готово | — |
 | 7 | Forms (email; TG/Sheets позже) | ✅ готово | — |
-| 8 | HTML-блоки + slots | 📋 запланировано | — |
+| 8 | HTML-блоки + slots | ✅ готово | — |
 | 9 | Multi-page import (sitemap) | ✅ готово | — |
 | 10 | AI-секции (OpenAI) | 📋 запланировано | — |
 | 11 | Demo funnel + оплата + CTA | 📋 запланировано | [product-plan.md](./product-plan.md) |
@@ -88,7 +88,7 @@
 
 Кнопка «Скачать пакет» в `/admin/jobs/{id}`. Zip: `public/` без `/preview/{id}/`, `data/content.json`, `page-model.json`, `server.mjs` (`POST /api/form`), README Beget/Timeweb/VPS.
 
-Следующее: Phase 8 HTML-блоки, затем demo funnel. Telegram/Sheets — позже.
+Следующее: demo funnel + оплата. Telegram/Sheets — позже.
 
 ---
 

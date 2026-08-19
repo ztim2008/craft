@@ -73,3 +73,7 @@ Preview использует `https://craft.nordic-builder.ru/preview/{jobId}/..
 ## ADR-0018 · Export без Next.js админки
 
 В zip клиенту: `public/` (patched HTML), `data/content.json`, `page-model.json`, zero-dep `server.mjs` (статика + `POST /api/form`), README (Beget/Timeweb/VPS). Полная Next-админка в пакет не кладётся. Пути `/preview/{jobId}/` переписываются в `/`. Домен в sitemap/canonical — плейсхолдер `YOUR-DOMAIN.RU`.
+
+## ADR-0019 · HTML-блоки в исходный DOM
+
+Блок вставляется before/after секции `id="n-…"`. Style и script разрешены (owner-only). Маркеры `<!--craft-block:id-->`, чтобы повторный патч не дублировал вставку. React страницу не рендерит.

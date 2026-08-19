@@ -17,6 +17,7 @@ export async function getContent(jobId: string): Promise<ContentOverlay> {
       publishedAt: parsed.publishedAt,
       fields: parsed.fields || {},
       forms: parsed.forms || {},
+      htmlBlocks: parsed.htmlBlocks || [],
     };
   } catch {
     return emptyContent();
@@ -30,6 +31,7 @@ export async function saveContent(jobId: string, overlay: ContentOverlay): Promi
     publishedAt: overlay.publishedAt,
     fields: overlay.fields || {},
     forms: overlay.forms || {},
+    htmlBlocks: overlay.htmlBlocks || [],
   };
   await mkdir(projectDir(jobId), { recursive: true });
   await writeFile(contentPath(jobId), JSON.stringify(next, null, 2), "utf8");
