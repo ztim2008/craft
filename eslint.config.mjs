@@ -11,6 +11,8 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    // Migration snapshots/assets (generated, may contain non-conformant JS)
+    "storage/**",
     "next-env.d.ts",
   ]),
 ]);
