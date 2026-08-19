@@ -25,6 +25,18 @@ describe("analyzeHtml", () => {
     assert.equal(sections[1].type, "cover");
   });
 
+  it("extracts HTML-code widgets without stripping style tags", () => {
+    const html = `
+      <section id="n-aaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa" class="cli-block cli-html" data-static="true">
+        <div id="n-bbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" data-type="code"><style>.x{color:red}</style></div>
+      </section>
+    `;
+    const sections = analyzeHtml(html);
+    assert.equal(sections[0].static, true);
+    assert.equal(sections[0].fields[0].type, "html");
+    assert.match(sections[0].fields[0].value, /color:red/);
+  });
+
   it("finds nested text nodes inside layout wrappers", () => {
     const html = `
       <section id="n-aaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa" class="cli-block cli-cover">

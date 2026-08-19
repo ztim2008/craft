@@ -8,7 +8,7 @@ export const CRAWL_LIMITS = {
   maxDefaultPages: 8,
   maxHtmlBytes: 8 * 1024 * 1024,
   maxRedirects: 8,
-  maxTotalTimeMs: 4 * 60 * 1000,
+  maxTotalTimeMs: 20 * 60 * 1000,
 } as const;
 
 export type NetworkEntry = {

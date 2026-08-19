@@ -21,6 +21,22 @@ describe("rewriteForExport", () => {
     assert.match(out, /href="\/assets\/a.css"/);
     assert.doesNotMatch(out, /preview/);
   });
+
+  it("collapses stacked /preview/uuid/ prefixes", () => {
+    const id = "e56926cc-f939-4358-a0dc-a0bcedc8b9a1";
+    const html = `<a href="https://practic-hub.ru/preview/${id}/preview/${id}/otzyvy/">x</a>`;
+    const out = rewriteForExport(html, id, "https://demo.nordic-builder.ru");
+    assert.doesNotMatch(out, /\/preview\//);
+  });
+
+  it("rewrites donor origin hrefs to site-relative paths", () => {
+    const html = `<a href="https://practic-hub.ru/otzyvy/">x</a><a href="https://practic-hub.ru">home</a><a href="https://practic-simply.ru/">ext</a>`;
+    const out = rewriteForExport(html, "00000000-0000-0000-0000-000000000000", "https://demo.nordic-builder.ru", "https://practic-hub.ru/");
+    assert.match(out, /href="\/otzyvy\/"/);
+    assert.match(out, /href="\/"/);
+    assert.match(out, /href="https:\/\/practic-simply.ru\/"/);
+    assert.doesNotMatch(out, /practic-hub\.ru/);
+  });
 });
 
 describe("sitemapXml", () => {

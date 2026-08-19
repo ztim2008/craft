@@ -1,8 +1,7 @@
 export function attr(source: string, name: string): string {
-  const double = source.match(new RegExp(`${name}\\s*=\\s*"([^"]*)"`, "i"));
-  if (double?.[1] != null) return double[1];
-  const single = source.match(new RegExp(`${name}\\s*=\\s*'([^']*)'`, "i"));
-  return single?.[1] ?? "";
+  const safe = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const quoted = source.match(new RegExp(`(?:^|[\\s/])${safe}\\s*=\\s*(["'])([\\s\\S]*?)\\1`, "i"));
+  return quoted?.[2] ?? "";
 }
 
 export function stripTags(html: string): string {

@@ -26,15 +26,39 @@ export function hasPreviewPathLeak(text: string): boolean {
   return PREVIEW_ABS_RE.test(text) || PREVIEW_PATH_RE.test(text);
 }
 
-export function rewriteForExport(html: string, jobId: string, siteOrigin: string): string {
+export function rewriteDonorOrigin(html: string, sourceUrl: string): string {
+  let donor: URL;
+  try {
+    donor = new URL(sourceUrl);
+  } catch {
+    return html;
+  }
+  const hosts = [...new Set([donor.host, donor.host.replace(/^www\./i, ""), `www.${donor.host.replace(/^www\./i, "")}`])].filter(
+    Boolean,
+  );
+  let next = html;
+  for (const host of hosts) {
+    const esc = host.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    next = next.replace(new RegExp(`https?:\\/\\/${esc}(?=["'])`, "gi"), "/");
+    next = next.replace(new RegExp(`https?:\\/\\/${esc}(?=/|[?#]|$)`, "gi"), "");
+  }
+  return next;
+}
+
+export function rewriteForExport(html: string, jobId: string, siteOrigin: string, sourceUrl = ""): string {
   const origin = siteOrigin.replace(/\/+$/, "");
   const previewPrefix = `/preview/${jobId}/`;
   const previewAbs = `https://craft.nordic-builder.ru/preview/${jobId}/`;
   let next = html;
-  next = next.replaceAll(previewAbs, `${origin}/`);
-  next = next.replaceAll(previewPrefix, "/");
-  next = next.replace(PREVIEW_ABS_RE, `${origin}/`);
-  next = next.replace(PREVIEW_PATH_RE, "/");
+  for (let i = 0; i < 8; i += 1) {
+    const before = next;
+    next = next.replaceAll(previewAbs, `${origin}/`);
+    next = next.replaceAll(previewPrefix, "/");
+    next = next.replace(PREVIEW_ABS_RE, `${origin}/`);
+    next = next.replace(PREVIEW_PATH_RE, "/");
+    if (next === before) break;
+  }
+  if (sourceUrl) next = rewriteDonorOrigin(next, sourceUrl);
   next = next.replace(/<base\s[^>]*>/i, `<base href="/">`);
   next = next.replace(
     /<link rel="canonical" href="[^"]*">/i,

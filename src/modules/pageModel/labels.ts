@@ -17,7 +17,8 @@ const SECTION_LABELS: Record<string, string> = {
   html: "HTML",
 };
 
-export function sectionLabel(type: string): string {
+export function sectionLabel(type: string, customClass = ""): string {
+  if (customClass) return `Виджет .${customClass}`;
   return SECTION_LABELS[type] || type;
 }
 

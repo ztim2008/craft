@@ -18,4 +18,49 @@ describe("patchHtml", () => {
     assert.match(out, />\+7 900 000-00-00</);
     assert.match(out, />Новый заголовок</);
   });
+
+  it("sets internal/anchor attrs and turns button into a link", () => {
+    const html = `<button id="n-cccc-cccc-cccc-cccc-cccccccccccc" class="cli-button">Заказать</button>`;
+    const out = patchHtml(html, {
+      "n-cccc-cccc-cccc-cccc-cccccccccccc": {
+        value: "Заказать",
+        linkKind: "anchor",
+        linkPage: "/",
+        linkSection: "n-sec",
+      },
+    });
+    assert.match(out, /<a\b[^>]*href="#n-sec"/);
+    assert.match(out, /<\/a>/);
+    const ext = patchHtml(`<a id="n-dddd-dddd-dddd-dddd-dddddddddddd" href="#">X</a>`, {
+      "n-dddd-dddd-dddd-dddd-dddddddddddd": {
+        value: "X",
+        linkKind: "external",
+        linkUrl: "https://example.com",
+        linkBlank: true,
+      },
+    });
+    assert.match(ext, /target="_blank"/);
+    assert.match(ext, /rel="noopener noreferrer"/);
+  });
+
+  it("does not dump wrapper text into nested highlight spans", () => {
+    const html =
+      `<h1 id="n-eeee-eeee-eeee-eeee-eeeeeeeeeeee">КУПИТЬ <span id="n-ffff-ffff-ffff-ffff-ffffffffffff">ПЕЧАТЬЮ</span></h1>`;
+    const out = patchHtml(html, {
+      "n-eeee-eeee-eeee-eeee-eeeeeeeeeeee": { value: "КУПИТЬ КУПИТЬ ПЕЧАТЬЮ!" },
+      "n-ffff-ffff-ffff-ffff-ffffffffffff": { value: "ПЕЧАТЬЮ!" },
+    });
+    assert.match(out, />КУПИТЬ <span/);
+    assert.match(out, />ПЕЧАТЬЮ!</);
+    assert.doesNotMatch(out, /КУПИТЬ КУПИТЬ/);
+  });
+
+  it("replaces inner HTML of code widgets", () => {
+    const html = `<div id="n-eeee-eeee-eeee-eeee-eeeeeeeeeeee" data-type="code"><style>.x{color:red}</style></div>`;
+    const out = patchHtml(html, {
+      "n-eeee-eeee-eeee-eeee-eeeeeeeeeeee": { value: "<style>.x{color:blue}</style>", innerHtml: true },
+    });
+    assert.match(out, /color:blue/);
+    assert.doesNotMatch(out, /color:red/);
+  });
 });

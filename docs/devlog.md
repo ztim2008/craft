@@ -4,6 +4,87 @@
 
 ---
 
+## 2026-08-19 · закрытие дня (вечер)
+
+### Итог
+
+Рабочий live-editor на полигоне `demo.nordic-builder.ru`: Patch Model поверх Craftum HTML, изоляция канвы как в Тильде, меню-клон, сквозные шапка/подвал/HTML, виджет `.pic` по fingerprint. Прод Craft не путать с конструктором nordic-builder.ru.
+
+### Сделано за вечер (поверх утреннего движка)
+
+| # | Задача | Статус |
+|---|--------|--------|
+| 1 | Полигон practic-hub (~40 стр.), PM2 `craft-demo-polygon` | ✅ |
+| 2 | Меню: клон DOM, `menuInserts[]` | ✅ |
+| 3 | scope site/page, вкладки Шапка / Подвал / HTML-код | ✅ |
+| 4 | Изоляция канвы (ADR-0032), debug скрыт | ✅ |
+| 5 | Rewrite донора practic-hub.ru | ✅ |
+| 6 | Виджет `.pic`: attr(class) vs custom-class, similar groups, вкладка «Виджеты» | ✅ |
+| 7 | Документы: live-editor, ADR-0031/0032 | ✅ |
+
+### План на 2026-08-20 · утверждён
+
+См. [plan-2026-08-20.md](./plan-2026-08-20.md): приёмка полигона → **добавить страницу** (клон каркаса + пункт меню). Не ЮKassa / AI / Agent API / sx7238.
+
+### Не коммитить
+
+`.env`, `storage/`, `www.zip` (558 МБ дамп).
+
+---
+
+## 2026-08-19 · Полигон practic-hub + live-editor
+
+### Итог
+
+На `demo.nordic-builder.ru` лежит снятый **practic-hub.ru** (~40 страниц). Редактор `/admin` правит Patch Model по Craftum HTML. Канвас больше не сваливает шапку, подвал и html-виджеты в одну простыню: вкладки как в Тильде показывают только нужный chrome.
+
+Шпаргалка для следующих агентов: [live-editor.md](./live-editor.md).
+
+### Сделано
+
+| # | Задача | Статус |
+|---|--------|--------|
+| 1 | Лимит crawl на большой сайт, импорт practic-hub (не перезаписывать живой practic-hub.ru) | ✅ |
+| 2 | Полигон: пакет на demo.nordic-builder.ru, PM2 `craft-demo-polygon` :3041 | ✅ |
+| 3 | Меню слой 2: клон `cli-menu__link`, `menuInserts[]`, десктоп+мобилка (ADR-0030) | ✅ |
+| 4 | `scope` site/page, вкладки Шапка / Подвал / HTML-код, аутлайн без сквозного (ADR-0031) | ✅ |
+| 5 | HTML-код = `cli-html` / `data-type=code`; quiet на канвасе страницы; SEO head/body отдельно | ✅ |
+| 6 | `rewriteDonorOrigin`: ссылки на practic-hub.ru → относительные в пакете | ✅ |
+| 7 | Изоляция канвы: focus header/footer/html (ADR-0032) | ✅ |
+| 8 | `#craft-dbg` скрыт (мешал кликам) | ✅ |
+
+### Ключевые файлы
+
+- `src/modules/content/menuInserts.ts` (+ test)
+- `src/modules/pageModel/sectionScope.ts` (+ test)
+- `src/modules/export/rewriteForExport.ts` (`sourceUrl`)
+- `src/modules/export/portable/{admin.html,canvas.js,server.mjs,patch.cjs}`
+
+После правок portable копировать на demo и `pm2 restart craft-demo-polygon`.
+
+### Не путать
+
+- Вкладка **HTML-код** ≠ SEO HTML в head/body ≠ виджет `.pic` с разными `n-…` на каждой странице
+- Puck не renderer
+- Конструктор nordic-builder.ru не этот проект
+
+### Открыто / следующий заход
+
+1. Виджет `pic` (`n-48c73e33` и клоны): fingerprint / apply-to-similar — **сделано** (вкладка «Виджеты», `similarWidgets.ts`)
+2. Не включать debug-полосу без запроса
+3. ЮKassa / AI / Agent API — не сейчас
+4. Git commit — только если попросят
+
+### Документы
+
+- [live-editor.md](./live-editor.md) — новый
+- [decisions.md](./decisions.md) — ADR-0031 уточнён, ADR-0032
+- [architecture.md](./architecture.md) — portable + ритуал полигона
+- [admin-spec.md](./admin-spec.md) — вкладки и изоляция канвы
+- [AGENTS.md](../AGENTS.md) — ссылка на live-editor
+
+---
+
 ## 2026-08-19 · День 1 — закрытие
 
 ### Итог дня
@@ -80,7 +161,7 @@
 | 10 | AI-секции (OpenAI) | 📋 запланировано | — |
 | 11 | Demo funnel + оплата + CTA | ✅ готово | заявка, ZIP по токену; ЮKassa позже |
 | 12 | Regression e2e | ✅ готово | `npm run e2e` |
-| 13 | Замкнуть контур: демо-домен на своём хостинге | 📋 запланировано | миграция + клиентский проход |
+| 13 | Замкнуть контур: демо-домен на своём хостинге | ✅ полигон | demo.nordic-builder.ru, live-editor 2026-08-19 |
 | 14 | Agent API на хостинге клиента | 📋 после 13 | ключ у владельца, HTML-слоты |
 
 **Легенда:** ✅ готово · 🔄 в работе · 📋 запланировано · ⏸ отложено

@@ -36,6 +36,9 @@ yarn-error.log*
 # crawl snapshots and job JSON
 /storage/
 
+# accidental dumps
+/www.zip
+
 # vercel
 .vercel
 

@@ -42,6 +42,46 @@ export function rewriteUrls(
   return next;
 }
 
+/** Не подставлять голый путь `/privacy` в середину чужих URL (privacy-cs.mail.ru). */
+export function pagePreviewLinkReplacements(
+  pages: Array<{ path: string; finalUrl: string }>,
+  previewPathFor: (pagePath: string) => string,
+): Array<{ from: string; to: string }> {
+  const out: Array<{ from: string; to: string }> = [];
+  const seen = new Set<string>();
+  const add = (from: string, to: string) => {
+    if (!from || from === to || from === "/" || from.length < 2) return;
+    const key = `${from}=>${to}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({ from, to });
+  };
+  for (const page of pages) {
+    const previewPath = previewPathFor(page.path);
+    add(page.finalUrl, previewPath);
+    try {
+      const url = new URL(page.finalUrl);
+      url.hash = "";
+      if (url.pathname !== "/" && url.pathname.endsWith("/")) {
+        url.pathname = url.pathname.slice(0, -1);
+      }
+      add(url.toString(), previewPath);
+    } catch {
+      // ignore
+    }
+    const trimmed = page.path === "/" ? "/" : page.path.replace(/\/+$/, "") || "/";
+    if (trimmed === "/") continue;
+    const slashed = `${trimmed}/`;
+    for (const href of [trimmed, slashed]) {
+      add(`href="${href}"`, `href="${previewPath}"`);
+      add(`href='${href}'`, `href='${previewPath}'`);
+      add(`action="${href}"`, `action="${previewPath}"`);
+      add(`action='${href}'`, `action='${previewPath}'`);
+    }
+  }
+  return out;
+}
+
 export function normalizePagePath(pathname: string): string {
   if (!pathname || pathname === "/") return "/";
   const trimmed = pathname.replace(/\/+$/, "");

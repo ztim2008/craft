@@ -1,6 +1,19 @@
+import type { SimilarGroup } from "@/modules/pageModel/types";
+
+export type LinkKind = "page" | "anchor" | "external" | "tel" | "mailto" | "file";
+
 export type FieldPatch = {
   value: string;
   href?: string;
+  src?: string;
+  linkKind?: LinkKind;
+  linkPage?: string;
+  linkSection?: string;
+  linkUrl?: string;
+  linkBlank?: boolean;
+  linkNofollow?: boolean;
+  linkDownload?: boolean;
+  innerHtml?: boolean;
 };
 
 export type FormPatch = {
@@ -14,6 +27,7 @@ export type HtmlBlock = {
   sectionId: string;
   position: HtmlBlockPosition;
   html: string;
+  hidden?: boolean;
 };
 
 export type PageSeo = {
@@ -43,6 +57,23 @@ export type SiteSettings = {
   jsonLd?: string;
 };
 
+export type MenuInsert = {
+  id: string;
+  label: string;
+  afterNodeId?: string;
+  itemNodeIds?: string[];
+  textNodeIds?: string[];
+  extraNodeIds?: string[];
+  href?: string;
+  linkKind?: LinkKind;
+  linkPage?: string;
+  linkSection?: string;
+  linkUrl?: string;
+  linkBlank?: boolean;
+  linkNofollow?: boolean;
+  linkDownload?: boolean;
+};
+
 export type SectionInsert = {
   id: string;
   afterId?: string;
@@ -63,9 +94,11 @@ export type ContentOverlay = {
   fields: Record<string, FieldPatch>;
   forms: Record<string, FormPatch>;
   htmlBlocks: HtmlBlock[];
+  menuInserts?: MenuInsert[];
   site?: SiteSettings;
   pages?: Record<string, PageSeo>;
   sections?: SectionLayout;
+  similar?: SimilarGroup[];
 };
 
 export function emptySite(): SiteSettings {
@@ -79,6 +112,7 @@ export function emptyContent(): ContentOverlay {
     fields: {},
     forms: {},
     htmlBlocks: [],
+    menuInserts: [],
     site: {},
     pages: {},
     sections: { order: [], hidden: [], removed: [], inserts: [] },

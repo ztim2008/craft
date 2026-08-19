@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Редактор страниц</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect fill='%232271b1' width='32' height='32' rx='6'/%3E%3C/svg%3E" />
   <style>
     :root { color-scheme: light; }
     * { box-sizing: border-box; }
@@ -57,11 +58,31 @@
     .card { background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
     pre { white-space: pre-wrap; font-size: 12px; }
     .hint { font-size: 13px; color: #50575e; margin: 0 0 12px; }
+    #craft-dbg { position: fixed; bottom: 0; left: 0; right: 0; z-index: 99999; max-height: 30vh; overflow: auto; background: #1d2327; color: #f0c14b; font: 12px/1.4 ui-monospace, monospace; padding: 8px 12px; white-space: pre-wrap; }
   </style>
 </head>
 <body>
   <div id="app"></div>
+  <pre id="craft-dbg" hidden></pre>
   <script>
+    const dbgLines = [];
+    function dbg(msg) {
+      dbgLines.push(new Date().toISOString().slice(11, 19) + " " + String(msg));
+      if (dbgLines.length > 50) dbgLines.shift();
+      try { console.log("[craft]", msg); } catch (err) {}
+    }
+    window.addEventListener("error", (e) => {
+      dbg("JS " + e.message + " " + (e.filename || "") + ":" + e.lineno + ":" + e.colno);
+    });
+    window.addEventListener("unhandledrejection", (e) => {
+      const r = e.reason;
+      dbg("Promise " + (r && r.message ? r.message : r));
+    });
+    dbg("admin script parsed");
+    document.getElementById("craft-dbg").addEventListener("click", () => {
+      document.getElementById("craft-dbg").hidden = true;
+    });
+
     const state = {
       view: "edit",
       content: null,
@@ -76,6 +97,8 @@
       listening: false,
       viewport: "desktop",
       insertAfterId: "",
+      modalMode: "insert",
+      editingFieldId: "",
       selectedSection: "",
       selectedSectionInsert: false,
       outlineLock: 0,
@@ -96,6 +119,166 @@
       return pages().find((page) => page.path === state.pagePath) || pages()[0] || null;
     }
 
+    function isLiveView() {
+      return state.view === "edit" || state.view === "sections" || state.view === "siteheader" || state.view === "sitefooter" || state.view === "sitehtml" || state.view === "sitewidgets" || state.view === "menu";
+    }
+
+    function preferHome() {
+      if (pages().some((page) => page.path === "/")) state.pagePath = "/";
+    }
+
+    function ensureScopes() {
+      const counts = {};
+      const classN = {};
+      pages().forEach((page) => {
+        const seen = {};
+        const seenClass = {};
+        (page.sections || []).forEach((sec) => {
+          if (sec.id && !seen[sec.id]) {
+            seen[sec.id] = 1;
+            counts[sec.id] = (counts[sec.id] || 0) + 1;
+          }
+          if (sec.customClass && !seenClass[sec.customClass]) {
+            seenClass[sec.customClass] = 1;
+            classN[sec.customClass] = (classN[sec.customClass] || 0) + 1;
+          }
+        });
+      });
+      pages().forEach((page) => {
+        (page.sections || []).forEach((sec) => {
+          const n = counts[sec.id] || 1;
+          sec.pageCount = Math.max(n, sec.pageCount || 1);
+          const classHits = classN[sec.customClass] || 0;
+          const similar = Boolean(sec.similarKey) || classHits >= 2;
+          sec.scope = sec.type === "header" || sec.type === "footer" || (sec.type === "html" && (n >= 2 || sec.static)) || similar ? "site" : "page";
+        });
+      });
+    }
+
+    function siteIds() {
+      ensureScopes();
+      const ids = new Set();
+      pages().forEach((page) => {
+        (page.sections || []).forEach((sec) => {
+          if (sec.scope === "site") ids.add(sec.id);
+        });
+      });
+      return ids;
+    }
+
+    function uniqueSiteSections(type) {
+      ensureScopes();
+      const seen = new Set();
+      const out = [];
+      pages().slice().sort((a, b) => Number(b.path === "/") - Number(a.path === "/")).forEach((page) => {
+        (page.sections || []).forEach((sec) => {
+          if (sec.scope !== "site") return;
+          if (type && sec.type !== type) return;
+          if (seen.has(sec.id)) return;
+          seen.add(sec.id);
+          out.push(Object.assign({ pagePath: page.path }, sec));
+        });
+      });
+      return out;
+    }
+
+    function uniqueSimilarWidgets() {
+      ensureScopes();
+      const byKey = new Map();
+      pages().slice().sort((a, b) => Number(b.path === "/") - Number(a.path === "/")).forEach((page) => {
+        (page.sections || []).forEach((sec) => {
+          const key = sec.similarKey || (sec.customClass ? sec.customClass + "::" : "");
+          if (!key || !sec.customClass) return;
+          if (byKey.has(key)) {
+            const cur = byKey.get(key);
+            cur.pageCount = (cur.pageCount || 1) + 1;
+            return;
+          }
+          byKey.set(key, Object.assign({ pagePath: page.path, pageCount: 1 }, sec));
+        });
+      });
+      return [...byKey.values()];
+    }
+
+    function similarSectionIds() {
+      const ids = [];
+      pages().forEach((page) => {
+        (page.sections || []).forEach((sec) => {
+          if (sec.customClass || sec.similarKey) ids.push(sec.id);
+        });
+      });
+      return [...new Set(ids)];
+    }
+
+    function uniqueHtmlWidgets() {
+      const seen = new Map();
+      uniqueSiteSections("html").forEach((sec) => {
+        const code = (sec.fields || []).filter((field) => field.type === "html" || field.html).map((field) => field.value).join("\n");
+        const key = code || sec.id;
+        if (!seen.has(key)) seen.set(key, sec);
+      });
+      return [...seen.values()];
+    }
+
+    function codeFieldsOfSection(sectionId) {
+      const fields = [];
+      pages().forEach((page) => {
+        (page.sections || []).forEach((sec) => {
+          if (sec.id !== sectionId) return;
+          (sec.fields || []).forEach((field) => {
+            if (field.type === "html" || field.html) fields.push(Object.assign({ sectionId: sec.id, pagePath: page.path }, field));
+          });
+        });
+      });
+      const uniq = [];
+      const ids = new Set();
+      fields.forEach((field) => {
+        if (ids.has(field.nodeId)) return;
+        ids.add(field.nodeId);
+        uniq.push(field);
+      });
+      return uniq;
+    }
+
+    function newNid() {
+      try { return "n-" + crypto.randomUUID(); } catch (err) {}
+      return "n-" + "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+        const r = Math.random() * 16 | 0;
+        return (c === "x" ? r : (r & 0x3 | 0x8)).toString(16);
+      });
+    }
+
+    function nids(count) {
+      const out = [];
+      for (let i = 0; i < count; i++) out.push(newNid());
+      return out;
+    }
+
+    function menuInserts() {
+      if (!state.content.menuInserts) state.content.menuInserts = [];
+      return state.content.menuInserts;
+    }
+
+    function menuInsertForNode(id) {
+      return menuInserts().find((item) =>
+        (item.itemNodeIds || []).includes(id) || (item.textNodeIds || []).includes(id)
+      ) || null;
+    }
+
+    function menuInsertField(insert) {
+      const action = resolveLinkAction(insert);
+      return {
+        nodeId: (insert.itemNodeIds && insert.itemNodeIds[0]) || insert.id,
+        type: "link",
+        label: insert.label || "Новая ссылка",
+        value: insert.label || "Новая ссылка",
+        href: action.href || insert.href || "/",
+        pagePath: state.pagePath,
+        sectionLabel: "Меню",
+        menuInsertId: insert.id,
+      };
+    }
+
     function allFields() {
       const out = [];
       pages().forEach((page) => {
@@ -109,16 +292,45 @@
     }
 
     function fieldById(id) {
+      const insert = menuInsertForNode(id);
+      if (insert) return menuInsertField(insert);
       return allFields().find((field) => field.nodeId === id) || null;
     }
 
-    function uniqueLinks() {
+    function uniqueMenuLinks() {
+      const owned = new Set();
+      menuInserts().forEach((item) => {
+        (item.itemNodeIds || []).forEach((id) => owned.add(id));
+        (item.textNodeIds || []).forEach((id) => owned.add(id));
+      });
       const seen = new Set();
       return allFields().filter((field) => {
         if (field.type !== "link" && field.type !== "button") return false;
+        if (owned.has(field.nodeId)) return false;
+        const blob = ((field.sectionLabel || "") + " " + (field.label || "")).toLowerCase();
+        if (!/шапк|меню|header/.test(blob)) return false;
+        if ((field.value || "").length > 80) return false;
         if (seen.has(field.nodeId)) return false;
         seen.add(field.nodeId);
         return true;
+      });
+    }
+
+    function syncMenuInsert(insert, next) {
+      insert.label = next.value != null ? next.value : insert.label;
+      insert.linkKind = next.linkKind || insert.linkKind;
+      insert.linkPage = next.linkPage;
+      insert.linkSection = next.linkSection;
+      insert.linkUrl = next.linkUrl;
+      insert.linkBlank = next.linkBlank;
+      insert.linkNofollow = next.linkNofollow;
+      insert.linkDownload = next.linkDownload;
+      insert.href = next.href;
+      (insert.itemNodeIds || []).forEach((nid) => {
+        state.content.fields[nid] = Object.assign({}, next, { value: insert.label });
+      });
+      (insert.textNodeIds || []).forEach((tid) => {
+        state.content.fields[tid] = { value: insert.label };
       });
     }
 
@@ -156,9 +368,11 @@
         if (!state.content.fields) state.content.fields = {};
         if (!state.content.forms) state.content.forms = {};
         if (!state.content.htmlBlocks) state.content.htmlBlocks = [];
+        if (!state.content.menuInserts) state.content.menuInserts = [];
         if (!state.content.site) state.content.site = {};
         if (!state.content.pages) state.content.pages = {};
         if (!state.content.sections) state.content.sections = { order: [], hidden: [], removed: [], inserts: [] };
+        ensureScopes();
         state.history = { past: [], future: [], coalesce: "", timer: 0, applying: false };
         if (!pages().some((page) => page.path === state.pagePath) && pages()[0]) {
           state.pagePath = pages()[0].path;
@@ -176,6 +390,7 @@
         fields: c.fields || {},
         forms: c.forms || {},
         htmlBlocks: c.htmlBlocks || [],
+        menuInserts: c.menuInserts || [],
         site: c.site || {},
         pages: c.pages || {},
         sections: c.sections || { order: [], hidden: [], removed: [], inserts: [] },
@@ -187,6 +402,7 @@
       state.content.fields = JSON.parse(JSON.stringify(data.fields || {}));
       state.content.forms = JSON.parse(JSON.stringify(data.forms || {}));
       state.content.htmlBlocks = JSON.parse(JSON.stringify(data.htmlBlocks || []));
+      state.content.menuInserts = JSON.parse(JSON.stringify(data.menuInserts || []));
       state.content.site = JSON.parse(JSON.stringify(data.site || {}));
       state.content.pages = JSON.parse(JSON.stringify(data.pages || {}));
       state.content.sections = JSON.parse(JSON.stringify(data.sections || { order: [], hidden: [], removed: [], inserts: [] }));
@@ -223,7 +439,7 @@
       hist.applying = false;
       paintInspector();
       paintOutline();
-      if (state.view !== "edit" && state.view !== "sections") fillPanel();
+      if (!isLiveView()) fillPanel();
       paintHistory();
       await save();
       state.status = "Черновик восстановлен";
@@ -244,19 +460,59 @@
       await applyHistory(hist.future.pop());
     }
 
-    function setField(id, original, next) {
+    function setField(id, original, next, opts) {
       recordChange("field:" + id);
-      const href = next.href || "";
-      const same = (next.value || "") === original && !href;
-      if (same) delete state.content.fields[id];
-      else state.content.fields[id] = next;
+      const meta = fieldById(id);
+      if (meta && (meta.html || meta.type === "html")) next.innerHtml = true;
+      const insert = menuInsertForNode(id);
+      const action = resolveLinkAction(next);
+      if (action.apply && action.href) next.href = action.href;
+      if (insert) {
+        syncMenuInsert(insert, next);
+      } else {
+        const href = next.href || "";
+        const same = (next.value || "") === original && !href && !next.linkKind;
+        if (same) delete state.content.fields[id];
+        else state.content.fields[id] = next;
+      }
+      if (opts && opts.fromCanvas) {
+        syncInspectorField(id);
+        return;
+      }
       const frame = document.getElementById("canvas");
       if (frame && frame.contentWindow) {
+        const target = insert && insert.itemNodeIds && insert.itemNodeIds[0] ? insert.itemNodeIds[0] : id;
         frame.contentWindow.postMessage(
-          { source: "craft-host", nodeId: id, patch: next },
+          {
+            source: "craft-host",
+            nodeId: target,
+            patch: Object.assign({}, next, {
+              href: next.href,
+              target: action.target || "",
+              rel: action.rel || "",
+              download: action.download,
+            }),
+          },
           "*",
         );
+        (insert && insert.textNodeIds ? insert.textNodeIds : []).forEach((tid) => {
+          frame.contentWindow.postMessage(
+            { source: "craft-host", nodeId: tid, patch: { value: next.value } },
+            "*",
+          );
+        });
       }
+    }
+
+    function syncInspectorField(id) {
+      if (state.selectedId !== id) return;
+      const box = document.getElementById("inspector");
+      if (!box) return;
+      const input = box.querySelector("input, textarea");
+      if (!input || document.activeElement === input) return;
+      const field = fieldById(id);
+      const patch = state.content.fields[id] || {};
+      input.value = patch.value != null ? patch.value : (field ? field.value : input.value);
     }
 
     function selectField(id) {
@@ -285,6 +541,7 @@
             fields: state.content.fields,
             forms: state.content.forms,
             htmlBlocks: state.content.htmlBlocks,
+            menuInserts: state.content.menuInserts || [],
             site: state.content.site || {},
             pages: state.content.pages || {},
             sections: state.content.sections || { order: [], hidden: [], removed: [], inserts: [] },
@@ -314,14 +571,89 @@
       return "/api/admin/page-html?path=" + encodeURIComponent(page ? page.path : "/");
     }
 
-    function reloadCanvas(force) {
-      const frame = document.getElementById("canvas");
-      if (!frame || (state.view !== "edit" && state.view !== "sections")) return;
-      const next = canvasUrl();
-      if (force || state.canvasPath !== next) {
-        state.canvasPath = next;
-        frame.src = next;
+    function paintModeHint() {
+      const node = document.getElementById("mode-hint");
+      if (!node) return;
+      const hints = {
+        siteheader: "На канвасе только шапка · правка уходит на все страницы",
+        sitefooter: "На канвасе только подвал · правка уходит на все страницы",
+        sitehtml: "На канвасе только HTML-код · правьте справа или кнопкой «Редактировать код»",
+        sitewidgets: "На канвасе только виджет .pic · правка ссылок и картинок уходит на все страницы",
+        menu: "На канвасе только шапка с меню · клик по пункту или список справа",
+        sections: "Секции этой страницы",
+        edit: "",
+      };
+      node.textContent = hints[state.view] || "";
+    }
+
+    function canvasFocus() {
+      if (state.view === "siteheader" || state.view === "menu") {
+        return { mode: "header", keepIds: uniqueSiteSections("header").map((sec) => sec.id) };
       }
+      if (state.view === "sitefooter") {
+        return { mode: "footer", keepIds: uniqueSiteSections("footer").map((sec) => sec.id) };
+      }
+      if (state.view === "sitehtml") {
+        return { mode: "html", keepIds: uniqueSiteSections("html").map((sec) => sec.id) };
+      }
+      if (state.view === "sitewidgets") {
+        return { mode: "widget", keepIds: similarSectionIds() };
+      }
+      return { mode: "" };
+    }
+
+    function revealCanvas() {
+      const frame = document.getElementById("canvas");
+      if (!frame || !frame.contentWindow) return;
+      const chrome = state.view === "sections" || state.view === "siteheader" || state.view === "sitefooter" || state.view === "menu";
+      const focus = canvasFocus();
+      frame.contentWindow.postMessage({ source: "craft-host", sectionChrome: chrome, focus }, "*");
+      if (state.selectedSection && focus.mode !== "html") {
+        frame.contentWindow.postMessage({
+          source: "craft-host",
+          revealSection: { id: state.selectedSection, insert: state.selectedSectionInsert },
+        }, "*");
+      }
+    }
+
+    async function reloadCanvas(force) {
+      const frame = document.getElementById("canvas");
+      if (!frame || !isLiveView()) return;
+      const next = canvasUrl();
+      if (state.canvasPath === next && frame.contentWindow && frame.contentDocument && frame.contentDocument.readyState === "complete") {
+        revealCanvas();
+        if (!force) return;
+      }
+      if (!force && state.canvasPath === next) {
+        revealCanvas();
+        return;
+      }
+      state.canvasPath = next;
+      try {
+        const t0 = Date.now();
+        const res = await fetch(next, { credentials: "same-origin" });
+        const text = await res.text();
+        dbg("page-html " + res.status + " " + text.length + "b " + (Date.now() - t0) + "ms" + (res.ok ? "" : " " + text.slice(0, 80)));
+        dbg("inject canvas.js=" + (text.indexOf("/__craft/canvas.js") >= 0) + " data=" + (text.indexOf("craft-canvas-data") >= 0));
+        const re = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+        let m;
+        let i = 0;
+        while ((m = re.exec(text))) {
+          const attrs = m[1] || "";
+          const body = m[2] || "";
+          if (/src=/i.test(attrs) || /application\/json/i.test(attrs)) continue;
+          if (!body.trim()) continue;
+          i += 1;
+          try {
+            new Function(body);
+          } catch (err) {
+            dbg("iframe inline#" + i + " " + err.message);
+          }
+        }
+      } catch (err) {
+        dbg("page-html FAIL " + err.message);
+      }
+      frame.src = next;
     }
 
     function paintStatus() {
@@ -383,20 +715,35 @@
       });
       const items = [];
       const inserts = layout.inserts || [];
+      const htmlBlocks = (state.content.htmlBlocks || []).filter((block) => block.position === "before" || block.position === "after");
+      function pushHtml(sectionId, position) {
+        htmlBlocks.filter((block) => block.sectionId === sectionId && block.position === position).forEach((block) => {
+          items.push({
+            id: block.id,
+            label: "HTML-блок",
+            insert: true,
+            hidden: Boolean(block.hidden),
+          });
+        });
+      }
       inserts.filter((item) => !item.afterId).forEach((item) => {
         items.push({ id: item.id, label: "Вставка HTML", insert: true, hidden: false });
       });
       layout.order.filter((id) => !layout.removed.includes(id)).forEach((id) => {
+        pushHtml(id, "before");
         const meta = byId[id] || {};
-        items.push({
-          id,
-          label: meta.label || id,
-          insert: false,
-          hidden: layout.hidden.includes(id),
-        });
+        if (!siteIds().has(id)) {
+          items.push({
+            id,
+            label: meta.label || id,
+            insert: false,
+            hidden: layout.hidden.includes(id),
+          });
+        }
         inserts.filter((item) => item.afterId === id).forEach((item) => {
           items.push({ id: item.id, label: "Вставка HTML", insert: true, hidden: false });
         });
+        pushHtml(id, "after");
       });
       return items;
     }
@@ -405,9 +752,10 @@
       const nav = document.getElementById("outline-list");
       if (!nav) return;
       nav.innerHTML = "";
+      nav.appendChild(el('<p class="muted">Шапка, подвал, HTML-код и виджеты — вкладки сверху. Правка с главной на все страницы.</p>'));
       const items = outlineItems();
       if (!items.length) {
-        nav.appendChild(el('<p class="muted">Нет секций в модели</p>'));
+        nav.appendChild(el('<p class="muted">Нет секций этой страницы</p>'));
         return;
       }
       items.forEach((item) => {
@@ -459,13 +807,15 @@
       const stageBar = document.getElementById("stage-bar");
       const stageFrame = document.getElementById("stage-frame");
       if (!frame || !panel) return;
-      const live = state.view === "edit" || state.view === "sections";
+      const live = isLiveView();
+      const withPanel = !live || state.view === "menu" || state.view === "sitehtml" || state.view === "sitewidgets";
       frame.style.display = live ? "block" : "none";
       if (stageBar) stageBar.style.display = live ? "flex" : "none";
       if (stageFrame) stageFrame.style.display = live ? "flex" : "none";
-      panel.style.display = live ? "none" : "block";
-      if (!live) fillPanel();
+      panel.style.display = withPanel ? "block" : "none";
+      if (withPanel) fillPanel();
       paintViewport();
+      paintModeHint();
     }
 
     function paintViewport() {
@@ -477,12 +827,18 @@
     }
 
     function openInsertModal(afterId) {
+      state.modalMode = "insert";
+      state.editingFieldId = "";
       state.insertAfterId = afterId || "";
       const modal = document.getElementById("insert-modal");
       const area = document.getElementById("insert-html");
       const hint = document.getElementById("insert-hint");
+      const title = document.getElementById("insert-title");
+      const ok = document.getElementById("insert-ok");
       if (!modal || !area) return;
       area.value = "";
+      if (title) title.textContent = "Вставить секцию HTML";
+      if (ok) ok.textContent = "Вставить";
       if (hint) {
         hint.textContent = state.insertAfterId
           ? "HTML вставится сразу после выбранной секции."
@@ -492,9 +848,138 @@
       area.focus();
     }
 
+    function openCodeModal(field) {
+      if (!field) return;
+      state.modalMode = "code";
+      state.editingFieldId = field.nodeId;
+      const modal = document.getElementById("insert-modal");
+      const area = document.getElementById("insert-html");
+      const hint = document.getElementById("insert-hint");
+      const title = document.getElementById("insert-title");
+      const ok = document.getElementById("insert-ok");
+      if (!modal || !area) return;
+      const patch = state.content.fields[field.nodeId] || {};
+      area.value = patch.value != null ? patch.value : (field.value || "");
+      if (title) title.textContent = "Код HTML";
+      if (ok) ok.textContent = "Сохранить код";
+      if (hint) hint.textContent = "Это сквозной HTML Крафтума (стиль/скрипт). Сохранение патчит все страницы с этим блоком.";
+      modal.classList.add("on");
+      area.focus();
+    }
+
     function closeInsertModal() {
       const modal = document.getElementById("insert-modal");
       if (modal) modal.classList.remove("on");
+    }
+
+    function isFlowHtmlBlock(block) {
+      return block && (block.position === "before" || block.position === "after");
+    }
+
+    function insertSlotKey(item) {
+      return item.afterId || "";
+    }
+
+    function moveSectionInsert(inserts, id, dir, sectionOrder) {
+      const next = inserts.slice();
+      const item = next.find((block) => block.id === id);
+      if (!item) return next;
+      const key = insertSlotKey(item);
+      const slot = next.filter((block) => insertSlotKey(block) === key);
+      const slotIndex = slot.findIndex((block) => block.id === id);
+      const swapWith =
+        dir === "up" && slotIndex > 0
+          ? slot[slotIndex - 1]
+          : dir === "down" && slotIndex < slot.length - 1
+            ? slot[slotIndex + 1]
+            : null;
+      if (swapWith) {
+        const i = next.findIndex((block) => block.id === item.id);
+        const j = next.findIndex((block) => block.id === swapWith.id);
+        const tmp = next[i];
+        next[i] = next[j];
+        next[j] = tmp;
+        return next;
+      }
+      const slots = [""].concat(sectionOrder.filter(Boolean));
+      const cur = slots.indexOf(key);
+      if (dir === "up") {
+        if (cur <= 0) return next;
+        item.afterId = slots[cur - 1] || undefined;
+      } else if (cur < 0 || cur >= slots.length - 1) {
+        return next;
+      } else {
+        item.afterId = slots[cur + 1] || undefined;
+      }
+      const from = next.findIndex((block) => block.id === id);
+      next.splice(from, 1);
+      const newKey = insertSlotKey(item);
+      if (dir === "up") {
+        let insertAt = 0;
+        for (let i = 0; i < next.length; i++) {
+          if (insertSlotKey(next[i]) === newKey) insertAt = i + 1;
+        }
+        next.splice(insertAt, 0, item);
+      } else {
+        const first = next.findIndex((block) => insertSlotKey(block) === newKey);
+        next.splice(first < 0 ? next.length : first, 0, item);
+      }
+      return next;
+    }
+
+    function moveHtmlBlock(id, dir) {
+      const blocks = state.content.htmlBlocks || [];
+      const block = blocks.find((item) => item.id === id);
+      if (!isFlowHtmlBlock(block)) return;
+      const order = ensureSections().order.filter((secId) => !(ensureSections().removed || []).includes(secId));
+      const slot = blocks.filter((item) => isFlowHtmlBlock(item) && item.sectionId === block.sectionId && item.position === block.position);
+      const slotIndex = slot.findIndex((item) => item.id === id);
+      const swapWith = dir === "up" && slotIndex > 0 ? slot[slotIndex - 1] : dir === "down" && slotIndex < slot.length - 1 ? slot[slotIndex + 1] : null;
+      if (swapWith) {
+        const i = blocks.findIndex((item) => item.id === block.id);
+        const j = blocks.findIndex((item) => item.id === swapWith.id);
+        const tmp = blocks[i];
+        blocks[i] = blocks[j];
+        blocks[j] = tmp;
+        return;
+      }
+      const si = order.indexOf(block.sectionId);
+      if (dir === "up") {
+        if (block.position === "after") block.position = "before";
+        else if (si > 0) {
+          block.sectionId = order[si - 1];
+          block.position = "after";
+        }
+      } else if (block.position === "before") {
+        block.position = "after";
+      } else if (si >= 0 && si < order.length - 1) {
+        block.sectionId = order[si + 1];
+        block.position = "before";
+      }
+    }
+
+    async function applyHtmlBlockAction(payload) {
+      const blocks = state.content.htmlBlocks || [];
+      const block = blocks.find((item) => item.id === payload.id);
+      if (!block) return;
+      if (payload.action === "up" || payload.action === "down") {
+        recordChange();
+        moveHtmlBlock(payload.id, payload.action);
+        await save();
+        return;
+      }
+      if (payload.action === "hide") {
+        recordChange();
+        block.hidden = !block.hidden;
+        await save();
+        return;
+      }
+      if (payload.action === "remove") {
+        if (!confirm("Удалить HTML-блок из патча?")) return;
+        recordChange();
+        state.content.htmlBlocks = blocks.filter((item) => item.id !== payload.id);
+        await save();
+      }
     }
 
     async function applySectionAction(payload) {
@@ -502,6 +987,13 @@
       const id = payload.id;
       const action = payload.action;
       if (payload.insert) {
+        if (action === "up" || action === "down") {
+          recordChange();
+          const order = layout.order.filter((secId) => !(layout.removed || []).includes(secId));
+          layout.inserts = moveSectionInsert(layout.inserts || [], id, action, order);
+          await save();
+          return;
+        }
         if (action === "remove") {
           recordChange();
           layout.inserts = (layout.inserts || []).filter((item) => item.id !== id);
@@ -512,10 +1004,20 @@
         }
         return;
       }
-      if (action === "insert") {
-        openInsertModal(id);
-        return;
-      }
+        if (action === "insert") {
+          openInsertModal(id);
+          return;
+        }
+        if (action === "editcode") {
+          const fields = codeFieldsOfSection(id);
+          if (!fields.length) {
+            state.status = "В этой секции нет поля «Код»";
+            paintStatus();
+            return;
+          }
+          openCodeModal(fields[0]);
+          return;
+        }
       if (action === "up") {
         const from = layout.order.indexOf(id);
         if (from < 1) return;
@@ -549,6 +1051,13 @@
       const area = document.getElementById("insert-html");
       const html = area ? area.value.trim() : "";
       if (!html) return;
+      if (state.modalMode === "code" && state.editingFieldId) {
+        const field = fieldById(state.editingFieldId) || { nodeId: state.editingFieldId, value: "", html: true, type: "html" };
+        setField(state.editingFieldId, field.value, { value: html, innerHtml: true });
+        closeInsertModal();
+        await save();
+        return;
+      }
       recordChange();
       const layout = ensureSections();
       layout.inserts.push({
@@ -610,7 +1119,41 @@
         return;
       }
       if (state.view === "sections") {
-        panel.appendChild(el('<p class="hint">Управление секциями на канвасе: наведите на блок. HTML вставляется во всплывающем окне.</p>'));
+        panel.appendChild(el('<p class="hint">Управление секциями на канвасе: наведите на блок. HTML вставляется во всплывающем окне. Сквозной HTML-код Крафтума на канвасе скрыт — вкладка «HTML-код».</p>'));
+        return;
+      }
+      if (state.view === "sitehtml") {
+        panel.appendChild(el('<p class="hint">Это не секции страницы, а HTML из Крафтума (часто CSS кнопок и виджетов). На канвасе остались только эти блоки. Правка сохраняется на все страницы, где этот код есть.</p>'));
+        const widgets = uniqueHtmlWidgets();
+        if (!widgets.length) panel.appendChild(el('<div class="card muted">Сквозного HTML-кода нет.</div>'));
+        widgets.forEach((sec, index) => {
+          const card = el('<div class="card"><div class="muted"></div><pre></pre><button type="button">Редактировать код</button></div>');
+          const field = (sec.fields || []).find((item) => item.type === "html" || item.html);
+          card.querySelector(".muted").textContent = "HTML " + (index + 1) + " · на " + (sec.pageCount || "?") + " стр.";
+          card.querySelector("pre").textContent = ((field && field.value) || "").slice(0, 400);
+          card.querySelector("button").addEventListener("click", () => openCodeModal(field));
+          panel.appendChild(card);
+        });
+        panel.appendChild(el('<p class="hint">Счётчики в head/body — вкладка SEO / сайт, поля HTML в head и перед /body. Плавающий .pic — вкладка «Виджеты».</p>'));
+        return;
+      }
+      if (state.view === "sitewidgets") {
+        panel.appendChild(el('<p class="hint">Одинаковый виджет на каждой странице, но у Крафтума разные n-…. Правка одного слота (ссылка VK, картинка, телефон) применяется ко всем копиям при публикации.</p>'));
+        const groups = uniqueSimilarWidgets();
+        if (!groups.length) panel.appendChild(el('<div class="card muted">Виджетов с data-custom-class нет. После пересборки page-model они появятся здесь.</div>'));
+        groups.forEach((sec) => {
+          const card = el('<div class="card"><div class="muted"></div></div>');
+          card.querySelector(".muted").textContent = (sec.label || ("." + sec.customClass)) + " · на " + (sec.pageCount || "?") + " стр.";
+          (sec.fields || []).forEach((field) => {
+            card.appendChild(fieldInput(Object.assign({
+              pagePath: sec.pagePath,
+              sectionLabel: sec.label,
+              sectionId: sec.id,
+            }, field)));
+          });
+          if (!(sec.fields || []).length) card.appendChild(el('<div class="muted">Нет полей — кликните иконку на канвасе.</div>'));
+          panel.appendChild(card);
+        });
         return;
       }
       if (state.view === "seo") {
@@ -647,10 +1190,57 @@
         return;
       }
       if (state.view === "menu") {
-        panel.appendChild(el('<p class="hint">Правка ссылки пишется в общий черновик. Если шапка с тем же id на всех страницах — после публикации обновится везде.</p>'));
-        const links = uniqueLinks();
+        panel.appendChild(el('<p class="hint">Новый пункт — клон существующей ссылки шапки. Он появится в десктопном и мобильном меню. Действие клика как у кнопок. После публикации те же id уезжают на все страницы.</p>'));
+        const add = el(`<div class="card">
+          <h2>Добавить ссылку</h2>
+          <label><span>Текст</span><input id="mi-label" placeholder="Новая страница"></label>
+          <button class="primary" type="button" id="mi-add">Добавить в меню</button>
+        </div>`);
+        add.querySelector("#mi-add").addEventListener("click", async () => {
+          const label = (add.querySelector("#mi-label").value || "").trim() || "Новая ссылка";
+          recordChange();
+          const itemNodeIds = nids(8);
+          const textNodeIds = nids(8);
+          const extraNodeIds = nids(64);
+          const insert = {
+            id: "mi-" + Date.now().toString(36),
+            label,
+            linkKind: "page",
+            linkPage: "/",
+            href: "/",
+            itemNodeIds,
+            textNodeIds,
+            extraNodeIds,
+          };
+          menuInserts().push(insert);
+          syncMenuInsert(insert, { value: label, linkKind: "page", linkPage: "/", href: "/" });
+          fillPanel();
+          await save();
+        });
+        panel.appendChild(add);
+        menuInserts().forEach((insert, index) => {
+          const card = el('<div class="card"><div class="muted"></div></div>');
+          card.querySelector(".muted").textContent = "Новый пункт · " + (index + 1);
+          card.appendChild(fieldInput(menuInsertField(insert)));
+          const del = document.createElement("button");
+          del.type = "button";
+          del.textContent = "Удалить пункт";
+          del.addEventListener("click", async () => {
+            recordChange();
+            (insert.itemNodeIds || []).concat(insert.textNodeIds || []).forEach((nid) => {
+              delete state.content.fields[nid];
+            });
+            state.content.menuInserts = menuInserts().filter((item) => item.id !== insert.id);
+            fillPanel();
+            await save();
+          });
+          card.appendChild(del);
+          panel.appendChild(card);
+        });
+        panel.appendChild(el('<p class="hint">Уже снятые пункты. Текст — на канвасе.</p>'));
+        const links = uniqueMenuLinks();
         links.forEach((field) => panel.appendChild(fieldInput(field)));
-        if (!links.length) panel.appendChild(el('<div class="card muted">Отдельных ссылок в модели нет — кликните пункт меню на живой странице.</div>'));
+        if (!links.length && !menuInserts().length) panel.appendChild(el('<div class="card muted">Пунктов меню в модели нет — кликните пункт на живой шапке.</div>'));
         return;
       }
       if (state.view === "fields") {
@@ -675,7 +1265,7 @@
             <option value="before">До секции</option>
             <option value="head">В &lt;head&gt;</option>
             <option value="bodyStart">Сразу после &lt;body&gt;</option>
-            <option value="bodyEnd">Перед &lt;/body&gt;</option>
+            <option value="bodyEnd">В конец body</option>
           </select></label>
           <label><span>HTML / style / script</span><textarea id="html"></textarea></label>
           <button class="primary" type="button" id="add">Добавить</button>
@@ -703,14 +1293,23 @@
         });
         panel.appendChild(box);
         state.content.htmlBlocks.forEach((block, index) => {
-          const card = el('<div class="card"><div class="muted"></div><pre></pre><button type="button">Удалить</button></div>');
-          card.querySelector(".muted").textContent = block.position + " · " + block.sectionId;
+          const card = el('<div class="card"><div class="muted"></div><pre></pre><div class="row" style="display:flex;gap:6px;flex-wrap:wrap"></div></div>');
+          card.querySelector(".muted").textContent = (block.hidden ? "скрыт · " : "") + block.position + " · " + (block.sectionId || "слот");
           card.querySelector("pre").textContent = block.html;
-          card.querySelector("button").addEventListener("click", () => {
-            recordChange();
-            state.content.htmlBlocks.splice(index, 1);
-            fillPanel();
-          });
+          const row = card.querySelector(".row");
+          function btn(label, fn) {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.textContent = label;
+            b.addEventListener("click", fn);
+            row.appendChild(b);
+          }
+          if (block.position === "before" || block.position === "after") {
+            btn("↑", () => applyHtmlBlockAction({ id: block.id, action: "up" }));
+            btn("↓", () => applyHtmlBlockAction({ id: block.id, action: "down" }));
+          }
+          btn(block.hidden ? "Показать" : "Скрыть", () => applyHtmlBlockAction({ id: block.id, action: "hide" }));
+          btn("Удалить", () => applyHtmlBlockAction({ id: block.id, action: "remove" }));
           panel.appendChild(card);
         });
       }
@@ -731,43 +1330,334 @@
       return lab;
     }
 
+    function inferLinkKind(href, download) {
+      const h = String(href || "").trim();
+      if (download) return "file";
+      if (/^tel:/i.test(h)) return "tel";
+      if (/^mailto:/i.test(h)) return "mailto";
+      if (h.indexOf("#") >= 0 && h !== "#") return "anchor";
+      if (!h || h === "#" || h.charAt(0) === "/" || h.charAt(0) === ".") return "page";
+      return "external";
+    }
+
+    function resolveLinkAction(patch) {
+      if (!patch.linkKind && (patch.href == null || patch.href === "")) return { apply: false };
+      const kind = patch.linkKind || inferLinkKind(patch.href, Boolean(patch.linkDownload));
+      let href = "";
+      if (kind === "page") {
+        href = patch.linkPage || patch.href || "/";
+        if (href === "#") href = "/";
+      } else if (kind === "anchor") {
+        const page = patch.linkPage && patch.linkPage !== "/" ? String(patch.linkPage).replace(/\/?$/, "/") : "";
+        const hash = String(patch.linkSection || "").replace(/^#/, "");
+        href = hash ? (page + "#" + hash) : (page || "/");
+      } else if (kind === "tel") {
+        href = "tel:" + String(patch.linkUrl || patch.href || "").replace(/^tel:/i, "").replace(/[^\d+]/g, "");
+      } else if (kind === "mailto") {
+        href = "mailto:" + String(patch.linkUrl || patch.href || "").replace(/^mailto:/i, "").trim();
+      } else {
+        href = patch.linkUrl || patch.href || "";
+      }
+      const blank = Boolean(patch.linkBlank) && (kind === "external" || kind === "file");
+      const rel = [blank ? "noopener noreferrer" : "", patch.linkNofollow ? "nofollow" : ""].filter(Boolean).join(" ").trim();
+      return { apply: true, href: href, target: blank ? "_blank" : "", rel: rel, download: kind === "file" || Boolean(patch.linkDownload) };
+    }
+
+    function parseHrefParts(href) {
+      const h = String(href || "");
+      const i = h.indexOf("#");
+      if (i >= 0) return { page: h.slice(0, i) || "/", section: h.slice(i + 1) };
+      return { page: h || "/", section: "" };
+    }
+
+    function phoneDigits(raw) {
+      let d = String(raw || "").replace(/^tel:/i, "").replace(/\D/g, "");
+      if (!d) return "";
+      if (d.charAt(0) === "8") d = "7" + d.slice(1);
+      if (d.charAt(0) !== "7") d = "7" + d;
+      return d.slice(0, 11);
+    }
+
+    function formatPhone(raw) {
+      const d = phoneDigits(raw);
+      const rest = d.charAt(0) === "7" ? d.slice(1) : d;
+      if (!rest) return "+7 (";
+      let out = "+7 (" + rest.slice(0, 3);
+      if (rest.length >= 3) out += ")";
+      if (rest.length > 3) out += " " + rest.slice(3, 6);
+      if (rest.length > 6) out += "-" + rest.slice(6, 8);
+      if (rest.length > 8) out += "-" + rest.slice(8, 10);
+      return out;
+    }
+
+    function applyPhoneMask(input) {
+      const caretDigits = String(input.value || "").slice(0, input.selectionStart || 0).replace(/\D/g, "").length;
+      const formatted = formatPhone(input.value);
+      input.value = formatted;
+      let seen = 0;
+      let pos = formatted.length;
+      for (let i = 0; i < formatted.length; i++) {
+        if (/\d/.test(formatted.charAt(i))) {
+          seen += 1;
+          if (seen >= caretDigits) {
+            pos = i + 1;
+            break;
+          }
+        }
+      }
+      try { input.setSelectionRange(pos, pos); } catch (err) {}
+    }
+
+    function maskEmail(raw) {
+      return String(raw || "").replace(/^mailto:/i, "").replace(/\s+/g, "").toLowerCase().replace(/[^a-z0-9._%+\-@]/g, "");
+    }
+
+    function isLinkField(field) {
+      return field.type === "link" || field.type === "button" || field.type === "phone";
+    }
+
+    function commitLinkField(field, textValue, extras) {
+      const prev = state.content.fields[field.nodeId] || {};
+      const next = Object.assign({}, prev, extras, { value: textValue });
+      setField(field.nodeId, field.value, next);
+    }
+
+    function linkActionPanel(field, textInput) {
+      const patch = state.content.fields[field.nodeId] || {};
+      const href = patch.href != null ? patch.href : (field.href || "");
+      const parts = parseHrefParts(href);
+      let kind = patch.linkKind || (field.type === "phone" ? "tel" : inferLinkKind(href, Boolean(field.download || patch.linkDownload)));
+      if (href === "#" && !patch.linkKind) kind = "page";
+      const box = el('<div class="card" style="margin-top:10px"></div>');
+      box.appendChild(el('<div class="muted">Действие клика</div>'));
+      const kindLab = el("<label><span>Тип</span></label>");
+      const kindSel = document.createElement("select");
+      [
+        ["page", "Страница сайта"],
+        ["anchor", "Якорь на секцию"],
+        ["external", "Внешняя ссылка"],
+        ["tel", "Телефон"],
+        ["mailto", "Почта"],
+        ["file", "Файл / скачать"],
+      ].forEach((pair) => {
+        const opt = document.createElement("option");
+        opt.value = pair[0];
+        opt.textContent = pair[1];
+        kindSel.appendChild(opt);
+      });
+      kindSel.value = kind;
+      kindLab.appendChild(kindSel);
+      box.appendChild(kindLab);
+      const extras = el("<div></div>");
+      box.appendChild(extras);
+
+      function currentText() {
+        return textInput ? textInput.value : (patch.value != null ? patch.value : field.value);
+      }
+
+      function commit() {
+        const k = kindSel.value;
+        const next = { linkKind: k };
+        const pageSel = extras.querySelector("[data-k=page]");
+        const secSel = extras.querySelector("[data-k=sec]");
+        const urlIn = extras.querySelector("[data-k=url]");
+        const blank = extras.querySelector("[data-k=blank]");
+        const nofollow = extras.querySelector("[data-k=nofollow]");
+        if (k === "page" || k === "anchor") next.linkPage = pageSel ? pageSel.value : "/";
+        if (k === "anchor") next.linkSection = secSel ? secSel.value : "";
+        if (k === "external" || k === "file" || k === "tel" || k === "mailto") next.linkUrl = urlIn ? urlIn.value : "";
+        next.linkBlank = Boolean(blank && blank.checked);
+        next.linkNofollow = Boolean(nofollow && nofollow.checked);
+        next.linkDownload = k === "file";
+        commitLinkField(field, currentText(), next);
+      }
+
+      function fillExtras() {
+        const keepPage = extras.querySelector("[data-k=page]") ? extras.querySelector("[data-k=page]").value : "";
+        const keepSec = extras.querySelector("[data-k=sec]") ? extras.querySelector("[data-k=sec]").value : "";
+        extras.innerHTML = "";
+        const k = kindSel.value;
+        if (k === "page" || k === "anchor") {
+          const lab = el("<label><span>Страница</span></label>");
+          const sel = document.createElement("select");
+          sel.setAttribute("data-k", "page");
+          pages().forEach((page) => {
+            const opt = document.createElement("option");
+            opt.value = page.path;
+            opt.textContent = (page.title || page.path) + " · " + page.path;
+            sel.appendChild(opt);
+          });
+          sel.value = keepPage || patch.linkPage || parts.page || (currentPage() && currentPage().path) || "/";
+          if (!Array.prototype.some.call(sel.options, (o) => o.value === sel.value) && sel.options[0]) sel.value = sel.options[0].value;
+          sel.addEventListener("change", () => {
+            if (kindSel.value === "anchor") fillExtras();
+            commit();
+          });
+          lab.appendChild(sel);
+          extras.appendChild(lab);
+        }
+        if (k === "anchor") {
+          const lab = el("<label><span>Секция</span></label>");
+          const sel = document.createElement("select");
+          sel.setAttribute("data-k", "sec");
+          const pagePath = extras.querySelector("[data-k=page]") ? extras.querySelector("[data-k=page]").value : "/";
+          const page = pages().find((item) => item.path === pagePath) || currentPage();
+          ((page && page.sections) || []).forEach((sec) => {
+            const opt = document.createElement("option");
+            opt.value = sec.id;
+            opt.textContent = sec.label || sec.id;
+            sel.appendChild(opt);
+          });
+          sel.value = keepSec || patch.linkSection || parts.section;
+          sel.addEventListener("change", commit);
+          lab.appendChild(sel);
+          extras.appendChild(lab);
+        }
+        if (k === "external" || k === "file" || k === "tel" || k === "mailto") {
+          const lab = el("<label><span></span></label>");
+          lab.querySelector("span").textContent = k === "tel" ? "Телефон" : k === "mailto" ? "Email" : "Адрес";
+          const url = document.createElement("input");
+          url.setAttribute("data-k", "url");
+          if (k === "tel") {
+            url.type = "tel";
+            url.inputMode = "tel";
+            url.autocomplete = "tel";
+            url.placeholder = "+7 (900) 000-00-00";
+            url.value = formatPhone(patch.linkUrl || href);
+            url.addEventListener("input", () => { applyPhoneMask(url); commit(); });
+          } else if (k === "mailto") {
+            url.type = "email";
+            url.autocomplete = "email";
+            url.placeholder = "name@domain.ru";
+            url.value = maskEmail(patch.linkUrl || href);
+            url.addEventListener("input", () => { url.value = maskEmail(url.value); commit(); });
+          } else {
+            url.placeholder = k === "file" ? "https://…/file.pdf" : "https://";
+            url.value = patch.linkUrl || href;
+            url.addEventListener("input", commit);
+          }
+          lab.appendChild(url);
+          extras.appendChild(lab);
+        }
+        if (k === "external" || k === "file") {
+          const row = el('<label style="display:flex;align-items:center;gap:8px;text-transform:none"></label>');
+          const blank = document.createElement("input");
+          blank.type = "checkbox";
+          blank.setAttribute("data-k", "blank");
+          blank.checked = Boolean(patch.linkBlank);
+          blank.addEventListener("change", commit);
+          row.appendChild(blank);
+          row.appendChild(document.createTextNode("Новое окно"));
+          extras.appendChild(row);
+          const row2 = el('<label style="display:flex;align-items:center;gap:8px;text-transform:none"></label>');
+          const nf = document.createElement("input");
+          nf.type = "checkbox";
+          nf.setAttribute("data-k", "nofollow");
+          nf.checked = Boolean(patch.linkNofollow);
+          nf.addEventListener("change", commit);
+          row2.appendChild(nf);
+          row2.appendChild(document.createTextNode("nofollow"));
+          extras.appendChild(row2);
+        }
+      }
+      kindSel.addEventListener("change", () => { fillExtras(); commit(); });
+      fillExtras();
+      return box;
+    }
+
     function fieldInput(field) {
       const patch = state.content.fields[field.nodeId] || {};
       const value = patch.value != null ? patch.value : field.value;
-      const href = patch.href != null ? patch.href : (field.href || "");
-      const wrap = el("<label><span></span></label>");
-      wrap.querySelector("span").textContent = field.type + " · " + field.label;
-      const input = document.createElement(field.type === "textarea" ? "textarea" : "input");
+      const wrap = document.createElement("div");
+      const lab = el("<label><span></span></label>");
+      lab.querySelector("span").textContent = field.type + " · " + field.label;
+      const input = document.createElement(field.type === "textarea" || field.type === "html" ? "textarea" : "input");
       if (field.type === "image") input.placeholder = "URL картинки";
-      input.value = value;
+      if (field.type === "phone") {
+        input.type = "tel";
+        input.inputMode = "tel";
+        input.placeholder = "+7 (900) 000-00-00";
+        input.value = formatPhone(value);
+      } else {
+        input.value = value;
+      }
       input.addEventListener("input", () => {
-        const next = { value: input.value };
-        if (href) next.href = href;
+        if (field.type === "phone") applyPhoneMask(input);
+        const prev = state.content.fields[field.nodeId] || {};
+        const next = Object.assign({}, prev, { value: input.value });
         if (field.type === "image") next.src = input.value;
+        if (field.type === "phone" && !prev.linkKind) {
+          next.linkKind = "tel";
+          next.linkUrl = input.value;
+        }
         setField(field.nodeId, field.value, next);
       });
-      wrap.appendChild(input);
-      if (field.type === "link" || field.type === "phone" || field.type === "button") {
-        const hrefInput = document.createElement("input");
-        hrefInput.value = href;
-        hrefInput.placeholder = "href / tel:";
-        hrefInput.style.marginTop = "6px";
-        hrefInput.addEventListener("input", () => {
-          setField(field.nodeId, field.value, { value: input.value, href: hrefInput.value });
-        });
-        wrap.appendChild(hrefInput);
-      }
+      lab.appendChild(input);
+      wrap.appendChild(lab);
+      if (isLinkField(field)) wrap.appendChild(linkActionPanel(field, input));
       return wrap;
     }
 
+    function paintSiteInspector(type, hint) {
+      const box = document.getElementById("inspector");
+      if (!box) return;
+      box.innerHTML = "";
+      const p = el('<p class="hint"></p>');
+      p.textContent = hint;
+      box.appendChild(p);
+      const list = uniqueSiteSections(type);
+      if (!list.length) {
+        box.appendChild(el('<div class="card muted">Сквозного блока этого типа нет.</div>'));
+        return;
+      }
+      list.forEach((sec) => {
+        const card = el('<div class="card"><div class="muted"></div></div>');
+        card.querySelector(".muted").textContent = (sec.label || type) + " · на " + (sec.pageCount || "?") + " стр.";
+        (sec.fields || []).forEach((field) => {
+          card.appendChild(fieldInput(Object.assign({
+            pagePath: sec.pagePath,
+            sectionLabel: sec.label,
+            sectionId: sec.id,
+          }, field)));
+        });
+        if (!(sec.fields || []).length) {
+          card.appendChild(el('<div class="muted">Нет полей в модели — правьте на канвасе главной.</div>'));
+        }
+        box.appendChild(card);
+      });
+    }
+
     function paintInspector() {
+      if (state.view === "siteheader") {
+        return paintSiteInspector("header", "Шапка сквозная: правка с главной уходит на все страницы после публикации.");
+      }
+      if (state.view === "sitefooter") {
+        return paintSiteInspector("footer", "Подвал сквозной: тот же id на внутренних страницах.");
+      }
+      if (state.view === "sitehtml") {
+        return paintSiteInspector("html", "На канвасе только HTML-блоки. Правка справа уходит на все страницы, где этот код есть.");
+      }
+      if (state.view === "sitewidgets") {
+        const box = document.getElementById("inspector");
+        if (!box) return;
+        box.innerHTML = "";
+        box.appendChild(el('<p class="hint">Виджет .pic: одни и те же иконки на всех страницах. Сохраните и опубликуйте — патч разъедется по копиям с другими id.</p>'));
+        return;
+      }
+      if (state.view === "menu") {
+        const box = document.getElementById("inspector");
+        if (!box) return;
+        box.innerHTML = "";
+        box.appendChild(el('<p class="hint">Меню живёт в шапке. Кликните пункт на канвасе или правьте список на панели снизу. Новая ссылка — клон пункта. После публикации — на всех страницах.</p>'));
+        return;
+      }
       const box = document.getElementById("inspector");
       if (!box) return;
       box.innerHTML = "";
       const field = fieldById(state.selectedId);
       box.appendChild(el(state.view === "sections"
         ? '<p class="hint">Наведите на секцию на канвасе: вверх, вниз, скрыть, удалить. «+ HTML» открывает окно вставки кода.</p>'
-        : '<p class="hint">Кликните текст, кнопку или пункт меню на странице. Наведите на секцию — панель управления блоком.</p>'));
+        : '<p class="hint">Текст правьте на странице. У кнопки и ссылки действие клика — справа: страница, якорь, внешняя, телефон, файл.</p>'));
       if (!field) {
         box.appendChild(el('<div class="card muted">Блок не размечен в модели. Запасной список — «Все поля», или HTML-блок.</div>'));
         const page = currentPage();
@@ -795,6 +1685,10 @@
           <h1>Редактор страниц</h1>
           <button data-nav="edit" type="button">Страница</button>
           <button data-nav="sections" type="button">Секции</button>
+          <button data-nav="siteheader" type="button">Шапка</button>
+          <button data-nav="sitefooter" type="button">Подвал</button>
+          <button data-nav="sitehtml" type="button">HTML-код</button>
+          <button data-nav="sitewidgets" type="button">Виджеты</button>
           <button data-nav="seo" type="button">SEO / сайт</button>
           <button data-nav="menu" type="button">Меню</button>
           <button data-nav="leads" type="button">Заявки</button>
@@ -819,6 +1713,7 @@
             <div class="stage-bar" id="stage-bar">
               <button data-vp-btn="desktop" type="button">Компьютер</button>
               <button data-vp-btn="mobile" type="button">Телефон</button>
+              <span id="mode-hint" class="muted"></span>
               <span class="grow"></span>
               <button id="insert-start" type="button">+ секция в начало</button>
             </div>
@@ -831,7 +1726,7 @@
         </div>
         <div class="modal" id="insert-modal">
           <div class="card">
-            <h2 style="margin:0 0 8px;font-size:16px">Вставить секцию HTML</h2>
+            <h2 id="insert-title" style="margin:0 0 8px;font-size:16px">Вставить секцию HTML</h2>
             <p class="hint" id="insert-hint">Код вставится патчем поверх страницы, не как блок конструктора.</p>
             <label><span>HTML</span><textarea id="insert-html" placeholder="section.cli-block или любой HTML-виджет"></textarea></label>
             <div class="row">
@@ -854,9 +1749,28 @@
             return;
           }
           state.view = btn.getAttribute("data-nav");
+          if (state.view === "siteheader" || state.view === "sitefooter" || state.view === "sitehtml" || state.view === "sitewidgets" || state.view === "menu") {
+            preferHome();
+            const type = state.view === "sitefooter" ? "footer" : "header";
+            if (state.view !== "sitehtml" && state.view !== "sitewidgets") {
+              const sec = uniqueSiteSections(type)[0];
+              if (sec) {
+                state.selectedSection = sec.id;
+                state.selectedSectionInsert = false;
+              }
+            }
+            if (state.view === "sitewidgets") {
+              const sec = uniqueSimilarWidgets()[0];
+              if (sec) {
+                state.selectedSection = sec.id;
+                state.selectedSectionInsert = false;
+              }
+            }
+          }
           paintNav();
           showStage();
-          if (state.view === "edit" || state.view === "sections") reloadCanvas(false);
+          if (isLiveView()) reloadCanvas(true);
+          paintInspector();
         });
       });
       root.querySelector("#save").addEventListener("click", save);
@@ -894,8 +1808,23 @@
             redoOverlay();
             return;
           }
+          if (event.data.htmlBlockAction) {
+            applyHtmlBlockAction(event.data.htmlBlockAction);
+            return;
+          }
           if (event.data.sectionAction) {
             applySectionAction(event.data.sectionAction);
+            return;
+          }
+          if (event.data.nodeId && event.data.patch) {
+            const prev = state.content.fields[event.data.nodeId] || {};
+            const field = fieldById(event.data.nodeId);
+            const next = Object.assign({}, prev, {
+              value: event.data.patch.value != null ? event.data.patch.value : (prev.value != null ? prev.value : (field && field.value) || ""),
+            });
+            if (!prev.linkKind && event.data.patch.href) next.href = event.data.patch.href;
+            if (field) setField(event.data.nodeId, field.value, next, { fromCanvas: true });
+            if (state.selectedId !== event.data.nodeId) selectField(event.data.nodeId);
             return;
           }
           if (event.data.nodeId) selectField(event.data.nodeId);
@@ -919,15 +1848,7 @@
       const frame = root.querySelector("#canvas");
       frame.addEventListener("load", () => {
         if (!frame.contentWindow) return;
-        if (state.view === "sections") {
-          frame.contentWindow.postMessage({ source: "craft-host", sectionChrome: true }, "*");
-        }
-        if (state.selectedSection) {
-          frame.contentWindow.postMessage({
-            source: "craft-host",
-            revealSection: { id: state.selectedSection, insert: state.selectedSectionInsert },
-          }, "*");
-        }
+        revealCanvas();
         if (state.selectedId) {
           frame.contentWindow.postMessage({ source: "craft-host", highlight: state.selectedId }, "*");
         }
@@ -963,7 +1884,7 @@
       paintHistory();
       paintInspector();
       showStage();
-      if (state.view === "edit" || state.view === "sections") reloadCanvas(false);
+      if (isLiveView()) reloadCanvas(false);
     }
 
     load();

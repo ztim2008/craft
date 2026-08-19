@@ -2,7 +2,7 @@
 
 Обновлено: 2026-08-19. Статусы: ✅ готово · 🔄 в работе · 📋 запланировано
 
-Журнал: [devlog.md](./devlog.md) · Продукт: [product-plan.md](./product-plan.md) · Админка: [admin-spec.md](./admin-spec.md)
+Журнал: [devlog.md](./devlog.md) · Канвас/полигон: [live-editor.md](./live-editor.md) · **Завтра 20.08:** [plan-2026-08-20.md](./plan-2026-08-20.md) · Продукт: [product-plan.md](./product-plan.md) · Админка: [admin-spec.md](./admin-spec.md)
 
 ---
 
@@ -119,6 +119,8 @@ URL: ma-maniere-ballet.ru, kc3748.craftum.io, madlenmartynova.ru, sx7238.craftum
 - Node :3041, HTTPS, стили/анимация/попапы, заявка в `/admin` без почты Craftum
 
 ЮKassa — после Phase 15. AI и Agent API — не раньше.
+
+Live-editor на полигоне (вечер 2026-08-19): меню-клон, scope site/page, вкладки шапка/подвал/html/**виджеты .pic**, изоляция канвы как в Тильде, rewrite донора, отладка скрыта. Шпаргалка: [live-editor.md](./live-editor.md).
 
 ---
 

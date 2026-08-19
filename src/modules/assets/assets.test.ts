@@ -6,7 +6,7 @@ import {
   extractHtmlAssetCandidates,
   resolveAssetUrl,
 } from "./collectUrls";
-import { pageOutputPath, relativeFromCss, relativeFromPage, rewriteUnimportedPageHrefs, importedPagePathSet, rewriteUrls } from "./rewrite";
+import { pageOutputPath, relativeFromCss, relativeFromPage, rewriteUnimportedPageHrefs, importedPagePathSet, rewriteUrls, pagePreviewLinkReplacements } from "./rewrite";
 import { injectPreviewBase, previewAssetHref, previewBaseHref } from "./previewBase";
 
 describe("classify", () => {
@@ -43,6 +43,15 @@ describe("collectUrls", () => {
     assert.ok(found.some((item) => item.includes("cdn2.craftum.com/x.jpg")));
   });
 
+  it("picks og:image and raw selcdn URLs from HTML", () => {
+    const html =
+      `<meta property="og:image" content="https://274418.selcdn.ru/cv/uploads/a.png">` +
+      `<img srcset="https://static.craftum.com/x=/1x0/filters:no_upscale()/https://274418.selcdn.ru/cv/uploads/b.png 100w">`;
+    const found = extractHtmlAssetCandidates(html);
+    assert.ok(found.some((item) => item.includes("uploads/a.png")));
+    assert.ok(found.some((item) => item.includes("uploads/b.png")));
+  });
+
   it("resolves relative assets against page origin", () => {
     assert.equal(
       resolveAssetUrl("/static/a.css", "https://sx7238.craftum.io/"),
@@ -71,6 +80,17 @@ describe("rewrite", () => {
   it("keeps css url() in same assets folder without double assets/", () => {
     assert.equal(relativeFromCss("assets/a.css", "assets/b.webp"), "./b.webp");
     assert.equal(relativeFromCss("assets/a.css", "assets/nested/b.webp"), "./nested/b.webp");
+  });
+
+  it("does not rewrite /privacy inside Mail.ru tracker", () => {
+    const reps = pagePreviewLinkReplacements(
+      [{ path: "/privacy", finalUrl: "https://practic-hub.ru/privacy" }],
+      () => "/preview/job/privacy/",
+    );
+    const html = `src="https://privacy-cs.mail.ru/static/sync-loader.js" href="/privacy"`;
+    const out = rewriteUrls(html, reps);
+    assert.match(out, /https:\/\/privacy-cs\.mail\.ru\/static\/sync-loader\.js/);
+    assert.match(out, /href="\/preview\/job\/privacy\/"/);
   });
 
   it("points unimported pages at the live Craftum origin", () => {

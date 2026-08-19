@@ -42,6 +42,7 @@ const FIELD_TYPES = new Set([
   "social",
   "header-menu",
   "timer",
+  "code",
 ]);
 
 function fieldLabel(type: string, value: string, title: string): string {
@@ -57,7 +58,7 @@ function fieldLabel(type: string, value: string, title: string): string {
 function mapType(dataType: string, text: string): PageModelField["type"] {
   if (dataType === "image" || dataType === "logo") return "image";
   if (dataType === "link" || dataType === "menu-item" || dataType === "social") return "link";
-  if (dataType === "button") return "button";
+  if (dataType === "code") return "html";
   if (looksLikePhone(text)) return "phone";
   if (text.length > 140) return "textarea";
   return "text";
@@ -75,8 +76,12 @@ export function extractFields(html: string): PageModelField[] {
     const selfClose = Boolean(match[5]);
     if (!nodeId || seen.has(nodeId)) continue;
     const dataType = attr(attrs, "data-type");
-    if (!dataType || SKIP_TYPES.has(dataType)) continue;
-    if (!FIELD_TYPES.has(dataType)) continue;
+    const hrefEarly = attr(attrs, "href");
+    const untypedLink = !dataType && /^a$/i.test(tag) && hrefEarly && hrefEarly !== "#";
+    if (!untypedLink) {
+      if (!dataType || SKIP_TYPES.has(dataType)) continue;
+      if (!FIELD_TYPES.has(dataType)) continue;
+    }
 
     const openTag = match[0];
     let inner = "";
@@ -86,8 +91,19 @@ export function extractFields(html: string): PageModelField[] {
       inner = html.slice(match.index + openTag.length, range.end).replace(new RegExp(`</${tag}\\s*>$`, "i"), "");
     }
 
+    if (dataType === "code") {
+      seen.add(nodeId);
+      fields.push({
+        nodeId,
+        type: "html",
+        label: attr(attrs, "data-title") || "HTML-код",
+        value: inner.trim(),
+        html: true,
+      });
+      continue;
+    }
     const text = stripTags(inner);
-    const href = attr(attrs, "href");
+    const href = hrefEarly || attr(attrs, "href");
     let imgSrc = "";
     if (dataType === "image" || dataType === "logo") {
       const img = inner.match(IMG_RE);
@@ -98,13 +114,16 @@ export function extractFields(html: string): PageModelField[] {
     if ((dataType === "menu-item" || dataType === "link" || dataType === "social") && !text && !href) continue;
 
     seen.add(nodeId);
-    const type = mapType(dataType, text);
+    const type = untypedLink ? "link" : mapType(dataType, text);
     fields.push({
       nodeId,
       type,
       label: fieldLabel(type, type === "image" ? imgSrc : text, attr(attrs, "data-title")),
       value: type === "image" ? imgSrc : text,
       href: href || undefined,
+      target: attr(attrs, "target") || undefined,
+      rel: attr(attrs, "rel") || undefined,
+      download: /\bdownload\b/i.test(attrs) ? true : undefined,
     });
   }
   return fields;
@@ -162,7 +181,9 @@ export function analyzeHtml(html: string): PageModelSection[] {
       id,
       rootId: attr(attrs, "data-root-id") || id.replace(/^n-/, ""),
       type,
-      label: sectionLabel(type),
+      label: sectionLabel(type, attr(attrs, "data-custom-class")),
+      static: /\bdata-static\b/i.test(attrs),
+      customClass: attr(attrs, "data-custom-class") || undefined,
       fields: extractFields(inner),
       forms: extractForms(inner),
     });

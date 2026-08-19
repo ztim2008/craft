@@ -3,6 +3,8 @@ import path from "node:path";
 import { projectDir } from "@/lib/storage";
 import type { PageSnapshot } from "@/modules/crawler/types";
 import { analyzeHtml } from "./analyzeHtml";
+import { applySectionScope } from "./sectionScope";
+import { applySimilarWidgets } from "./similarWidgets";
 import type { PageModel } from "./types";
 
 export function pageModelPath(jobId: string): string {
@@ -24,11 +26,14 @@ export async function buildPageModel(input: {
       sections: analyzeHtml(html),
     });
   }
+  applySectionScope(pages);
+  const similar = applySimilarWidgets(pages);
   const model: PageModel = {
     version: 1,
     sourceUrl: input.sourceUrl,
     generatedAt: new Date().toISOString(),
     pages,
+    similar,
     counts: {
       pages: pages.length,
       sections: pages.reduce((sum, item) => sum + item.sections.length, 0),

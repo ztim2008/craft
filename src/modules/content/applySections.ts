@@ -33,6 +33,62 @@ function wrapInsert(block: SectionInsert): string {
   return `<!--craft-section:${block.id}-->${block.html}<!--/craft-section:${block.id}-->`;
 }
 
+function insertSlotKey(item: SectionInsert): string {
+  return item.afterId || "";
+}
+
+export function moveSectionInsert(
+  inserts: SectionInsert[],
+  id: string,
+  dir: "up" | "down",
+  sectionOrder: string[],
+): SectionInsert[] {
+  const next = inserts.slice();
+  const item = next.find((block) => block.id === id);
+  if (!item) return next;
+  const key = insertSlotKey(item);
+  const slot = next.filter((block) => insertSlotKey(block) === key);
+  const slotIndex = slot.findIndex((block) => block.id === id);
+  const swapWith =
+    dir === "up" && slotIndex > 0
+      ? slot[slotIndex - 1]
+      : dir === "down" && slotIndex < slot.length - 1
+        ? slot[slotIndex + 1]
+        : null;
+  if (swapWith) {
+    const i = next.findIndex((block) => block.id === item.id);
+    const j = next.findIndex((block) => block.id === swapWith.id);
+    const tmp = next[i];
+    next[i] = next[j];
+    next[j] = tmp;
+    return next;
+  }
+  const slots = [""].concat(sectionOrder.filter(Boolean));
+  const cur = slots.indexOf(key);
+  if (dir === "up") {
+    if (cur <= 0) return next;
+    item.afterId = slots[cur - 1] || undefined;
+  } else if (cur < 0 || cur >= slots.length - 1) {
+    return next;
+  } else {
+    item.afterId = slots[cur + 1] || undefined;
+  }
+  const from = next.findIndex((block) => block.id === id);
+  next.splice(from, 1);
+  const newKey = insertSlotKey(item);
+  if (dir === "up") {
+    let insertAt = 0;
+    for (let i = 0; i < next.length; i++) {
+      if (insertSlotKey(next[i]) === newKey) insertAt = i + 1;
+    }
+    next.splice(insertAt, 0, item);
+  } else {
+    const first = next.findIndex((block) => insertSlotKey(block) === newKey);
+    next.splice(first < 0 ? next.length : first, 0, item);
+  }
+  return next;
+}
+
 export function applySections(html: string, layout?: SectionLayout): string {
   let next = html.replace(INSERT_RE, "");
   const found = findCliSections(next);
@@ -61,8 +117,7 @@ export function applySections(html: string, layout?: SectionLayout): string {
       chunks.push(wrapInsert(extra));
     }
   }
-  for (const extra of inserts.filter((item) => !item.afterId && item.html.trim())) {
-    chunks.unshift(wrapInsert(extra));
-  }
+  const leading = inserts.filter((item) => !item.afterId && item.html.trim());
+  if (leading.length) chunks.unshift(...leading.map(wrapInsert));
   return prefix + chunks.join("") + suffix;
 }

@@ -77,3 +77,17 @@ Craft не редактирует страницу. Craft редактирует
 
 - **Посетитель** на `craft.nordic-builder.ru`: 1 страница → preview. Не полный сайт.
 - **Оператор** в `/admin`: миграция по тарифу, домен, ZIP. Полигон выкладки — `demo.nordic-builder.ru`, не конструктор nordic-builder.ru.
+
+## Portable live-editor (пакет клиента)
+
+Редактор в ZIP и на полигоне — не Next.js. Исходники:
+
+- `src/modules/export/portable/admin.html` — chrome (страницы, вкладки, инспектор)
+- `src/modules/export/portable/canvas.js` — скрипт внутри iframe HTML
+- `src/modules/export/portable/server.mjs` — Node на хостинге клиента, inject canvas
+- `src/modules/export/portable/patch.cjs` — тот же DOM patch, что на Craft
+
+Полигон: `https://demo.nordic-builder.ru` · `/admin` · PM2 `craft-demo-polygon` · порт 3041.  
+После правок portable — **скопировать** эти файлы в `/var/www/www-root/data/www/demo.nordic-builder.ru/` и `pm2 restart craft-demo-polygon`. Источник practic-hub.ru не перезаписывать.
+
+Канвас: вкладки Шапка / Меню / Подвал / HTML-код показывают **только** этот chrome (как Тильда), не всю страницу. Подробности: [live-editor.md](./live-editor.md), ADR-0030…0032.

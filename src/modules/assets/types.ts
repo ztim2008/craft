@@ -1,7 +1,7 @@
 export const ASSET_LIMITS = {
   maxFileBytes: 8 * 1024 * 1024,
-  maxTotalBytes: 250 * 1024 * 1024,
-  maxAssets: 400,
+  maxTotalBytes: 800 * 1024 * 1024,
+  maxAssets: 2500,
   timeoutMs: 20_000,
   concurrency: 6,
   maxDiscoverRounds: 3,

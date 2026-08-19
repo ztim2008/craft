@@ -12,6 +12,7 @@ import { injectPreviewBase, previewAssetHref } from "./previewBase";
 import {
   importedPagePathSet,
   pageOutputPath,
+  pagePreviewLinkReplacements,
   relativeFromCss,
   rewriteUnimportedPageHrefs,
   rewriteUrls,
@@ -134,46 +135,14 @@ export async function collectProjectAssets(input: {
   const jobId = path.basename(input.projectRoot);
   const previewOrigin = "https://craft.nordic-builder.ru";
 
-  function normalizeUrl(raw: string): string {
-    try {
-      const url = new URL(raw);
-      url.hash = "";
-      if (url.pathname !== "/" && url.pathname.endsWith("/")) {
-        url.pathname = url.pathname.slice(0, -1);
-      }
-      return url.toString();
-    } catch {
-      return raw;
-    }
-  }
-
   function previewPathFor(pagePath: string): string {
     const outRel = pageOutputPath(pagePath);
     return `/preview/${jobId}/${outRel === "index.html" ? "" : outRel.replace(/index\.html$/, "")}`;
   }
 
-  // Preview-only: переписываем ссылки на другие страницы на локальные `/preview/{jobId}/...`,
-  // чтобы навигация по меню/карточкам работала внутри preview.
-  const pageLinkReplacements: Array<{ from: string; to: string }> = [];
-  const seenPageReplacements = new Set<string>();
-  for (const page of input.pages) {
-    const previewPath = previewPathFor(page.path);
-    const abs1 = page.finalUrl;
-    const abs2 = normalizeUrl(page.finalUrl);
-    const rooted1 = page.path;
-    const rootedTrim = rooted1 === "/" ? "/" : rooted1.replace(/\/+$/, "");
-    const rootedSlash = rootedTrim === "/" ? "/" : `${rootedTrim}/`;
-
-    const candidates: string[] = Array.from(new Set([abs1, abs2, rootedTrim, rootedSlash])).filter(
-      (from) => from && from !== "/" && from.length > 1,
-    );
-    for (const from of candidates) {
-      const key = `${from}=>${previewPath}`;
-      if (seenPageReplacements.has(key)) continue;
-      seenPageReplacements.add(key);
-      pageLinkReplacements.push({ from, to: previewPath });
-    }
-  }
+  // Preview-only: ссылки на снятые страницы → `/preview/{jobId}/...`.
+  // Только абсолютный URL и href/action, не голый путь (ломает privacy-cs.mail.ru).
+  const pageLinkReplacements = pagePreviewLinkReplacements(input.pages, previewPathFor);
   const homePreview = previewPathFor("/");
   pageLinkReplacements.push(
     { from: `href="/"`, to: `href="${homePreview}"` },

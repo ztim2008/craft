@@ -20,6 +20,7 @@ describe("portable patch.cjs", () => {
       htmlBlocks: [
         { id: "hb-1", sectionId: "n-sec", position: "after" as const, html: "<style>.x{color:red}</style>" },
       ],
+      menuInserts: [],
     };
     assert.equal(portable.applyContent(html, overlay), applyContent(html, overlay));
   });

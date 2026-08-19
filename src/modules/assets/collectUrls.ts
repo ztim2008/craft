@@ -47,7 +47,7 @@ export function extractCssUrls(css: string): string[] {
 
 export function extractHtmlAssetCandidates(html: string): string[] {
   const found: string[] = [];
-  const attr = /(?:src|href|poster|data-src)=['"]([^'"]+)['"]/gi;
+  const attr = /(?:src|href|poster|data-src|content)=['"]([^'"]+)['"]/gi;
   for (const match of html.matchAll(attr)) {
     found.push(match[1]);
   }
@@ -64,6 +64,7 @@ export function extractHtmlAssetCandidates(html: string): string[] {
     found.push(...extractHttpUrls(match[1]));
   }
   found.push(...extractCraftumProxyUrls(html));
+  found.push(...extractHttpUrls(html));
   return found;
 }
 

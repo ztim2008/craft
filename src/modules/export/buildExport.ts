@@ -65,23 +65,30 @@ export async function buildExportZip(
   await cp(siteRoot, path.join(staging, "public"), { recursive: true });
 
   const overlay = await getContent(jobId);
+  let similar;
+  try {
+    const model = JSON.parse(await readFile(path.join(root, "page-model.json"), "utf8"));
+    similar = model.similar;
+  } catch {
+    similar = undefined;
+  }
   const publicRoot = path.join(staging, "public");
   const htmlFiles = await walkFiles(publicRoot, new Set([".html"]));
   for (const file of htmlFiles) {
     let html = await readFile(file, "utf8");
-    html = rewriteForExport(html, jobId, origin);
+    html = rewriteForExport(html, jobId, origin, sourceUrl);
     html = injectFormBridge(html, "/api/form");
     const rel = path.relative(publicRoot, file);
     const sourceFile = path.join(staging, "data", "source", rel);
     await mkdir(path.dirname(sourceFile), { recursive: true });
     await writeFile(sourceFile, html, "utf8");
-    html = applyContent(html, overlay, pagePathFromRel(rel));
+    html = applyContent(html, overlay, pagePathFromRel(rel), similar);
     await writeFile(file, html, "utf8");
   }
   const textFiles = await walkFiles(publicRoot, new Set([".css", ".js", ".xml", ".txt"]));
   for (const file of textFiles) {
     const raw = await readFile(file, "utf8");
-    const next = rewriteForExport(raw, jobId, origin);
+    const next = rewriteForExport(raw, jobId, origin, sourceUrl);
     if (next !== raw) await writeFile(file, next, "utf8");
   }
 
@@ -104,6 +111,7 @@ export async function buildExportZip(
   await cp(path.join(PORTABLE_DIR, "server.mjs"), path.join(staging, "server.mjs"));
   await cp(path.join(PORTABLE_DIR, "patch.cjs"), path.join(staging, "patch.cjs"));
   await cp(path.join(PORTABLE_DIR, "admin.html"), path.join(staging, "admin.html"));
+  await cp(path.join(PORTABLE_DIR, "canvas.js"), path.join(staging, "canvas.js"));
   const port = options.nodePort && options.nodePort > 0 ? options.nodePort : 3000;
   const password = options.adminPassword?.trim() || "смените-пароль";
   const instruction = deployInstructionTxt({

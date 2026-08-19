@@ -71,9 +71,11 @@ export async function GET(
     const { getContent } = await import("@/modules/content/store");
     const { applyContent } = await import("@/modules/content/applyContent");
     const overlay = await getContent(id);
+    const { getPageModel } = await import("@/modules/pageModel/buildPageModel");
+    const model = await getPageModel(id);
     const rel = path.relative(siteRoot, file);
     const { pagePathFromRel } = await import("@/modules/content/applySeo");
-    let html = applyContent(raw.toString("utf8"), overlay, pagePathFromRel(rel));
+    let html = applyContent(raw.toString("utf8"), overlay, pagePathFromRel(rel), model?.similar);
     html = injectPreviewBase(html, id);
     if (job.homepageOnly) html = injectDemoLeadBar(html, id);
     const { injectFormBridge } = await import("@/modules/forms/formBridge");

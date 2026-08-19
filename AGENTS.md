@@ -6,3 +6,6 @@
 - Puck не рендерит сайт. Legacy HTML + DOM patch.
 - Секреты и `.env` не коммитить. Снапшоты в `storage/` не коммитить.
 - Перед правками: `docs/architecture.md`, `docs/mvp-plan.md`, `docs/decisions.md`
+- Live-editor / полигон / что не трогать: `docs/live-editor.md`
+- Журнал дня: `docs/devlog.md`
+- План на завтра (20.08, утверждён): `docs/plan-2026-08-20.md`

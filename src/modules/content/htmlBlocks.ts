@@ -44,7 +44,58 @@ function findElementRange(html: string, nodeId: string): { start: number; end: n
 }
 
 function wrapBlock(block: HtmlBlock): string {
-  return `<!--craft-block:${block.id}-->${block.html}<!--/craft-block:${block.id}-->`;
+  const flow = block.position === "before" || block.position === "after";
+  if (!flow && block.hidden) return "";
+  const safeId = String(block.id).replace(/[^a-zA-Z0-9_-]/g, "");
+  const inner = flow
+    ? `<div data-craft-html-block="${safeId}"${block.hidden ? " hidden data-craft-hidden=\"true\"" : ""}>${block.html}</div>`
+    : block.html;
+  return `<!--craft-block:${safeId}-->${inner}<!--/craft-block:${safeId}-->`;
+}
+
+export function isFlowHtmlBlock(block: HtmlBlock): boolean {
+  return block.position === "before" || block.position === "after";
+}
+
+export function moveHtmlBlock(
+  blocks: HtmlBlock[],
+  id: string,
+  dir: "up" | "down",
+  sectionOrder: string[],
+): HtmlBlock[] {
+  const next = blocks.slice();
+  const block = next.find((item) => item.id === id);
+  if (!block || !isFlowHtmlBlock(block)) return next;
+  const slot = next.filter(
+    (item) => isFlowHtmlBlock(item) && item.sectionId === block.sectionId && item.position === block.position,
+  );
+  const slotIndex = slot.findIndex((item) => item.id === id);
+  const swapWith =
+    dir === "up" && slotIndex > 0 ? slot[slotIndex - 1] : dir === "down" && slotIndex < slot.length - 1 ? slot[slotIndex + 1] : null;
+  if (swapWith) {
+    const i = next.findIndex((item) => item.id === block.id);
+    const j = next.findIndex((item) => item.id === swapWith.id);
+    if (i >= 0 && j >= 0) {
+      const tmp = next[i];
+      next[i] = next[j];
+      next[j] = tmp;
+    }
+    return next;
+  }
+  const si = sectionOrder.indexOf(block.sectionId);
+  if (dir === "up") {
+    if (block.position === "after") block.position = "before";
+    else if (si > 0) {
+      block.sectionId = sectionOrder[si - 1];
+      block.position = "after";
+    }
+  } else if (block.position === "before") {
+    block.position = "after";
+  } else if (si >= 0 && si < sectionOrder.length - 1) {
+    block.sectionId = sectionOrder[si + 1];
+    block.position = "before";
+  }
+  return next;
 }
 
 function insertSlot(html: string, position: HtmlBlock["position"], chunk: string): string {
@@ -68,6 +119,7 @@ export function applyHtmlBlocks(html: string, blocks: HtmlBlock[]): string {
   for (const block of blocks) {
     if (!String(block.html || "").trim()) continue;
     const wrapped = wrapBlock(block);
+    if (!wrapped) continue;
     if (block.position === "head" || block.position === "bodyStart" || block.position === "bodyEnd") {
       next = insertSlot(next, block.position, wrapped);
       continue;

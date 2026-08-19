@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/modules/security/urlGuard.test.ts src/modules/crawler/discoverLinks.test.ts src/modules/assets/assets.test.ts src/modules/pageModel/analyzeHtml.test.ts src/modules/content/patchHtml.test.ts src/modules/content/htmlBlocks.test.ts src/modules/content/applySeo.test.ts src/modules/content/applySections.test.ts src/modules/forms/forms.test.ts src/modules/export/rewriteForExport.test.ts src/modules/billing/plans.test.ts src/modules/export/portable/patch.test.ts src/modules/clients/clients.test.ts src/modules/export/instruction.test.ts",
+    "test": "tsx --test src/modules/security/urlGuard.test.ts src/modules/crawler/discoverLinks.test.ts src/modules/assets/assets.test.ts src/modules/pageModel/analyzeHtml.test.ts src/modules/pageModel/sectionScope.test.ts src/modules/pageModel/similarWidgets.test.ts src/modules/content/patchHtml.test.ts src/modules/content/linkAction.test.ts src/modules/content/htmlBlocks.test.ts src/modules/content/applySeo.test.ts src/modules/content/applySections.test.ts src/modules/content/menuInserts.test.ts src/modules/forms/forms.test.ts src/modules/export/rewriteForExport.test.ts src/modules/billing/plans.test.ts src/modules/export/portable/patch.test.ts src/modules/clients/clients.test.ts src/modules/export/instruction.test.ts",
     "e2e": "tsx scripts/e2e-walk.ts",
     "start:prod": "next start -p 3040"
   },
