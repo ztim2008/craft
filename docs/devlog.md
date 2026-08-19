@@ -86,26 +86,34 @@
 
 ## GitHub setup
 
-Репозиторий инициализирован локально. Remote пока нет.
+Репозиторий: **https://github.com/ztim2008/craft**
 
-### На сервере (уже сделано)
+Локально: branch `main`, commit `5a69e21`, remote `origin` → `git@github.com:ztim2008/craft.git`
+
+### Push с сервера (нужен доступ ztim2008)
+
+На сервере SSH-ключ привязан к аккаунту `bilarius1-tech` — push в `ztim2008/craft` отклонён. Варианты:
+
+**A) С вашего ПК** (если залогинены в ztim2008):
 
 ```bash
-cd /var/www/www-root/data/www/craft.nordic-builder.ru
-git add -A && git commit -m "..."
+git clone git@github.com:ztim2008/craft.git
+# или добавить remote к копии с сервера через scp/rsync
+git push -u origin main
 ```
 
-### С вашего ПК или после установки gh
+**B) Deploy key на сервере** для `ztim2008/craft`:
+
+1. GitHub → repo → Settings → Deploy keys → Add
+2. Публичный ключ с сервера (сгенерировать отдельный для craft)
+3. `git push -u origin main`
+
+**C) Personal Access Token (HTTPS)**:
 
 ```bash
-# 1. Создать репозиторий на GitHub (private)
-#    https://github.com/new → craft-kraftum-migration (private)
-
-# 2. На сервере
-cd /var/www/www-root/data/www/craft.nordic-builder.ru
-git remote add origin git@github.com:YOUR_USER/craft-kraftum-migration.git
-git branch -M main
+git remote set-url origin https://github.com/ztim2008/craft.git
 git push -u origin main
+# username: ztim2008, password: ghp_...
 ```
 
 **Не коммитить:** `.env*`, `storage/` (уже в `.gitignore`).
