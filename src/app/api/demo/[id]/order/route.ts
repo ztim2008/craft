@@ -3,6 +3,7 @@ import { getLivePlan } from "@/modules/billing/plans";
 import { allowRate, clientIp } from "@/modules/billing/rateLimit";
 import { getImportJob } from "@/modules/jobs/store";
 import { sendLeadEmail } from "@/modules/forms/sendEmail";
+import { normalizeOwnDomain } from "@/modules/clients/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,9 +34,15 @@ export async function POST(request: Request, context: RouteContext) {
     });
   }
 
-  let body: { plan?: string; name?: string; email?: string; phone?: string };
+  let body: { plan?: string; name?: string; email?: string; phone?: string; domain?: string };
   try {
-    body = (await request.json()) as { plan?: string; name?: string; email?: string; phone?: string };
+    body = (await request.json()) as {
+      plan?: string;
+      name?: string;
+      email?: string;
+      phone?: string;
+      domain?: string;
+    };
   } catch {
     return Response.json({ error: "Ожидался JSON" }, { status: 400 });
   }
@@ -47,6 +54,15 @@ export async function POST(request: Request, context: RouteContext) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return Response.json({ error: "Укажите email" }, { status: 400 });
   }
+  let domain: string;
+  try {
+    domain = normalizeOwnDomain(body.domain || "");
+  } catch (error) {
+    return Response.json(
+      { error: error instanceof Error ? error.message : "Укажите ваш домен" },
+      { status: 400 },
+    );
+  }
 
   const order = await createOrder({
     jobId: id,
@@ -54,6 +70,9 @@ export async function POST(request: Request, context: RouteContext) {
     name,
     email,
     phone: body.phone,
+    domain,
+    sourceUrl: job.sourceUrl,
+    channel: "demo",
     amountRub: plan.amountRub,
   });
 
@@ -69,6 +88,7 @@ export async function POST(request: Request, context: RouteContext) {
         `Демо: https://craft.nordic-builder.ru/demo/${id}`,
         `Имя: ${name}`,
         `Email: ${email}`,
+        `Домен (отвязать от Крафтума): ${domain}`,
         body.phone ? `Телефон: ${body.phone}` : "",
         "",
         "ЮKassa пока не подключена — отметьте оплату в /admin/orders и клиент скачает ZIP.",

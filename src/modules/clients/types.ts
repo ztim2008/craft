@@ -26,6 +26,21 @@ export function originFromDomain(raw: string): string {
   return `https://${host}`;
 }
 
+export function isConstructorHost(host: string): boolean {
+  const h = host.toLowerCase().replace(/^www\./, "");
+  return h === "craftum.io" || h.endsWith(".craftum.io") || h === "craftum.ru" || h.endsWith(".craftum.ru");
+}
+
+export function suggestDomainFromSourceUrl(url: string): string {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, "");
+    if (!host || isConstructorHost(host)) return "";
+    return host;
+  } catch {
+    return "";
+  }
+}
+
 export function normalizeDomain(raw: string): string {
   let value = raw.trim().toLowerCase();
   value = value.replace(/^https?:\/\//, "");
@@ -37,6 +52,23 @@ export function normalizeDomain(raw: string): string {
     throw new Error("Укажите домен вида example.ru");
   }
   return value;
+}
+
+/** Домен клиента — его собственный, не адрес на Крафтуме. */
+export function normalizeOwnDomain(raw: string): string {
+  const host = normalizeDomain(raw);
+  if (isConstructorHost(host)) {
+    throw new Error(
+      "Укажите ваш домен (example.ru), не адрес на Крафтуме. Домен остаётся вашим — его только отвязать.",
+    );
+  }
+  return host;
+}
+
+export function parseOptionalOwnDomain(raw: string): string | undefined {
+  const value = raw.trim();
+  if (!value) return undefined;
+  return normalizeOwnDomain(value);
 }
 
 export function normalizePort(raw: unknown): number {

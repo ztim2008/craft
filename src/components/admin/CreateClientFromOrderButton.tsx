@@ -11,14 +11,16 @@ export function CreateClientFromOrderButton({
   sourceUrl,
   jobId,
   orderId,
+  domain: suggestedDomain,
 }: {
   name: string;
   email: string;
   phone?: string;
   plan: string;
   sourceUrl: string;
-  jobId: string;
+  jobId?: string;
   orderId: string;
+  domain?: string;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +28,15 @@ export function CreateClientFromOrderButton({
 
   async function run() {
     setError(null);
-    const domain = window.prompt("Домен клиента (example.ru)", "");
+    let site = sourceUrl.trim();
+    if (!site) {
+      site = window.prompt("URL сайта на Крафтуме", "") || "";
+    }
+    if (!site) return;
+    const domain = window.prompt(
+      "Домен клиента — тот, что уже у него. Отвяжем от Крафтума, новый не покупаем.",
+      suggestedDomain || "",
+    );
     if (!domain) return;
     setPending(true);
     try {
@@ -38,8 +48,8 @@ export function CreateClientFromOrderButton({
           email,
           phone,
           plan,
-          sourceUrl,
-          jobId,
+          sourceUrl: site,
+          jobId: jobId || undefined,
           orderId,
           domain,
         }),

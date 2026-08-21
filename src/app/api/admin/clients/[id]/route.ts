@@ -1,5 +1,5 @@
 import { getClient, saveClient } from "@/modules/clients/store";
-import { normalizeDomain, normalizeHosting, normalizePort } from "@/modules/clients/types";
+import { normalizeHosting, normalizeOwnDomain, normalizePort } from "@/modules/clients/types";
 import type { PlanId } from "@/modules/billing/types";
 
 export const runtime = "nodejs";
@@ -41,7 +41,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const next = await saveClient({
       ...current,
       name: body.name !== undefined ? body.name.trim() : current.name,
-      domain: body.domain !== undefined ? normalizeDomain(body.domain) : current.domain,
+      domain: body.domain !== undefined ? normalizeOwnDomain(body.domain) : current.domain,
       plan: body.plan === "pro" || body.plan === "basic" ? body.plan : current.plan,
       sourceUrl: body.sourceUrl !== undefined ? body.sourceUrl.trim() : current.sourceUrl,
       jobId: body.jobId !== undefined ? body.jobId || undefined : current.jobId,

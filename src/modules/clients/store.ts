@@ -5,8 +5,8 @@ import { createId } from "@/lib/ids";
 import { STORAGE_ROOT } from "@/lib/storage";
 import type { PlanId } from "@/modules/billing/types";
 import {
-  normalizeDomain,
   normalizeHosting,
+  normalizeOwnDomain,
   normalizePort,
   type ClientRecord,
   type HostingKind,
@@ -68,7 +68,7 @@ export async function createClient(input: {
   const client: ClientRecord = {
     id: createId(),
     name: input.name.trim(),
-    domain: normalizeDomain(input.domain),
+    domain: normalizeOwnDomain(input.domain),
     plan: input.plan,
     sourceUrl: input.sourceUrl.trim(),
     jobId: input.jobId || undefined,

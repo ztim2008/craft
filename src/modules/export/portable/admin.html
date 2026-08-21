@@ -182,6 +182,33 @@
       return out;
     }
 
+    function isPopupSection(sec) {
+      return Boolean(sec && (sec.type === "popup" || sec.popup));
+    }
+
+    function popupSections() {
+      const seen = new Set();
+      const out = [];
+      pages().slice().sort((a, b) => Number(b.path === "/") - Number(a.path === "/")).forEach((page) => {
+        (page.sections || []).forEach((sec) => {
+          if (!isPopupSection(sec) || seen.has(sec.id)) return;
+          seen.add(sec.id);
+          out.push(Object.assign({ pagePath: page.path }, sec));
+        });
+      });
+      return out;
+    }
+
+    function popupIds() {
+      return new Set(popupSections().map((sec) => String(sec.id).toLowerCase()));
+    }
+
+    function sectionTitle(sec) {
+      if (!sec) return "";
+      if (isPopupSection(sec)) return "Попап";
+      return sec.label || sec.id;
+    }
+
     function uniqueSimilarWidgets() {
       ensureScopes();
       const byKey = new Map();
@@ -735,7 +762,7 @@
         if (!siteIds().has(id)) {
           items.push({
             id,
-            label: meta.label || id,
+            label: sectionTitle(meta) || id,
             insert: false,
             hidden: layout.hidden.includes(id),
           });
@@ -752,7 +779,7 @@
       const nav = document.getElementById("outline-list");
       if (!nav) return;
       nav.innerHTML = "";
-      nav.appendChild(el('<p class="muted">Шапка, подвал, HTML-код и виджеты — вкладки сверху. Правка с главной на все страницы.</p>'));
+      nav.appendChild(el('<p class="muted">Шапка и подвал — вкладки сверху. Попап-формы в списке страницы: клик открывает окно, кнопки на канвасе тоже.</p>'));
       const items = outlineItems();
       if (!items.length) {
         nav.appendChild(el('<p class="muted">Нет секций этой страницы</p>'));
@@ -793,6 +820,8 @@
           "*",
         );
       }
+      if (!insert) state.selectedId = "";
+      paintInspector();
     }
 
     function paintNav() {
@@ -1330,11 +1359,18 @@
       return lab;
     }
 
+    function popupIdFromHref(href) {
+      const m = String(href || "").match(/#(n-[0-9a-f-]{36})\b/i);
+      return m ? m[1].toLowerCase() : null;
+    }
+
     function inferLinkKind(href, download) {
       const h = String(href || "").trim();
       if (download) return "file";
       if (/^tel:/i.test(h)) return "tel";
       if (/^mailto:/i.test(h)) return "mailto";
+      const popupId = popupIdFromHref(h);
+      if (popupId && popupIds().has(popupId)) return "popup";
       if (h.indexOf("#") >= 0 && h !== "#") return "anchor";
       if (!h || h === "#" || h.charAt(0) === "/" || h.charAt(0) === ".") return "page";
       return "external";
@@ -1347,6 +1383,9 @@
       if (kind === "page") {
         href = patch.linkPage || patch.href || "/";
         if (href === "#") href = "/";
+      } else if (kind === "popup") {
+        const hash = String(patch.linkSection || popupIdFromHref(patch.href || "") || "").replace(/^#/, "");
+        href = hash ? ("#" + hash) : "#";
       } else if (kind === "anchor") {
         const page = patch.linkPage && patch.linkPage !== "/" ? String(patch.linkPage).replace(/\/?$/, "/") : "";
         const hash = String(patch.linkSection || "").replace(/^#/, "");
@@ -1413,7 +1452,7 @@
     }
 
     function isLinkField(field) {
-      return field.type === "link" || field.type === "button" || field.type === "phone";
+      return field.type === "link" || field.type === "button" || field.type === "phone" || Boolean(field.href);
     }
 
     function commitLinkField(field, textValue, extras) {
@@ -1434,6 +1473,7 @@
       const kindSel = document.createElement("select");
       [
         ["page", "Страница сайта"],
+        ["popup", "Попап / форма"],
         ["anchor", "Якорь на секцию"],
         ["external", "Внешняя ссылка"],
         ["tel", "Телефон"],
@@ -1464,12 +1504,18 @@
         const blank = extras.querySelector("[data-k=blank]");
         const nofollow = extras.querySelector("[data-k=nofollow]");
         if (k === "page" || k === "anchor") next.linkPage = pageSel ? pageSel.value : "/";
-        if (k === "anchor") next.linkSection = secSel ? secSel.value : "";
+        if (k === "anchor" || k === "popup") next.linkSection = secSel ? secSel.value : "";
         if (k === "external" || k === "file" || k === "tel" || k === "mailto") next.linkUrl = urlIn ? urlIn.value : "";
         next.linkBlank = Boolean(blank && blank.checked);
         next.linkNofollow = Boolean(nofollow && nofollow.checked);
         next.linkDownload = k === "file";
         commitLinkField(field, currentText(), next);
+        if (k === "popup" && next.linkSection) {
+          const frame = document.getElementById("canvas");
+          if (frame && frame.contentWindow) {
+            frame.contentWindow.postMessage({ source: "craft-host", openPopup: next.linkSection }, "*");
+          }
+        }
       }
 
       function fillExtras() {
@@ -1505,13 +1551,35 @@
           ((page && page.sections) || []).forEach((sec) => {
             const opt = document.createElement("option");
             opt.value = sec.id;
-            opt.textContent = sec.label || sec.id;
+            opt.textContent = sectionTitle(sec);
             sel.appendChild(opt);
           });
           sel.value = keepSec || patch.linkSection || parts.section;
           sel.addEventListener("change", commit);
           lab.appendChild(sel);
           extras.appendChild(lab);
+        }
+        if (k === "popup") {
+          const list = popupSections();
+          if (!list.length) {
+            extras.appendChild(el('<p class="muted">На этом сайте нет всплывающих форм Крафтума.</p>'));
+          } else {
+            const lab = el("<label><span>Какой попап открыть</span></label>");
+            const sel = document.createElement("select");
+            sel.setAttribute("data-k", "sec");
+            list.forEach((sec) => {
+              const opt = document.createElement("option");
+              opt.value = sec.id;
+              opt.textContent = (sec.fields && sec.fields[0] && sec.fields[0].value) ? String(sec.fields[0].value).slice(0, 48) : "Попап";
+              sel.appendChild(opt);
+            });
+            sel.value = keepSec || patch.linkSection || parts.section;
+            if (!Array.prototype.some.call(sel.options, (o) => o.value === sel.value) && sel.options[0]) sel.value = sel.options[0].value;
+            sel.addEventListener("change", commit);
+            lab.appendChild(sel);
+            extras.appendChild(lab);
+            extras.appendChild(el('<p class="muted">Тот же попап, что уже есть в HTML. Не новая вкладка и не новая форма.</p>'));
+          }
         }
         if (k === "external" || k === "file" || k === "tel" || k === "mailto") {
           const lab = el("<label><span></span></label>");
@@ -1657,8 +1725,16 @@
       const field = fieldById(state.selectedId);
       box.appendChild(el(state.view === "sections"
         ? '<p class="hint">Наведите на секцию на канвасе: вверх, вниз, скрыть, удалить. «+ HTML» открывает окно вставки кода.</p>'
-        : '<p class="hint">Текст правьте на странице. У кнопки и ссылки действие клика — справа: страница, якорь, внешняя, телефон, файл.</p>'));
-      if (!field) {
+        : '<p class="hint">Текст — на канвасе. У кнопки действие клика справа: страница, попап, якорь, внешняя, телефон, файл.</p>'));
+      const popupSec = ((currentPage() && currentPage().sections) || []).find((sec) => sec.id === state.selectedSection && isPopupSection(sec));
+      if (!field && popupSec) {
+        box.appendChild(el('<p class="hint">Это всплывающая форма с донора. Заголовок и поля правятся здесь или внутри открытого окна на канвасе.</p>'));
+        const head = el('<div class="card"><div class="muted"></div></div>');
+        head.querySelector(".muted").textContent = sectionTitle(popupSec);
+        box.appendChild(head);
+        (popupSec.fields || []).forEach((item) => box.appendChild(fieldInput(item)));
+        (popupSec.forms || []).forEach((form) => box.appendChild(formInput(form)));
+      } else if (!field) {
         box.appendChild(el('<div class="card muted">Блок не размечен в модели. Запасной список — «Все поля», или HTML-блок.</div>'));
         const page = currentPage();
         (page && page.sections ? page.sections : []).forEach((section) => {

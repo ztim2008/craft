@@ -121,13 +121,22 @@
       if (mode === "footer") match = cls.indexOf(" cli-footer ") >= 0;
       if (mode === "html") match = cls.indexOf(" cli-html ") >= 0 || cls.indexOf(" craft-html-quiet ") >= 0 || quiet[sec.id];
       if (mode === "widget") match = cls.indexOf(" pic") >= 0 || (sec.getAttribute && sec.getAttribute("data-custom-class"));
+      var isPop =
+        cls.indexOf(" cli-popup ") >= 0 || (sec.getAttribute && sec.getAttribute("data-popup") === "true");
+      if (isPop) {
+        sec.classList.remove("craft-focus-out");
+        return;
+      }
       if (keep[sec.id]) match = true;
       if (match) sec.classList.remove("craft-focus-out");
       else sec.classList.add("craft-focus-out");
     });
     if (mode) {
       window.scrollTo(0, 0);
-      var first = document.querySelector("section.cli-block:not(.craft-focus-out)");
+      document.querySelectorAll("section.cli-popup.show, [data-popup='true'].show").forEach(function (n) {
+        n.classList.remove("show");
+      });
+      var first = document.querySelector("section.cli-block:not(.craft-focus-out):not(.cli-popup)");
       if (first) first.scrollIntoView({ block: "start" });
     }
   }
@@ -141,9 +150,35 @@
       el = document.querySelector('[data-craft-insert="' + sid + '"]') || document.querySelector('[data-craft-html-block="' + sid + '"]');
     } else el = document.getElementById(id);
     if (!el) el = document.getElementById(id);
+    if (isPopup(el)) {
+      showPopup(el);
+      return;
+    }
     if (!el || el.classList.contains("craft-focus-out")) return;
     el.classList.add("craft-sec-on");
     el.scrollIntoView({ block: "start", behavior: "smooth" });
+  }
+  function isPopup(el) {
+    if (!el) return false;
+    return el.getAttribute("data-popup") === "true" || (" " + (el.className || "") + " ").indexOf(" cli-popup ") >= 0;
+  }
+  function popupFromHref(href) {
+    var m = String(href || "").match(/#(n-[0-9a-f-]{36})\b/i);
+    if (!m) return null;
+    var el = document.getElementById(m[1]);
+    return isPopup(el) ? el : null;
+  }
+  function hidePopup(el) {
+    if (!el) return;
+    el.classList.remove("show");
+  }
+  function showPopup(el) {
+    if (!el) return;
+    document.querySelectorAll("section.cli-popup.show, [data-popup='true'].show").forEach(function (n) {
+      if (n !== el) n.classList.remove("show");
+    });
+    el.classList.remove("craft-focus-out");
+    el.classList.add("show");
   }
   function boot() {
     mountBars();
@@ -225,6 +260,36 @@
       "click",
       function (e) {
         if (e.target && e.target.closest && e.target.closest(".craft-sec-bar")) return;
+        var closer = e.target && e.target.closest && e.target.closest("[data-popup-close]");
+        if (closer) {
+          e.preventDefault();
+          e.stopPropagation();
+          var closed = closer.closest('[data-popup="true"]') || closer.closest("section.cli-popup");
+          hidePopup(closed);
+          return;
+        }
+        if (e.target && e.target.getAttribute && e.target.getAttribute("data-popup") === "true") {
+          e.preventDefault();
+          e.stopPropagation();
+          hidePopup(e.target);
+          return;
+        }
+        var link = e.target && e.target.closest && e.target.closest("a[href]");
+        var pop = link ? popupFromHref(link.getAttribute("href") || "") : null;
+        if (pop) {
+          e.preventDefault();
+          e.stopPropagation();
+          showPopup(pop);
+          var refPop = sectionRef(e.target);
+          if (refPop) postOutline(refPop, false);
+          if (link.getAttribute && link.getAttribute("data-craft-field")) {
+            startEdit(link);
+            placeCaret(link, e);
+          } else {
+            parent.postMessage({ source: "craft-canvas", nodeId: link.id }, "*");
+          }
+          return;
+        }
         if (e.target && e.target.closest && e.target.closest("[data-craft-editing]")) {
           e.stopPropagation();
           return;
@@ -298,6 +363,10 @@
       if (e.data.focus !== undefined) applyFocus(e.data.focus);
       if (e.data.revealSection && e.data.revealSection.id) {
         revealSection(e.data.revealSection.id, e.data.revealSection.insert);
+      }
+      if (e.data.openPopup) {
+        var opened = document.getElementById(e.data.openPopup);
+        if (isPopup(opened)) showPopup(opened);
       }
       if (e.data.highlight) {
         document.querySelectorAll(".craft-hit").forEach(function (n) {

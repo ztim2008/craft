@@ -15,6 +15,10 @@ export type Order = {
   name: string;
   email: string;
   phone?: string;
+  domain?: string;
+  sourceUrl?: string;
+  comment?: string;
+  channel?: "demo" | "landing";
   status: OrderStatus;
   amountRub: number;
   downloadToken?: string;
@@ -42,20 +46,28 @@ export async function getOrder(id: string): Promise<Order | null> {
 }
 
 export async function createOrder(input: {
-  jobId: string;
+  jobId?: string;
   plan: PlanId;
   name: string;
   email: string;
   phone?: string;
+  domain?: string;
+  sourceUrl?: string;
+  comment?: string;
+  channel?: "demo" | "landing";
   amountRub: number;
 }): Promise<Order> {
   const order: Order = {
     id: createId(),
-    jobId: input.jobId,
+    jobId: input.jobId?.trim() || "",
     plan: input.plan,
     name: input.name.trim(),
     email: input.email.trim().toLowerCase(),
     phone: input.phone?.trim() || undefined,
+    domain: input.domain?.trim() || undefined,
+    sourceUrl: input.sourceUrl?.trim() || undefined,
+    comment: input.comment?.trim() || undefined,
+    channel: input.channel || (input.jobId ? "demo" : "landing"),
     status: "pending",
     amountRub: input.amountRub,
     createdAt: new Date().toISOString(),

@@ -19,5 +19,7 @@ describe("injectFormBridge", () => {
     const html = injectFormBridge("<html><body>x</body></html>", "/api/preview/11111111-1111-1111-1111-111111111111/form");
     assert.match(html, /\/api\/preview\/11111111-1111-1111-1111-111111111111\/form/);
     assert.match(html, /<\/script><\/body>/);
+    assert.match(html, /data-popup/);
+    assert.match(html, /cli-popup/);
   });
 });

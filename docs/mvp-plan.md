@@ -2,7 +2,7 @@
 
 Обновлено: 2026-08-19. Статусы: ✅ готово · 🔄 в работе · 📋 запланировано
 
-Журнал: [devlog.md](./devlog.md) · Канвас/полигон: [live-editor.md](./live-editor.md) · **Завтра 20.08:** [plan-2026-08-20.md](./plan-2026-08-20.md) · Продукт: [product-plan.md](./product-plan.md) · Админка: [admin-spec.md](./admin-spec.md)
+Журнал: [devlog.md](./devlog.md) · Канвас/полигон: [live-editor.md](./live-editor.md) · **После 21.08:** [plan-2026-08-22.md](./plan-2026-08-22.md) · Продукт: [product-plan.md](./product-plan.md) · Админка: [admin-spec.md](./admin-spec.md)
 
 ---
 
@@ -120,7 +120,9 @@ URL: ma-maniere-ballet.ru, kc3748.craftum.io, madlenmartynova.ru, sx7238.craftum
 
 ЮKassa — после Phase 15. AI и Agent API — не раньше.
 
-Live-editor на полигоне (вечер 2026-08-19): меню-клон, scope site/page, вкладки шапка/подвал/html/**виджеты .pic**, изоляция канвы как в Тильде, rewrite донора, отладка скрыта. Шпаргалка: [live-editor.md](./live-editor.md).
+Live-editor на полигоне (вечер 2026-08-19): меню-клон, scope site/page, вкладки шапка/подвал/html/**виджеты .pic**, изоляция канвы как в Тильде, rewrite донора, отладка скрыта. 21.08: попапы Крафтума (`cli-popup` + `show`, ADR-0034) на канвасе и в инспекторе кнопок. Шпаргалка: [live-editor.md](./live-editor.md).
+
+«Добавить страницу» (ADR-0030 слой 3) **отложено**: без модуля статей это пустая кнопка. Конструктор в Craft не вшиваем. Дальше — живые миграции: [plan-2026-08-22.md](./plan-2026-08-22.md).
 
 ---
 

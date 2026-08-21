@@ -20,6 +20,11 @@ function removeAttr(openTag, name) {
   return openTag.replace(new RegExp(`\\s${name}(\\s*=\\s*(["'])[\\s\\S]*?\\2)?`, "i"), "");
 }
 
+function popupIdFromHref(href) {
+  const match = String(href || "").trim().match(/#(n-[0-9a-f-]{36})\b/i);
+  return match ? match[1].toLowerCase() : null;
+}
+
 function inferLinkKind(href, download) {
   const h = String(href || "").trim();
   if (download) return "file";
@@ -37,6 +42,9 @@ function resolveLinkAction(patch) {
   if (kind === "page") {
     href = patch.linkPage || patch.href || "/";
     if (href === "#") href = "/";
+  } else if (kind === "popup") {
+    const hash = String(patch.linkSection || popupIdFromHref(patch.href || "") || "").replace(/^#/, "");
+    href = hash ? `#${hash}` : "#";
   } else if (kind === "anchor") {
     const page = patch.linkPage && patch.linkPage !== "/" ? String(patch.linkPage).replace(/\/?$/, "/") : "";
     const hash = String(patch.linkSection || "").replace(/^#/, "");

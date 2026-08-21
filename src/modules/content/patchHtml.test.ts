@@ -43,6 +43,18 @@ describe("patchHtml", () => {
     assert.match(ext, /rel="noopener noreferrer"/);
   });
 
+  it("writes popup hash href without leaving the page", () => {
+    const html = `<a id="n-cccc-cccc-cccc-cccc-cccccccccccc" class="cli-button" href="/about/">Заказать</a>`;
+    const out = patchHtml(html, {
+      "n-cccc-cccc-cccc-cccc-cccccccccccc": {
+        value: "Заказать",
+        linkKind: "popup",
+        linkSection: "n-4ccbc67d-b99d-447a-9ad4-e78c5c3db929",
+      },
+    });
+    assert.match(out, /href="#n-4ccbc67d-b99d-447a-9ad4-e78c5c3db929"/);
+  });
+
   it("does not dump wrapper text into nested highlight spans", () => {
     const html =
       `<h1 id="n-eeee-eeee-eeee-eeee-eeeeeeeeeeee">КУПИТЬ <span id="n-ffff-ffff-ffff-ffff-ffffffffffff">ПЕЧАТЬЮ</span></h1>`;

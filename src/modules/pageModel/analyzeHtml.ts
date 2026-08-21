@@ -57,6 +57,7 @@ function fieldLabel(type: string, value: string, title: string): string {
 
 function mapType(dataType: string, text: string): PageModelField["type"] {
   if (dataType === "image" || dataType === "logo") return "image";
+  if (dataType === "button") return "button";
   if (dataType === "link" || dataType === "menu-item" || dataType === "social") return "link";
   if (dataType === "code") return "html";
   if (looksLikePhone(text)) return "phone";
@@ -183,6 +184,7 @@ export function analyzeHtml(html: string): PageModelSection[] {
       type,
       label: sectionLabel(type, attr(attrs, "data-custom-class")),
       static: /\bdata-static\b/i.test(attrs),
+      popup: /\bdata-popup\b/i.test(attrs) || type === "popup" || /\bcli-popup\b/.test(className),
       customClass: attr(attrs, "data-custom-class") || undefined,
       fields: extractFields(inner),
       forms: extractForms(inner),

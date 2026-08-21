@@ -62,8 +62,11 @@ export function ClientCardForm({
         <input required name="name" defaultValue={client.name} className="w-full rounded border border-[#8c8f94] px-3 py-2" />
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block text-[#50575e]">Домен</span>
+        <span className="mb-1 block text-[#50575e]">Домен (уже клиента, отвязать от Крафтума)</span>
         <input required name="domain" defaultValue={client.domain} className="w-full rounded border border-[#8c8f94] px-3 py-2" />
+        <span className="mt-1 block text-xs text-[#50575e]">
+          Не *.craftum.io. Сначала выкладка на хостинг, потом отвязка домена.
+        </span>
       </label>
       <label className="block text-sm">
         <span className="mb-1 block text-[#50575e]">Тариф</span>

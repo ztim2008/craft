@@ -49,13 +49,16 @@ export function CreateClientForm({ jobs }: { jobs: JobOption[] }) {
         <input required name="name" className="w-full rounded border border-[#8c8f94] px-3 py-2" />
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block text-[#50575e]">Домен</span>
+        <span className="mb-1 block text-[#50575e]">Домен клиента (уже его, отвязать от Крафтума)</span>
         <input
           required
           name="domain"
           placeholder="client.ru"
           className="w-full rounded border border-[#8c8f94] px-3 py-2"
         />
+        <span className="mt-1 block text-xs text-[#50575e]">
+          Не адрес *.craftum.io. Новый домен не покупаем — только отвязка от конструктора.
+        </span>
       </label>
       <label className="block text-sm">
         <span className="mb-1 block text-[#50575e]">Тариф</span>

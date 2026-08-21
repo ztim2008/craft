@@ -1,19 +1,24 @@
 "use client";
 
 import { formatRub, type Plan } from "@/modules/billing/types";
+import { suggestDomainFromSourceUrl } from "@/modules/clients/types";
+import { ContactLinks } from "@/components/landing/ContactLinks";
 import { useState, type FormEvent } from "react";
 
 export function OrderForm({
   jobId,
   plans,
+  sourceUrl,
 }: {
   jobId: string;
   plans: Plan[];
+  sourceUrl?: string;
 }) {
   const [planId, setPlanId] = useState(plans[0]?.id || "basic");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [domain, setDomain] = useState(() => suggestDomainFromSourceUrl(sourceUrl || ""));
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [done, setDone] = useState(false);
@@ -26,7 +31,7 @@ export function OrderForm({
       const response = await fetch(`/api/demo/${jobId}/order`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ plan: planId, name, email, phone }),
+        body: JSON.stringify({ plan: planId, name, email, phone, domain }),
       });
       const data = (await response.json()) as { error?: string; orderId?: string };
       if (!response.ok) throw new Error(data.error || "Не удалось отправить заявку");
@@ -41,9 +46,13 @@ export function OrderForm({
 
   if (done) {
     return (
-      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-950">
-        Заявка принята. Оператор отметит оплату и соберёт пакет на карточке клиента. ZIP с этой
-        страницы не скачивается.
+      <div className="space-y-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-950">
+        <p>
+          Заявка принята. Домен остаётся вашим — отвяжем его от Крафтума, когда сайт уже будет на
+          вашем хостинге.
+        </p>
+        <p className="text-emerald-900/80">Напишите, если хотите уточнить тариф или сроки:</p>
+        <ContactLinks tone="light" />
       </div>
     );
   }
@@ -86,6 +95,16 @@ export function OrderForm({
         onChange={(e) => setEmail(e.target.value)}
         className="w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm"
       />
+      <label className="block space-y-1">
+        <span className="text-xs text-zinc-500">Ваш домен (уже ваш, не покупаем заново)</span>
+        <input
+          required
+          placeholder="example.ru"
+          value={domain}
+          onChange={(e) => setDomain(e.target.value)}
+          className="w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm"
+        />
+      </label>
       <input
         placeholder="Телефон (необязательно)"
         value={phone}
@@ -93,8 +112,8 @@ export function OrderForm({
         className="w-full rounded-xl border border-zinc-300 px-3 py-2 text-sm"
       />
       <p className="text-xs text-zinc-500">
-        Техподдержка и установка «под ключ» в цену не входят. ЮKassa подключим позже — сейчас счёт
-        или перевод, пакет выдаём вручную.
+        Домен отвяжем от Крафтума после выкладки на ваш хостинг. Сопровождение — по договорённости.
+        Написать: Telegram t.me/bilarius, VK vk.ru/bilarius.
       </p>
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
       <button
@@ -102,7 +121,7 @@ export function OrderForm({
         disabled={pending}
         className="w-full rounded-xl bg-zinc-900 px-4 py-3 text-sm font-medium text-white disabled:opacity-60"
       >
-        {pending ? "Отправка…" : "Оставить заявку на пакет"}
+        {pending ? "Отправка…" : "Оставить заявку на переезд"}
       </button>
     </form>
   );

@@ -13,9 +13,10 @@ export default async function AdminOrdersPage() {
   const orders = await listOrders();
   const rows = await Promise.all(
     orders.map(async (order) => {
-      const job = await getImportJob(order.jobId);
+      const job = order.jobId ? await getImportJob(order.jobId) : null;
       const client = await findClientByOrder(order.id);
-      return { order, sourceUrl: job?.sourceUrl || order.jobId, jobStatus: job?.status, client };
+      const sourceUrl = order.sourceUrl || job?.sourceUrl || "";
+      return { order, sourceUrl, jobStatus: job?.status, client };
     }),
   );
 
@@ -24,7 +25,7 @@ export default async function AdminOrdersPage() {
       <div>
         <h1 className="text-2xl font-semibold">Заявки</h1>
         <p className="mt-1 text-sm text-[#50575e]">
-          Оплата вручную. ZIP и инструкцию отдаёте с карточки клиента, не с публичного демо.
+          С главной и после демо. ZIP отдаёте с карточки клиента.
         </p>
       </div>
       <div className="overflow-hidden rounded border border-[#c3c4c7] bg-white">
@@ -41,28 +42,39 @@ export default async function AdminOrdersPage() {
           <tbody>
             {rows.map(({ order, sourceUrl, jobStatus, client }) => {
               const plan = planCopy(order.plan);
+              const fromLanding = order.channel === "landing" || !order.jobId;
               return (
                 <tr key={order.id} className="border-t border-[#dcdcde] align-top">
                   <td className="px-4 py-3">
                     <div>{order.name}</div>
                     <div className="text-xs text-[#50575e]">{order.email}</div>
                     {order.phone ? <div className="text-xs text-[#50575e]">{order.phone}</div> : null}
+                    {order.domain ? (
+                      <div className="text-xs text-[#50575e]">домен: {order.domain} · отвязать от Крафтума</div>
+                    ) : null}
+                    {order.comment ? <div className="mt-1 text-xs text-[#1d2327]">{order.comment}</div> : null}
                   </td>
                   <td className="max-w-xs px-4 py-3">
-                    <div className="truncate">{sourceUrl}</div>
-                    <div className="text-xs text-[#50575e]">импорт: {jobStatus || "—"}</div>
+                    <div className="truncate">{sourceUrl || "—"}</div>
+                    <div className="text-xs text-[#50575e]">
+                      {fromLanding ? "с главной" : `демо · импорт: ${jobStatus || "—"}`}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     {plan?.name} · {formatRub(order.amountRub)}
                   </td>
                   <td className="px-4 py-3">{order.status}</td>
                   <td className="space-y-2 px-4 py-3">
-                    <Link className="block text-[#2271b1] hover:underline" href={`/demo/${order.jobId}`}>
-                      Демо
-                    </Link>
-                    <Link className="block text-[#2271b1] hover:underline" href={`/admin/jobs/${order.jobId}`}>
-                      Контент
-                    </Link>
+                    {order.jobId ? (
+                      <>
+                        <Link className="block text-[#2271b1] hover:underline" href={`/demo/${order.jobId}`}>
+                          Демо
+                        </Link>
+                        <Link className="block text-[#2271b1] hover:underline" href={`/admin/jobs/${order.jobId}`}>
+                          Контент
+                        </Link>
+                      </>
+                    ) : null}
                     {client ? (
                       <Link className="block text-[#2271b1] hover:underline" href={`/admin/clients/${client.id}`}>
                         Карточка клиента
@@ -76,6 +88,7 @@ export default async function AdminOrdersPage() {
                         sourceUrl={sourceUrl}
                         jobId={order.jobId}
                         orderId={order.id}
+                        domain={order.domain}
                       />
                     )}
                     {order.status !== "paid" ? <MarkPaidButton orderId={order.id} /> : (
@@ -88,7 +101,7 @@ export default async function AdminOrdersPage() {
             {rows.length === 0 ? (
               <tr>
                 <td className="px-4 py-6 text-[#50575e]" colSpan={5}>
-                  Заявок ещё нет. Они появляются с публичной воронки после демо.
+                  Заявок ещё нет. Они приходят с формы на главной и после демо.
                 </td>
               </tr>
             ) : null}

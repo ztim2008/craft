@@ -1,6 +1,6 @@
 import type { SimilarGroup } from "@/modules/pageModel/types";
 
-export type LinkKind = "page" | "anchor" | "external" | "tel" | "mailto" | "file";
+export type LinkKind = "page" | "anchor" | "popup" | "external" | "tel" | "mailto" | "file";
 
 export type FieldPatch = {
   value: string;

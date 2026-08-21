@@ -117,8 +117,15 @@ export function DemoStatus() {
           <div>
             <h2 className="text-xl font-semibold">На свой хостинг</h2>
             <p className="mt-2 text-sm text-zinc-600">
-              Preview — демо одной страницы. ZIP и инструкцию пришлёт оператор после заявки. Это не
-              самообслуживание экспорта.
+              Домен остаётся вашим. Сначала выкладываем сайт на ваш хостинг, потом отвязываем домен
+              от Крафтума. Написать:{" "}
+              <a className="underline" href="https://t.me/bilarius" target="_blank" rel="noreferrer">
+                Telegram
+              </a>
+              {" · "}
+              <a className="underline" href="https://vk.ru/bilarius" target="_blank" rel="noreferrer">
+                VK
+              </a>
             </p>
           </div>
           {demo.order?.status === "pending" ? (
@@ -126,7 +133,7 @@ export function DemoStatus() {
               Заявка уже есть ({demo.order.plan}). Ждём подтверждение оплаты.
             </div>
           ) : plans.length ? (
-            <OrderForm jobId={demo.id} plans={plans} />
+            <OrderForm jobId={demo.id} plans={plans} sourceUrl={demo.sourceUrl} />
           ) : (
             <p className="text-sm text-zinc-500">Загрузка тарифов…</p>
           )}

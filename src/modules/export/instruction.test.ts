@@ -23,6 +23,8 @@ describe("deploy instruction txt", () => {
     assert.match(text, /file:\/\//);
     assert.doesNotMatch(text, /^# /m);
     assert.match(text, /клик по блоку/);
+    assert.match(text, /отвяз/i);
+    assert.match(text, /уже ваш/i);
   });
 
   it("shortens editor chapter when includeEditor is false", () => {

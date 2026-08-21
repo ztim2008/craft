@@ -42,7 +42,13 @@ async function main() {
 
   const home = await fetch("http://127.0.0.1:3040/");
   const homeHtml = await home.text();
-  assert(home.status === 200 && homeHtml.includes("Бесплатное демо"), "public home");
+  assert(
+    home.status === 200 &&
+      homeHtml.includes("Бесплатное демо") &&
+      homeHtml.includes("t.me/bilarius") &&
+      homeHtml.includes("Оставить заявку"),
+    "public home",
+  );
   report.push("user: GET / — landing ok");
 
   const demoDenied = await fetch("http://127.0.0.1:3040/api/demo/import", {

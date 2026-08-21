@@ -25,6 +25,19 @@ describe("analyzeHtml", () => {
     assert.equal(sections[1].type, "cover");
   });
 
+  it("marks Craftum popup form-blocks as popup, not a separate chrome tab", () => {
+    const html = `
+      <section id="n-4ccbc67d-b99d-447a-9ad4-e78c5c3db929" data-popup="true" class="cli-popup cli-block cli-form-block">
+        <form id="n-form-p"><input id="n-in-p" name="Имя" placeholder="Имя" type="text"></form>
+      </section>
+    `;
+    const sections = analyzeHtml(html);
+    assert.equal(sections[0].type, "popup");
+    assert.equal(sections[0].label, "Попап");
+    assert.equal(sections[0].popup, true);
+    assert.equal(sections[0].forms.length, 1);
+  });
+
   it("extracts HTML-code widgets without stripping style tags", () => {
     const html = `
       <section id="n-aaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa" class="cli-block cli-html" data-static="true">

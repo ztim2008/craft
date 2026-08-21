@@ -2,6 +2,7 @@ const SECTION_LABELS: Record<string, string> = {
   header: "Шапка",
   cover: "Обложка",
   footer: "Подвал",
+  popup: "Попап",
   about: "О компании",
   advantages: "Преимущества",
   services: "Услуги",
@@ -23,6 +24,7 @@ export function sectionLabel(type: string, customClass = ""): string {
 }
 
 export function sectionTypeFromClass(className: string): string {
+  if (/\bcli-popup\b/.test(className)) return "popup";
   const parts = className.split(/\s+/).filter(Boolean);
   const typed = parts.find(
     (part) =>

@@ -213,6 +213,8 @@ function injectCanvas(html, fieldIds, sectionLabels, fieldTypes, quietIds) {
 .craft-sec-bar button[data-act="remove"]{background:#8a2424}
 .craft-html-quiet{padding-top:0!important;outline:none!important}
 .craft-focus-out{display:none!important}
+.cli-popup.show{display:flex!important}
+.cli-popup.craft-sec{padding-top:0}
 html[data-craft-focus]:not([data-craft-focus=""]) body{background:#c3c4c7!important}
 html[data-craft-focus="html"] .craft-html-quiet,html[data-craft-focus="html"] .cli-html{min-height:72px;margin:16px;padding:16px!important;outline:1px dashed #2271b1;outline-offset:4px;background:#fff}
 html[data-craft-focus="widget"] section.cli-block.pic,html[data-craft-focus="widget"] section[data-custom-class]{margin:16px;background:#fff}

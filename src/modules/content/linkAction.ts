@@ -8,11 +8,27 @@ export type ResolvedLink = {
   download?: boolean;
 };
 
-export function inferLinkKind(href = "", download = false): LinkKind {
+const NODE_HASH_RE = /#(n-[0-9a-f-]{36})\b/i;
+
+export function popupIdFromHref(href = ""): string | null {
+  const match = String(href).trim().match(NODE_HASH_RE);
+  return match ? match[1].toLowerCase() : null;
+}
+
+export function inferLinkKind(
+  href = "",
+  download = false,
+  popupIds?: Iterable<string> | null,
+): LinkKind {
   const h = href.trim();
   if (download) return "file";
   if (/^tel:/i.test(h)) return "tel";
   if (/^mailto:/i.test(h)) return "mailto";
+  const popupId = popupIdFromHref(h);
+  if (popupId && popupIds) {
+    const set = new Set(Array.from(popupIds, (id) => String(id).toLowerCase()));
+    if (set.has(popupId)) return "popup";
+  }
   if (h.includes("#") && h !== "#") return "anchor";
   if (!h || h === "#" || h.startsWith("/") || h.startsWith(".")) return "page";
   return "external";
@@ -27,6 +43,9 @@ export function resolveLinkAction(patch: FieldPatch): ResolvedLink {
   if (kind === "page") {
     href = patch.linkPage || patch.href || "/";
     if (href === "#") href = "/";
+  } else if (kind === "popup") {
+    const hash = (patch.linkSection || popupIdFromHref(patch.href || "") || "").replace(/^#/, "");
+    href = hash ? `#${hash}` : "#";
   } else if (kind === "anchor") {
     const page = patch.linkPage && patch.linkPage !== "/" ? patch.linkPage.replace(/\/?$/, "/") : "";
     const hash = (patch.linkSection || "").replace(/^#/, "");

@@ -8,5 +8,5 @@
 - Перед правками: `docs/architecture.md`, `docs/mvp-plan.md`, `docs/decisions.md`
 - Live-editor / полигон / что не трогать: `docs/live-editor.md`
 - Журнал дня: `docs/devlog.md`
-- План на 20.08 (утверждён): `docs/plan-2026-08-20.md`
-- Промпт новой сессии 20.08: `docs/prompt-2026-08-20.md`
+- План после 21.08: `docs/plan-2026-08-22.md`
+- Промпт новой сессии: `docs/prompt-2026-08-22.md`

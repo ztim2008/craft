@@ -34,6 +34,7 @@ export type PageModelSection = {
   scope?: "site" | "page";
   pageCount?: number;
   static?: boolean;
+  popup?: boolean;
   customClass?: string;
   similarKey?: string;
   fields: PageModelField[];
