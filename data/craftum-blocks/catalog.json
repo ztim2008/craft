@@ -1,0 +1,1271 @@
+{
+  "version": 1,
+  "apiVersion": "v1",
+  "updatedAt": "2026-09-01T18:21:24.562Z",
+  "source": "craft.nordic-builder.ru",
+  "blocks": [
+    {
+      "id": "a1",
+      "name": "a1",
+      "description": "a1",
+      "insert": {
+        "mode": "snapshot",
+        "craftumBlock": {
+          "id": "c462bc8c-d457-4819-a5c8-32e1ff79346d",
+          "priority": "1|i00007:",
+          "slug": {
+            "id": 75,
+            "name": "empty01",
+            "type": "block",
+            "locale": "ru-ru",
+            "title": "empty-01",
+            "keywords": "",
+            "description": "Дизайн-блок",
+            "preview_url": null,
+            "category_id": 75
+          },
+          "title": "empty-01",
+          "content": {
+            "id": "fddc0c2d-37b9-482e-9248-2d8313f0803d",
+            "inner_html": "",
+            "tag": "section",
+            "attrs": {
+              "id": "n-fddc0c2d-37b9-482e-9248-2d8313f0803d",
+              "class": "cli-block cli-cover cli-block--inverse",
+              "data-type": "block-wrapper",
+              "data-resize": true,
+              "data-root-id": "c462bc8c-d457-4819-a5c8-32e1ff79346d",
+              "data-converted": true,
+              "data-design-type": "block-wrapper"
+            },
+            "children": [
+              {
+                "id": "5f727851-4afc-47b6-a53a-1ff9a475b276",
+                "inner_html": "",
+                "tag": "div",
+                "attrs": {
+                  "id": "n-5f727851-4afc-47b6-a53a-1ff9a475b276",
+                  "class": "cli-block__content cli-grid cli-block__content--cover cli-block__content--normal",
+                  "data-type": "grid",
+                  "data-title": "CDN_PUG_COMPONENTS_BLOCK",
+                  "data-root-id": "c462bc8c-d457-4819-a5c8-32e1ff79346d",
+                  "data-converted": true,
+                  "data-design-type": "grid",
+                  "data-design-order": "1",
+                  "data-block-content": true
+                },
+                "children": [
+                  {
+                    "id": "082909f7-2146-4534-b1b0-4a0c58547a1a",
+                    "inner_html": "",
+                    "tag": "div",
+                    "attrs": {
+                      "id": "n-082909f7-2146-4534-b1b0-4a0c58547a1a",
+                      "class": "cli-empty-img cli-empty-img--first",
+                      "data-type": "image-wrapper",
+                      "data-title": "CDN_PUG_COMPONENTS_ICON",
+                      "data-root-id": "c462bc8c-d457-4819-a5c8-32e1ff79346d",
+                      "data-converted": true,
+                      "data-draggable": true,
+                      "data-design-type": "icon"
+                    },
+                    "children": [
+                      {
+                        "id": "7b488444-0338-4cd4-a318-ee44a9c3e123",
+                        "inner_html": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"317\" height=\"363\" viewBox=\"0 0 317 363\"><path d=\"M270.705 75.9608C305.757 119.892 324.916 176.002 313.595 224.936C302.274 273.869 260.037 315.626 209.527 339.984C159.017 364.342 100.016 371.519 66.4873 347.378C32.7413 323.02 24.6858 267.127 14.4532 214.062C4.00278 160.996 -8.40703 110.758 11.1874 70.5237C30.7819 30.0721 82.816 -0.157868 133.979 0.277096C185.143 0.712059 235.87 32.2469 270.705 75.9608Z\"></path></svg>",
+                        "tag": "div",
+                        "attrs": {
+                          "id": "n-7b488444-0338-4cd4-a318-ee44a9c3e123",
+                          "class": "cli-svg",
+                          "data-type": "icon",
+                          "data-root-id": "c462bc8c-d457-4819-a5c8-32e1ff79346d",
+                          "data-multitype": true,
+                          "data-system-sizes": "666,317px,363px,fill;767,317px,363px,fill;1023,317px,363px,fill;1199,317px,363px,fill;1920,317px,363px,fill",
+                          "data-widget-controls": true
+                        },
+                        "children": [],
+                        "styles": {}
+                      }
+                    ],
+                    "styles": {
+                      "": {
+                        "top": "235px",
+                        "left": "-332px",
+                        "width": "317px",
+                        "height": "363px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 666px)": {
+                        "top": "207px",
+                        "left": "155px",
+                        "width": "317px",
+                        "height": "363px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 767px)": {
+                        "top": "207px",
+                        "left": "156px",
+                        "width": "317px",
+                        "height": "363px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 1023px)": {
+                        "top": "207px",
+                        "left": "155px",
+                        "width": "317px",
+                        "height": "363px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 1199px)": {
+                        "top": "207px",
+                        "left": "155px",
+                        "width": "317px",
+                        "height": "363px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      }
+                    }
+                  },
+                  {
+                    "id": "2260a25f-e806-4c38-869d-daa54a629b3b",
+                    "inner_html": "",
+                    "tag": "div",
+                    "attrs": {
+                      "id": "n-2260a25f-e806-4c38-869d-daa54a629b3b",
+                      "class": "cli-empty-img cli-empty-img--second",
+                      "data-type": "image-wrapper",
+                      "data-title": "CDN_PUG_COMPONENTS_ICON",
+                      "data-root-id": "c462bc8c-d457-4819-a5c8-32e1ff79346d",
+                      "data-converted": true,
+                      "data-draggable": true,
+                      "data-design-type": "icon"
+                    },
+                    "children": [
+                      {
+                        "id": "fec85b81-6932-4a0d-b332-ce7a2431d299",
+                        "inner_html": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"422\" height=\"410\" viewBox=\"0 0 422 410\"><path d=\"M345.745 83.0706C393.792 135.863 430.588 205.439 420.248 269.827C409.909 334.215 352.435 393.415 292.528 406.842C232.316 420.269 169.976 388.533 114.935 355.881C60.1972 323.534 13.0621 290.577 2.41871 248.16C-8.22469 205.744 17.6236 153.562 53.203 103.821C88.4783 54.0806 133.485 6.47615 185.485 0.678165C237.79 -5.42497 297.393 30.2784 345.745 83.0706Z\"></path></svg>",
+                        "tag": "div",
+                        "attrs": {
+                          "id": "n-fec85b81-6932-4a0d-b332-ce7a2431d299",
+                          "class": "cli-svg",
+                          "data-type": "icon",
+                          "data-root-id": "c462bc8c-d457-4819-a5c8-32e1ff79346d",
+                          "data-multitype": true,
+                          "data-system-sizes": "666,422px,410px,fill;767,422px,410px,fill;1023,422px,410px,fill;1199,422px,410px,fill;1920,422px,410px,fill",
+                          "data-widget-controls": true
+                        },
+                        "children": [],
+                        "styles": {}
+                      }
+                    ],
+                    "styles": {
+                      "": {
+                        "top": "-143px",
+                        "left": "1044px",
+                        "width": "422px",
+                        "height": "410px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 666px)": {
+                        "top": "-143px",
+                        "left": "-214px",
+                        "width": "422px",
+                        "height": "410px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 767px)": {
+                        "top": "-143px",
+                        "left": "-214px",
+                        "width": "422px",
+                        "height": "410px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 1023px)": {
+                        "top": "-143px",
+                        "left": "234px",
+                        "width": "422px",
+                        "height": "410px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 1199px)": {
+                        "top": "-143px",
+                        "left": "234px",
+                        "width": "422px",
+                        "height": "410px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      }
+                    }
+                  },
+                  {
+                    "id": "62387889-39ec-466e-a9b3-0352623a7497",
+                    "inner_html": "",
+                    "tag": "div",
+                    "attrs": {
+                      "id": "n-62387889-39ec-466e-a9b3-0352623a7497",
+                      "class": "cli-empty-img cli-empty-img--third",
+                      "data-type": "image-wrapper",
+                      "data-title": "CDN_PUG_COMPONENTS_ICON",
+                      "data-root-id": "c462bc8c-d457-4819-a5c8-32e1ff79346d",
+                      "data-converted": true,
+                      "data-draggable": true,
+                      "data-design-type": "icon"
+                    },
+                    "children": [
+                      {
+                        "id": "e5af853d-888e-4b46-8c52-b23cce1ee8a6",
+                        "inner_html": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"257\" height=\"249\" viewBox=\"0 0 257 249\"><path d=\"M210.978 60.0157C236.328 90.9826 258.707 124.693 256.727 160.952C254.944 197.015 228.604 235.625 195.728 245.817C162.654 255.813 123.044 237.389 84.2271 218.378C45.6077 199.367 8.17663 179.571 1.83909 152.72C-4.49844 126.065 20.6537 91.9626 46.994 60.6037C73.5325 29.2449 101.457 0.629914 129.58 0.629914C157.505 0.433921 185.826 28.8529 210.978 60.0157Z\"></path></svg>",
+                        "tag": "div",
+                        "attrs": {
+                          "id": "n-e5af853d-888e-4b46-8c52-b23cce1ee8a6",
+                          "class": "cli-svg",
+                          "data-type": "icon",
+                          "data-root-id": "c462bc8c-d457-4819-a5c8-32e1ff79346d",
+                          "data-multitype": true,
+                          "data-system-sizes": "666,257px,249px,fill;767,257px,249px,fill;1023,257px,249px,fill;1199,257px,249px,fill;1920,257px,249px,fill",
+                          "data-widget-controls": true
+                        },
+                        "children": [],
+                        "styles": {}
+                      }
+                    ],
+                    "styles": {
+                      "": {
+                        "top": "522px",
+                        "left": "949px",
+                        "width": "257px",
+                        "height": "249px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 666px)": {
+                        "top": "383px",
+                        "left": "-128px",
+                        "width": "257px",
+                        "height": "249px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 767px)": {
+                        "top": "383px",
+                        "left": "-128px",
+                        "width": "257px",
+                        "height": "249px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 1023px)": {
+                        "top": "383px",
+                        "left": "320px",
+                        "width": "257px",
+                        "height": "249px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 1199px)": {
+                        "top": "383px",
+                        "left": "320px",
+                        "width": "257px",
+                        "height": "249px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      }
+                    }
+                  },
+                  {
+                    "id": "7104d5ed-f0e6-4428-94e3-51e54f0a2f53",
+                    "inner_html": "Все инструменты для уникального дизайна",
+                    "tag": "div",
+                    "attrs": {
+                      "id": "n-7104d5ed-f0e6-4428-94e3-51e54f0a2f53",
+                      "class": "cli-block-title cli-block-title--gigantic cli-text-center cli-text-bold",
+                      "data-seo": true,
+                      "data-type": "text",
+                      "data-title": "CDN_PUG_COMPONENTS_TITLE",
+                      "data-root-id": "c462bc8c-d457-4819-a5c8-32e1ff79346d",
+                      "data-converted": true,
+                      "data-draggable": true,
+                      "data-design-type": "text",
+                      "data-design-order": "2",
+                      "data-content-order": "1"
+                    },
+                    "children": [],
+                    "styles": {
+                      "": {
+                        "top": "240px",
+                        "left": "110px",
+                        "width": "921px",
+                        "height": "141px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 666px)": {
+                        "top": "141px",
+                        "left": "32px",
+                        "width": "921px",
+                        "height": "31px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 767px)": {
+                        "top": "141px",
+                        "left": "32px",
+                        "width": "921px",
+                        "height": "31px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 1023px)": {
+                        "top": "180px",
+                        "left": "40px",
+                        "width": "921px",
+                        "height": "106px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 1199px)": {
+                        "top": "180px",
+                        "left": "40px",
+                        "width": "921px",
+                        "height": "106px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      }
+                    }
+                  },
+                  {
+                    "id": "125172c7-2972-4d14-8114-446040fec557",
+                    "inner_html": "Не упусти возможность узнать свои скрытые таланты и проверь свои силы с помощью дизайн-блока",
+                    "tag": "div",
+                    "attrs": {
+                      "id": "n-125172c7-2972-4d14-8114-446040fec557",
+                      "class": "cli-block-subtitle cli-block-subtitle--big cli-text-center cli-text-regular",
+                      "data-type": "text",
+                      "data-title": "CDN_PUG_COMPONENTS_SUBTITLE",
+                      "data-root-id": "c462bc8c-d457-4819-a5c8-32e1ff79346d",
+                      "data-converted": true,
+                      "data-draggable": true,
+                      "data-design-type": "text",
+                      "data-design-order": "3",
+                      "data-content-order": "2"
+                    },
+                    "children": [],
+                    "styles": {
+                      "": {
+                        "top": "405px",
+                        "left": "110px",
+                        "width": "921px",
+                        "height": "63px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 666px)": {
+                        "top": "171px",
+                        "left": "32px",
+                        "width": "921px",
+                        "height": "19px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 767px)": {
+                        "top": "171px",
+                        "left": "32px",
+                        "width": "921px",
+                        "height": "19px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 1023px)": {
+                        "top": "286px",
+                        "left": "40px",
+                        "width": "921px",
+                        "height": "23px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 1199px)": {
+                        "top": "286px",
+                        "left": "40px",
+                        "width": "921px",
+                        "height": "23px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      }
+                    }
+                  },
+                  {
+                    "id": "1312deb7-8eb6-4012-83c7-4aae50c32a28",
+                    "inner_html": "",
+                    "tag": "a",
+                    "attrs": {
+                      "id": "n-1312deb7-8eb6-4012-83c7-4aae50c32a28",
+                      "href": "#",
+                      "class": "cli-button cli-button--big cli-button--primary",
+                      "data-type": "button",
+                      "data-title": "CDN_PUG_COMPONENTS_BUTTON",
+                      "data-root-id": "c462bc8c-d457-4819-a5c8-32e1ff79346d",
+                      "data-converted": true,
+                      "data-draggable": true,
+                      "data-design-type": "button"
+                    },
+                    "children": [
+                      {
+                        "id": "96789839-e70e-4070-8ffa-042a704eb430",
+                        "inner_html": "Просто бесподобно!",
+                        "tag": "span",
+                        "attrs": {
+                          "id": "n-96789839-e70e-4070-8ffa-042a704eb430",
+                          "class": "",
+                          "data-type": "text",
+                          "data-root-id": "c462bc8c-d457-4819-a5c8-32e1ff79346d",
+                          "data-design-type": "text"
+                        },
+                        "children": [],
+                        "styles": {}
+                      }
+                    ],
+                    "styles": {
+                      "": {
+                        "top": "508px",
+                        "left": "454px",
+                        "width": "233px",
+                        "height": "58px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 666px)": {
+                        "top": "190px",
+                        "left": "32px",
+                        "width": "296px",
+                        "height": "58px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 767px)": {
+                        "top": "190px",
+                        "left": "32px",
+                        "width": "604px",
+                        "height": "58px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 1023px)": {
+                        "top": "309px",
+                        "left": "268px",
+                        "width": "233px",
+                        "height": "58px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      },
+                      "@media screen and (max-width: 1199px)": {
+                        "top": "309px",
+                        "left": "396px",
+                        "width": "233px",
+                        "height": "58px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "min-width": "0px",
+                        "min-height": "0px"
+                      }
+                    }
+                  }
+                ],
+                "styles": {
+                  "": {
+                    "width": "1141px",
+                    "height": "806px",
+                    "max-width": "none",
+                    "min-width": "0px",
+                    "min-height": "0px",
+                    "padding-top": "0px",
+                    "padding-bottom": "0px"
+                  },
+                  "@media screen and (max-width: 666px)": {
+                    "width": "360px",
+                    "height": "388px",
+                    "max-width": "none",
+                    "min-width": "0px",
+                    "min-height": "0px",
+                    "padding-top": "0px",
+                    "padding-bottom": "0px"
+                  },
+                  "@media screen and (max-width: 767px)": {
+                    "width": "667px",
+                    "height": "388px",
+                    "max-width": "none",
+                    "min-width": "0px",
+                    "min-height": "0px",
+                    "padding-top": "0px",
+                    "padding-bottom": "0px"
+                  },
+                  "@media screen and (max-width: 1023px)": {
+                    "width": "768px",
+                    "height": "547px",
+                    "max-width": "none",
+                    "min-width": "0px",
+                    "min-height": "0px",
+                    "padding-top": "0px",
+                    "padding-bottom": "0px"
+                  },
+                  "@media screen and (max-width: 1199px)": {
+                    "width": "1024px",
+                    "height": "547px",
+                    "max-width": "none",
+                    "min-width": "0px",
+                    "min-height": "0px",
+                    "padding-top": "0px",
+                    "padding-bottom": "0px"
+                  }
+                }
+              },
+              {
+                "id": "7d21b3c3-f7df-4cfa-ae24-0317fd8f903f",
+                "inner_html": "",
+                "tag": "div",
+                "attrs": {
+                  "id": "n-7d21b3c3-f7df-4cfa-ae24-0317fd8f903f",
+                  "class": "cli-background",
+                  "style": "--background-image: linear-gradient(90deg, rgba(41, 58, 204, 0.5), rgba(23, 230, 230, 0.5));--background-color: #000000;",
+                  "data-fill": true,
+                  "data-type": "background",
+                  "data-image": true,
+                  "data-video": true,
+                  "data-root-id": "c462bc8c-d457-4819-a5c8-32e1ff79346d",
+                  "data-design-type": "background",
+                  "data-system-sizes": "666,666px,806px,cover;767,767px,806px,cover;1023,1023px,806px,cover;1199,1199px,806px,cover;1920,1579px,806px,cover",
+                  "data-system-bg-url": "",
+                  "data-system-bg-sizes": "666,1292,806;767,1292,806;1023,1292,806;1199,1292,806;1920,1579,806;"
+                },
+                "children": [],
+                "styles": {
+                  "": {
+                    "background-image": "var(--bg-1920, var(--background-image))"
+                  },
+                  "@media screen and (max-width: 666px)": {
+                    "background-image": "var(--bg-666, var(--background-image))"
+                  },
+                  "@media screen and (max-width: 767px)": {
+                    "background-image": "var(--bg-767, var(--background-image))"
+                  },
+                  "@media screen and (max-width: 1023px)": {
+                    "background-image": "var(--bg-1023, var(--background-image))"
+                  },
+                  "@media screen and (max-width: 1199px)": {
+                    "background-image": "var(--bg-1199, var(--background-image))"
+                  }
+                }
+              }
+            ],
+            "styles": {}
+          },
+          "page_id": 1497379,
+          "slug_id": 75,
+          "fonts": [],
+          "bind": {}
+        }
+      },
+      "featured": true,
+      "category": "hero"
+    },
+    {
+      "id": "b2",
+      "name": "b2",
+      "description": "b2",
+      "insert": {
+        "mode": "snapshot",
+        "craftumBlock": {
+          "id": "accd8d49-a775-462b-a4b5-05687d2f0b66",
+          "priority": "1|i0000f:",
+          "slug": {
+            "id": 75,
+            "name": "empty01",
+            "type": "block",
+            "locale": "ru-ru",
+            "title": "empty-01",
+            "keywords": "",
+            "description": "Дизайн-блок",
+            "preview_url": null,
+            "category_id": 75
+          },
+          "title": "empty-01",
+          "content": {
+            "id": "62688a6f-d43c-4b72-a93a-e9783fe3bef8",
+            "inner_html": "",
+            "tag": "section",
+            "attrs": {
+              "id": "n-62688a6f-d43c-4b72-a93a-e9783fe3bef8",
+              "class": "cli-block cli-cover cli-block--inverse",
+              "data-type": "block-wrapper",
+              "data-resize": true,
+              "data-root-id": "accd8d49-a775-462b-a4b5-05687d2f0b66",
+              "data-design-type": "block-wrapper",
+              "data-converted": true
+            },
+            "children": [
+              {
+                "id": "b6387b2c-e783-4fb9-b542-4463ad7c5a34",
+                "inner_html": "",
+                "tag": "div",
+                "attrs": {
+                  "id": "n-b6387b2c-e783-4fb9-b542-4463ad7c5a34",
+                  "class": "cli-block__content cli-grid cli-block__content--cover cli-block__content--normal",
+                  "data-type": "grid",
+                  "data-title": "CDN_PUG_COMPONENTS_BLOCK",
+                  "data-root-id": "accd8d49-a775-462b-a4b5-05687d2f0b66",
+                  "data-design-type": "grid",
+                  "data-design-order": "1",
+                  "data-block-content": true,
+                  "data-converted": true
+                },
+                "children": [
+                  {
+                    "id": "63088a60-d24e-49c4-8f55-4329426f45f5",
+                    "inner_html": "",
+                    "tag": "div",
+                    "attrs": {
+                      "id": "n-63088a60-d24e-49c4-8f55-4329426f45f5",
+                      "class": "cli-empty-img cli-empty-img--first",
+                      "data-type": "image-wrapper",
+                      "data-title": "CDN_PUG_COMPONENTS_ICON",
+                      "data-root-id": "accd8d49-a775-462b-a4b5-05687d2f0b66",
+                      "data-draggable": true,
+                      "data-design-type": "icon",
+                      "data-converted": true
+                    },
+                    "children": [
+                      {
+                        "id": "11792485-dd52-4889-b0b8-ff8f06cc52ef",
+                        "inner_html": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"317\" height=\"363\" viewBox=\"0 0 317 363\"><path d=\"M270.705 75.9608C305.757 119.892 324.916 176.002 313.595 224.936C302.274 273.869 260.037 315.626 209.527 339.984C159.017 364.342 100.016 371.519 66.4873 347.378C32.7413 323.02 24.6858 267.127 14.4532 214.062C4.00278 160.996 -8.40703 110.758 11.1874 70.5237C30.7819 30.0721 82.816 -0.157868 133.979 0.277096C185.143 0.712059 235.87 32.2469 270.705 75.9608Z\"></path></svg>",
+                        "tag": "div",
+                        "attrs": {
+                          "id": "n-11792485-dd52-4889-b0b8-ff8f06cc52ef",
+                          "class": "cli-svg",
+                          "data-type": "icon",
+                          "data-root-id": "accd8d49-a775-462b-a4b5-05687d2f0b66",
+                          "data-multitype": true,
+                          "data-system-sizes": "666,317px,363px,fill;767,317px,363px,fill;1023,317px,363px,fill;1199,317px,363px,fill;1920,317px,363px,fill",
+                          "data-widget-controls": true
+                        },
+                        "children": [],
+                        "styles": {}
+                      }
+                    ],
+                    "styles": {
+                      "": {
+                        "left": "-332px",
+                        "top": "235px",
+                        "min-width": "0px",
+                        "width": "317px",
+                        "min-height": "0px",
+                        "height": "363px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      },
+                      "@media screen and (max-width: 1199px)": {
+                        "left": "155px",
+                        "top": "207px",
+                        "min-width": "0px",
+                        "width": "317px",
+                        "min-height": "0px",
+                        "height": "363px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      },
+                      "@media screen and (max-width: 1023px)": {
+                        "left": "155px",
+                        "top": "207px",
+                        "min-width": "0px",
+                        "width": "317px",
+                        "min-height": "0px",
+                        "height": "363px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      },
+                      "@media screen and (max-width: 767px)": {
+                        "left": "156px",
+                        "top": "207px",
+                        "min-width": "0px",
+                        "width": "317px",
+                        "min-height": "0px",
+                        "height": "363px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      },
+                      "@media screen and (max-width: 666px)": {
+                        "left": "155px",
+                        "top": "207px",
+                        "min-width": "0px",
+                        "width": "317px",
+                        "min-height": "0px",
+                        "height": "363px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      }
+                    }
+                  },
+                  {
+                    "id": "e547dfc6-722d-4f5f-b919-9333aec669fb",
+                    "inner_html": "",
+                    "tag": "div",
+                    "attrs": {
+                      "id": "n-e547dfc6-722d-4f5f-b919-9333aec669fb",
+                      "class": "cli-empty-img cli-empty-img--second",
+                      "data-type": "image-wrapper",
+                      "data-title": "CDN_PUG_COMPONENTS_ICON",
+                      "data-root-id": "accd8d49-a775-462b-a4b5-05687d2f0b66",
+                      "data-draggable": true,
+                      "data-design-type": "icon",
+                      "data-converted": true
+                    },
+                    "children": [
+                      {
+                        "id": "d01fa2ee-0238-4cc5-b5b3-8931c8a44ea3",
+                        "inner_html": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"422\" height=\"410\" viewBox=\"0 0 422 410\"><path d=\"M345.745 83.0706C393.792 135.863 430.588 205.439 420.248 269.827C409.909 334.215 352.435 393.415 292.528 406.842C232.316 420.269 169.976 388.533 114.935 355.881C60.1972 323.534 13.0621 290.577 2.41871 248.16C-8.22469 205.744 17.6236 153.562 53.203 103.821C88.4783 54.0806 133.485 6.47615 185.485 0.678165C237.79 -5.42497 297.393 30.2784 345.745 83.0706Z\"></path></svg>",
+                        "tag": "div",
+                        "attrs": {
+                          "id": "n-d01fa2ee-0238-4cc5-b5b3-8931c8a44ea3",
+                          "class": "cli-svg",
+                          "data-type": "icon",
+                          "data-root-id": "accd8d49-a775-462b-a4b5-05687d2f0b66",
+                          "data-multitype": true,
+                          "data-system-sizes": "666,422px,410px,fill;767,422px,410px,fill;1023,422px,410px,fill;1199,422px,410px,fill;1920,422px,410px,fill",
+                          "data-widget-controls": true
+                        },
+                        "children": [],
+                        "styles": {}
+                      }
+                    ],
+                    "styles": {
+                      "": {
+                        "left": "1044px",
+                        "top": "-143px",
+                        "min-width": "0px",
+                        "width": "422px",
+                        "min-height": "0px",
+                        "height": "410px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      },
+                      "@media screen and (max-width: 1199px)": {
+                        "left": "234px",
+                        "top": "-143px",
+                        "min-width": "0px",
+                        "width": "422px",
+                        "min-height": "0px",
+                        "height": "410px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      },
+                      "@media screen and (max-width: 1023px)": {
+                        "left": "234px",
+                        "top": "-143px",
+                        "min-width": "0px",
+                        "width": "422px",
+                        "min-height": "0px",
+                        "height": "410px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      },
+                      "@media screen and (max-width: 767px)": {
+                        "left": "-214px",
+                        "top": "-143px",
+                        "min-width": "0px",
+                        "width": "422px",
+                        "min-height": "0px",
+                        "height": "410px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      },
+                      "@media screen and (max-width: 666px)": {
+                        "left": "-214px",
+                        "top": "-143px",
+                        "min-width": "0px",
+                        "width": "422px",
+                        "min-height": "0px",
+                        "height": "410px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      }
+                    }
+                  },
+                  {
+                    "id": "aa1c4100-2de3-42d6-8662-f12aba0b37a7",
+                    "inner_html": "",
+                    "tag": "div",
+                    "attrs": {
+                      "id": "n-aa1c4100-2de3-42d6-8662-f12aba0b37a7",
+                      "class": "cli-empty-img cli-empty-img--third",
+                      "data-type": "image-wrapper",
+                      "data-title": "CDN_PUG_COMPONENTS_ICON",
+                      "data-root-id": "accd8d49-a775-462b-a4b5-05687d2f0b66",
+                      "data-draggable": true,
+                      "data-design-type": "icon",
+                      "data-converted": true
+                    },
+                    "children": [
+                      {
+                        "id": "c8ea4bda-0492-4f64-841f-2984af17c072",
+                        "inner_html": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"257\" height=\"249\" viewBox=\"0 0 257 249\"><path d=\"M210.978 60.0157C236.328 90.9826 258.707 124.693 256.727 160.952C254.944 197.015 228.604 235.625 195.728 245.817C162.654 255.813 123.044 237.389 84.2271 218.378C45.6077 199.367 8.17663 179.571 1.83909 152.72C-4.49844 126.065 20.6537 91.9626 46.994 60.6037C73.5325 29.2449 101.457 0.629914 129.58 0.629914C157.505 0.433921 185.826 28.8529 210.978 60.0157Z\"></path></svg>",
+                        "tag": "div",
+                        "attrs": {
+                          "id": "n-c8ea4bda-0492-4f64-841f-2984af17c072",
+                          "class": "cli-svg",
+                          "data-type": "icon",
+                          "data-root-id": "accd8d49-a775-462b-a4b5-05687d2f0b66",
+                          "data-multitype": true,
+                          "data-system-sizes": "666,257px,249px,fill;767,257px,249px,fill;1023,257px,249px,fill;1199,257px,249px,fill;1920,257px,249px,fill",
+                          "data-widget-controls": true
+                        },
+                        "children": [],
+                        "styles": {}
+                      }
+                    ],
+                    "styles": {
+                      "": {
+                        "left": "949px",
+                        "top": "522px",
+                        "min-width": "0px",
+                        "width": "257px",
+                        "min-height": "0px",
+                        "height": "249px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      },
+                      "@media screen and (max-width: 1199px)": {
+                        "left": "320px",
+                        "top": "383px",
+                        "min-width": "0px",
+                        "width": "257px",
+                        "min-height": "0px",
+                        "height": "249px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      },
+                      "@media screen and (max-width: 1023px)": {
+                        "left": "320px",
+                        "top": "383px",
+                        "min-width": "0px",
+                        "width": "257px",
+                        "min-height": "0px",
+                        "height": "249px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      },
+                      "@media screen and (max-width: 767px)": {
+                        "left": "-128px",
+                        "top": "383px",
+                        "min-width": "0px",
+                        "width": "257px",
+                        "min-height": "0px",
+                        "height": "249px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      },
+                      "@media screen and (max-width: 666px)": {
+                        "left": "-128px",
+                        "top": "383px",
+                        "min-width": "0px",
+                        "width": "257px",
+                        "min-height": "0px",
+                        "height": "249px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      }
+                    }
+                  },
+                  {
+                    "id": "18777416-e2e7-43cd-857b-d5a357293848",
+                    "inner_html": "Все инструменты для уникального дизайна",
+                    "tag": "div",
+                    "attrs": {
+                      "id": "n-18777416-e2e7-43cd-857b-d5a357293848",
+                      "class": "cli-block-title cli-block-title--gigantic cli-text-center cli-text-bold",
+                      "data-seo": true,
+                      "data-type": "text",
+                      "data-title": "CDN_PUG_COMPONENTS_TITLE",
+                      "data-root-id": "accd8d49-a775-462b-a4b5-05687d2f0b66",
+                      "data-draggable": true,
+                      "data-design-type": "text",
+                      "data-design-order": "2",
+                      "data-content-order": "1",
+                      "data-converted": true
+                    },
+                    "children": [],
+                    "styles": {
+                      "": {
+                        "left": "110px",
+                        "top": "240px",
+                        "min-width": "0px",
+                        "width": "921px",
+                        "min-height": "0px",
+                        "height": "141px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      },
+                      "@media screen and (max-width: 1023px)": {
+                        "top": "180px",
+                        "left": "40px",
+                        "min-height": "0px",
+                        "height": "106px",
+                        "min-width": "0px",
+                        "width": "921px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      },
+                      "@media screen and (max-width: 767px)": {
+                        "top": "141px",
+                        "left": "32px",
+                        "min-height": "0px",
+                        "height": "31px",
+                        "min-width": "0px",
+                        "width": "921px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      },
+                      "@media screen and (max-width: 666px)": {
+                        "top": "141px",
+                        "left": "32px",
+                        "min-height": "0px",
+                        "height": "31px",
+                        "min-width": "0px",
+                        "width": "921px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      },
+                      "@media screen and (max-width: 1199px)": {
+                        "top": "180px",
+                        "left": "40px",
+                        "min-height": "0px",
+                        "height": "106px",
+                        "min-width": "0px",
+                        "width": "921px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      }
+                    }
+                  },
+                  {
+                    "id": "90f50c95-b6f5-44cd-b8f9-64fe3487c761",
+                    "inner_html": "Не упусти возможность узнать свои скрытые таланты и проверь свои силы с помощью дизайн-блока",
+                    "tag": "div",
+                    "attrs": {
+                      "id": "n-90f50c95-b6f5-44cd-b8f9-64fe3487c761",
+                      "class": "cli-block-subtitle cli-block-subtitle--big cli-text-center cli-text-regular",
+                      "data-type": "text",
+                      "data-title": "CDN_PUG_COMPONENTS_SUBTITLE",
+                      "data-root-id": "accd8d49-a775-462b-a4b5-05687d2f0b66",
+                      "data-draggable": true,
+                      "data-design-type": "text",
+                      "data-design-order": "3",
+                      "data-content-order": "2",
+                      "data-converted": true
+                    },
+                    "children": [],
+                    "styles": {
+                      "": {
+                        "left": "110px",
+                        "top": "405px",
+                        "min-width": "0px",
+                        "width": "921px",
+                        "min-height": "0px",
+                        "height": "63px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      },
+                      "@media screen and (max-width: 1023px)": {
+                        "top": "286px",
+                        "left": "40px",
+                        "min-height": "0px",
+                        "height": "23px",
+                        "min-width": "0px",
+                        "width": "921px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      },
+                      "@media screen and (max-width: 767px)": {
+                        "top": "171px",
+                        "left": "32px",
+                        "min-height": "0px",
+                        "height": "19px",
+                        "min-width": "0px",
+                        "width": "921px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      },
+                      "@media screen and (max-width: 666px)": {
+                        "top": "171px",
+                        "left": "32px",
+                        "min-height": "0px",
+                        "height": "19px",
+                        "min-width": "0px",
+                        "width": "921px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      },
+                      "@media screen and (max-width: 1199px)": {
+                        "top": "286px",
+                        "left": "40px",
+                        "min-height": "0px",
+                        "height": "23px",
+                        "min-width": "0px",
+                        "width": "921px",
+                        "margin": "0px",
+                        "padding": "0px"
+                      }
+                    }
+                  },
+                  {
+                    "id": "ab6777ef-eaf0-41a7-8cce-53b457f3d6d6",
+                    "inner_html": "",
+                    "tag": "a",
+                    "attrs": {
+                      "id": "n-ab6777ef-eaf0-41a7-8cce-53b457f3d6d6",
+                      "href": "#",
+                      "class": "cli-button cli-button--big cli-button--primary",
+                      "data-type": "button",
+                      "data-title": "CDN_PUG_COMPONENTS_BUTTON",
+                      "data-root-id": "accd8d49-a775-462b-a4b5-05687d2f0b66",
+                      "data-draggable": true,
+                      "data-design-type": "button",
+                      "data-converted": true
+                    },
+                    "children": [
+                      {
+                        "id": "48d3579b-8b2a-4006-a911-e62a88d0340c",
+                        "inner_html": "Просто бесподобно!",
+                        "tag": "span",
+                        "attrs": {
+                          "id": "n-48d3579b-8b2a-4006-a911-e62a88d0340c",
+                          "class": "",
+                          "data-type": "text",
+                          "data-root-id": "accd8d49-a775-462b-a4b5-05687d2f0b66",
+                          "data-design-type": "text"
+                        },
+                        "children": [],
+                        "styles": {}
+                      }
+                    ],
+                    "styles": {
+                      "": {
+                        "left": "454px",
+                        "top": "508px",
+                        "min-width": "0px",
+                        "width": "233px",
+                        "min-height": "0px",
+                        "height": "58px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "--normal-background-color": "rgba(237,48,9,1)"
+                      },
+                      "@media screen and (max-width: 1199px)": {
+                        "left": "396px",
+                        "top": "309px",
+                        "min-width": "0px",
+                        "width": "233px",
+                        "min-height": "0px",
+                        "height": "58px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "--normal-background-color": "rgba(237,48,9,1)"
+                      },
+                      "@media screen and (max-width: 1023px)": {
+                        "left": "268px",
+                        "top": "309px",
+                        "min-width": "0px",
+                        "width": "233px",
+                        "min-height": "0px",
+                        "height": "58px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "--normal-background-color": "rgba(237,48,9,1)"
+                      },
+                      "@media screen and (max-width: 767px)": {
+                        "left": "32px",
+                        "top": "190px",
+                        "min-width": "0px",
+                        "width": "604px",
+                        "min-height": "0px",
+                        "height": "58px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "--normal-background-color": "rgba(237,48,9,1)"
+                      },
+                      "@media screen and (max-width: 666px)": {
+                        "left": "32px",
+                        "top": "190px",
+                        "min-width": "0px",
+                        "width": "296px",
+                        "min-height": "0px",
+                        "height": "58px",
+                        "margin": "0px",
+                        "padding": "0px",
+                        "--normal-background-color": "rgba(237,48,9,1)"
+                      }
+                    }
+                  }
+                ],
+                "styles": {
+                  "": {
+                    "min-width": "0px",
+                    "width": "1141px",
+                    "min-height": "0px",
+                    "height": "806px",
+                    "padding-top": "0px",
+                    "padding-bottom": "0px",
+                    "max-width": "none"
+                  },
+                  "@media screen and (max-width: 1199px)": {
+                    "min-width": "0px",
+                    "width": "1024px",
+                    "min-height": "0px",
+                    "height": "547px",
+                    "padding-top": "0px",
+                    "padding-bottom": "0px",
+                    "max-width": "none"
+                  },
+                  "@media screen and (max-width: 1023px)": {
+                    "min-width": "0px",
+                    "width": "768px",
+                    "min-height": "0px",
+                    "height": "547px",
+                    "padding-top": "0px",
+                    "padding-bottom": "0px",
+                    "max-width": "none"
+                  },
+                  "@media screen and (max-width: 767px)": {
+                    "min-width": "0px",
+                    "width": "667px",
+                    "min-height": "0px",
+                    "height": "388px",
+                    "padding-top": "0px",
+                    "padding-bottom": "0px",
+                    "max-width": "none"
+                  },
+                  "@media screen and (max-width: 666px)": {
+                    "min-width": "0px",
+                    "width": "360px",
+                    "min-height": "0px",
+                    "height": "388px",
+                    "padding-top": "0px",
+                    "padding-bottom": "0px",
+                    "max-width": "none"
+                  }
+                }
+              },
+              {
+                "id": "232999e2-db91-4e54-9d8f-2d9bff11e88e",
+                "inner_html": "",
+                "tag": "div",
+                "attrs": {
+                  "id": "n-232999e2-db91-4e54-9d8f-2d9bff11e88e",
+                  "class": "cli-background",
+                  "style": "--background-image: url(https://274418.selcdn.ru/cv08300-33250f0d-0664-43fc-9dbf-9d89738d114e/uploads/62653/ebc09253-4def-4009-8962-96aeab678d7c.jpg);--background-color: #000000;",
+                  "data-fill": true,
+                  "data-type": "background",
+                  "data-image": true,
+                  "data-video": true,
+                  "data-root-id": "accd8d49-a775-462b-a4b5-05687d2f0b66",
+                  "data-design-type": "background",
+                  "data-system-bg-sizes": "666,1037,806;767,1037,806;1023,1037,806;1199,1152,806;1920,1152,806;",
+                  "data-system-sizes": "666,666px,806px,cover;767,767px,806px,cover;1023,1023px,806px,cover;1199,1199px,806px,cover;1920,1579px,806px,cover",
+                  "data-system-bg-url": "https://274418.selcdn.ru/cv08300-33250f0d-0664-43fc-9dbf-9d89738d114e/uploads/62653/ebc09253-4def-4009-8962-96aeab678d7c.jpg"
+                },
+                "children": [],
+                "styles": {
+                  "@media screen and (max-width: 666px)": {
+                    "background-image": "var(--bg-666, var(--background-image))"
+                  },
+                  "@media screen and (max-width: 767px)": {
+                    "background-image": "var(--bg-767, var(--background-image))"
+                  },
+                  "@media screen and (max-width: 1023px)": {
+                    "background-image": "var(--bg-1023, var(--background-image))"
+                  },
+                  "@media screen and (max-width: 1199px)": {
+                    "background-image": "var(--bg-1199, var(--background-image))"
+                  },
+                  "": {
+                    "background-image": "var(--bg-1920, var(--background-image))"
+                  }
+                }
+              }
+            ],
+            "styles": {}
+          },
+          "page_id": 1497379,
+          "slug_id": 75,
+          "fonts": [],
+          "bind": {}
+        }
+      },
+      "featured": true,
+      "category": "hero"
+    }
+  ]
+}

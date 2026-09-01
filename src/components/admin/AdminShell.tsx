@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 
 const NAV = [
   { href: "/admin", label: "Обзор" },
+  { href: "/admin/craftum-blocks", label: "Craftum Blocks" },
   { href: "/admin/clients", label: "Клиенты" },
   { href: "/admin/import", label: "Импорт" },
   { href: "/admin/orders", label: "Заявки" },

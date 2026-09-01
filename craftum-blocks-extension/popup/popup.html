@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        width: 340px;
+        margin: 0;
+        padding: 16px;
+        font: 14px/1.45 system-ui, sans-serif;
+        color: #1e293b;
+      }
+      h1 { margin: 0 0 8px; font-size: 16px; color: #6d28d9; }
+      p { margin: 0 0 10px; color: #475569; }
+      label { display: block; margin: 12px 0 4px; font-size: 13px; font-weight: 600; }
+      input {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+      }
+      .ok, .warn {
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 13px;
+        margin-bottom: 12px;
+      }
+      .ok { background: #ecfdf5; color: #047857; }
+      .warn { background: #fff7ed; color: #c2410c; }
+      button.save {
+        width: 100%;
+        margin-top: 10px;
+        padding: 11px;
+        border: none;
+        border-radius: 10px;
+        background: #7c3aed;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button.save:hover { background: #6d28d9; }
+      .saved { color: #047857; font-size: 12px; min-height: 18px; margin-top: 8px; }
+      .hint { font-size: 12px; color: #64748b; line-height: 1.4; }
+      a.link {
+        display: inline-block;
+        margin-top: 14px;
+        font-size: 12px;
+        color: #64748b;
+      }
+      a.link:hover { color: #7c3aed; }
+    </style>
+  </head>
+  <body>
+    <h1>Craftum Blocks</h1>
+    <p id="status" class="warn">…</p>
+
+    <label for="publishKey">Ключ администратора (только для вас)</label>
+    <input id="publishKey" type="password" placeholder="CRAFTUM_BLOCKS_PUBLISH_KEY" />
+    <button type="button" class="save" id="saveKey">Сохранить ключ</button>
+    <p id="saved" class="saved"></p>
+    <p class="hint">
+      После сохранения обновите страницу Craftum (F5). Появится кнопка «↑ В каталог».<br />
+      Обычным пользователям ключ не нужен — только иконка блоков при «+».
+    </p>
+
+    <a class="link" href="https://craft.nordic-builder.ru/admin/craftum-blocks" target="_blank">
+      Открыть админку каталога ↗
+    </a>
+    <script src="popup.js"></script>
+  </body>
+</html>

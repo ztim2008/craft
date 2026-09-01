@@ -36,6 +36,9 @@ yarn-error.log*
 # crawl snapshots and job JSON
 /storage/
 
+# craftum research captures (may contain API secrets)
+/docs/craftum-blocks-research/captured/*.json
+
 # accidental dumps
 /www.zip
 

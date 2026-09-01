@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-01T12:45:00.000Z",
+  "categories": [
+    { "id": "hero", "name": "Обложки", "emoji": "🎯", "order": 0 },
+    { "id": "about", "name": "О компании", "emoji": "🏢", "order": 10 },
+    { "id": "text", "name": "Текст", "emoji": "📰", "order": 20 },
+    { "id": "advantages", "name": "Преимущества", "emoji": "⭐", "order": 30 },
+    { "id": "gallery", "name": "Галерея", "emoji": "🖼️", "order": 40 },
+    { "id": "form", "name": "Формы", "emoji": "🧮", "order": 50 },
+    { "id": "contacts", "name": "Контакты", "emoji": "📞", "order": 60 },
+    { "id": "footer", "name": "Подвал", "emoji": "🦶", "order": 70 },
+    { "id": "code", "name": "Код", "emoji": "🧩", "order": 80 },
+    { "id": "design-blocks", "name": "Дизайн-блоки", "emoji": "🧱", "order": 90 },
+    { "id": "custom", "name": "Дизайн", "emoji": "🎨", "order": 100 }
+  ]
+}

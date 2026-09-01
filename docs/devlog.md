@@ -4,6 +4,138 @@
 
 ---
 
+## 2026-09-01 · закрытие дня · Craftum Blocks v0.5.0
+
+### Итог
+
+**Craftum Blocks** доведён до рабочего контура на test site: publish → каталог → вставка на другую страницу. Вечером подтверждено пользователем после очистки каталога и чистого цикла. Расширение **v0.5.0**, админка с превью, ZIP на `/downloads/`.
+
+### Что сделано за день
+
+| Область | Результат |
+|---------|-----------|
+| Расширение | v0.3.4 → **v0.5.0**: панель «Мои блоки», publish, insert snapshot, priority, F5-guard |
+| Админка | `/admin/craftum-blocks`: каталог, категории, превью Ctrl+V, WebP |
+| API | `/api/craftum-blocks`, publish, admin-check |
+| Документация | `docs/craftum-blocks/*`, `admin-workflow.md`, agent-guide |
+| Разведка | `newBlockOrderFrom`, priority midpoint, scripts в `scripts/` |
+
+### Ключевые уроки (обязательно помнить)
+
+1. **Превью в админке ≠ snapshot.** Карточка — картинка; вставка — JSON `craftumBlock` при «↑ В каталог».
+2. **Перед publish: Ctrl+S** в Craftum → «Обновить список» → проверить серую плашку (UUID + текст секции).
+3. **Workshop:** одна страница, много секций; категории вручную; страницы Craftum ≠ категории каталога.
+4. **После обновления расширения — F5** (Extension context invalidated).
+5. **401 api-v2.craftum.com** — перелогин Craftum, не баг расширения.
+6. **`fonts` в snapshot** — только объекты; строки `var(--sans-serif)` ломают рендер → sanitize при publish/insert.
+7. **Duplicate priority** — при повторной вставке на страницу; fix: unique priority + retry (v0.4.9+).
+8. **Редактирование дизайна** — в Craftum после вставки (Контент/Дизайн), не в нашей админке.
+
+### Версии расширения (хронология дня)
+
+- **v0.4.5** — `newBlockOrderFrom`, позиция вставки
+- **v0.4.6** — guard `chrome.runtime.id`, баннер F5
+- **v0.4.7** — SVG launcher, бейдж «новых»
+- **v0.4.8** — sanitize fonts
+- **v0.4.9** — unique priority, предупреждение дубликата snapshot
+- **v0.5.0** — publish preview (плашка секции), `listPageBlocksForPublish`, каталог очищен
+
+### Не трогать
+
+Craftum site **954959**. Тесты **954965** (и другие test sites по согласованию).
+
+### Завтра
+
+Утреннее тестирование пользователем → фидбек. Возможные задачи: стабильность insert, информер новых блоков, иконка, monetization stub. См. `docs/prompt-2026-09-02.md`.
+
+---
+
+## 2026-09-01 · Craftum Blocks — админка, превью, позиция вставки
+
+### Итог
+
+Расширение **Craftum Blocks v0.4.5**: полный контур publish → каталог → вставка на канву. Админка с медиагалереей превью. Исправлена позиция вставки блоков (не всегда наверх). Кнопка «↑ В каталог» снова на месте.
+
+### Ключевые находки (позиция вставки)
+
+Craftum при клике «+» между секциями пишет в Pinia (`page` store) поле **`newBlockOrderFrom`** — это `priority` блока, **после которого** вставлять.
+
+Пример (test site 954965, page 1496963):
+
+| Блок | priority |
+|------|----------|
+| empty-01 (верх) | `1\|c82379:` |
+| cover-03 (низ) | `1\|hzzzzz:` |
+
+Клик «+» между ними → `newBlockOrderFrom = "1|c82379:"` → нативный `create_block` → `priority = "1|f411lm:"` (midpoint в base-36).
+
+**Проблема:** к моменту клика по блоку в нашей панели Craftum уже сбрасывает `newBlockOrderFrom` → мы читали `null` → блок уезжал наверх.
+
+**Решение (v0.4.4 → v0.4.5):**
+
+1. Запоминать `newBlockOrderFrom` при клике «+» и при открытии библиотеки (`captureInsertOrderFrom`)
+2. Передавать в `insertBlockSnapshot` и восстанавливать в Pinia перед `createBlock`
+3. Считать `priority` midpoint-алгоритмом Craftum (base-36, совпадает с нативным `f411lm`)
+4. Удалять `priority` / `id` из snapshot каталога перед вставкой
+5. Версионировать `page-world.js` — старый код мог оставаться в page context без F5
+
+Разведка: `scripts/craftum-insert-position-research.ts`, дополнено `docs/craftum-blocks-research/api-findings.md`.
+
+### Админка · превью блоков
+
+- Компонент `BlockPreviewGallery`: Ctrl+V, drag-drop, «Сохранить превью», статус ✓
+- Оптимизация sharp: WebP 1200×900, 4:3, `object-contain`
+- Route handler `/craftum-blocks/previews/[filename]` — App Router перехватывал `public/`, отдавал 404
+- Сетка карточек и расширение: aspect 4:3 + `object-contain`
+
+### Расширение v0.4.5
+
+| Что | Детали |
+|-----|--------|
+| Позиция вставки | `pendingInsertOrderFrom` + patch Pinia |
+| «↑ В каталог» | В шапке панели «Мои блоки» + FAB внизу справа (не перекрывается иконкой) |
+| page-world | Версия `0.4.5`, hot-reload при обновлении расширения |
+| ZIP | `public/downloads/craftum-blocks-setup.zip` |
+
+### Как пользоваться (вставка)
+
+1. «+» **между** нужными секциями (не только иконка расширения)
+2. Выбрать блок в панели «Мои блоки»
+3. После обновления расширения — **F5** на странице Craftum
+
+### Документация
+
+- `docs/craftum-blocks-research/api-findings.md` — `newBlockOrderFrom`, priority
+- `docs/craftum-blocks/monetization.md`, `admin-plan.md`
+
+### Не трогать
+
+Craftum site **954959**. Тесты только **954965**.
+
+### v0.4.6 · Extension context invalidated
+
+После обновления расширения без F5 Chrome убивает старый content script → `chrome.runtime.getURL` падает → панель «Мои блоки» не появляется. Fix: проверка `chrome.runtime.id`, try/catch, баннер «нажмите F5». Ошибки `401` на `api-v2.craftum.com` — сессия Craftum (перелогин), не расширение.
+
+---
+
+## 2026-09-01 · Craftum Blocks — контур закрыт (утро)
+
+### Итог
+
+Расширение **Craftum Blocks v0.3.4**: publish snapshot → каталог на сервере → «Мои блоки» → вставка на канву Craftum. Работает на test site 954965.
+
+### Ключевые находки
+
+- Snapshot **не через REST POST** — только WebSocket `create_block` (ADR-0036).
+- Content script **не видит** webpack Craftum — `page-world.js` в page context (ADR-0035).
+- Каталог: `data/craftum-blocks/catalog.json`, API `/api/craftum-blocks`.
+
+### Документация
+
+- `docs/craftum-blocks/` — philosophy, architecture, agent-guide, roadmap.
+
+---
+
 ## 2026-08-21 · закрытие дня
 
 ### Итог

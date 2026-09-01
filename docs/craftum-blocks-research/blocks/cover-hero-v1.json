@@ -1,0 +1,122 @@
+{
+  "id": "cover-hero-v1",
+  "version": 1,
+  "name": "Cover Hero (Craftum preset)",
+  "description": "Штатный cover: заголовок, подзаголовок, кнопка, изображение, декоративные blob",
+  "previewUrl": null,
+  "source": {
+    "siteUrl": "https://fy4299.craftum.io",
+    "websiteId": 954959,
+    "pageId": 1496862,
+    "capturedAt": "2026-09-01",
+    "state": "filled-default"
+  },
+  "craftum": {
+    "sectionType": "design-block",
+    "presetId": "ab8a097d-8b5f-4420-ac29-790617b9c742",
+    "insertMode": "api",
+    "sectionClass": "cli-block cli-cover cli-block--inverse",
+    "gridClass": "cli-block__content cli-grid cli-block__content--cover cli-block__content--normal"
+  },
+  "styles": {
+    "presetCssHref": "/static/ab8a097d-8b5f-4420-ac29-790617b9c742.css",
+    "siteHeadCss": null,
+    "dependsOn": [
+      "f-blocks-styles.css",
+      "e-complex-styles.css"
+    ]
+  },
+  "tree": {
+    "section": {
+      "dataType": "block-wrapper",
+      "dataDesignType": "block-wrapper",
+      "className": "cli-block cli-cover cli-block--inverse",
+      "dataResize": true
+    },
+    "grid": {
+      "dataType": "grid",
+      "dataDesignType": "grid",
+      "dataTitle": "CDN_PUG_COMPONENTS_BLOCK",
+      "dataBlockContent": true,
+      "className": "cli-block__content cli-grid cli-block__content--cover cli-block__content--normal"
+    },
+    "decorations": [
+      {
+        "role": "blob-icon-1",
+        "dataType": "image-wrapper",
+        "dataDesignType": "icon",
+        "className": "cli-empty-img cli-empty-img--first",
+        "editable": false
+      },
+      {
+        "role": "blob-icon-2",
+        "dataType": "image-wrapper",
+        "dataDesignType": "icon",
+        "className": "cli-empty-img cli-empty-img--second",
+        "editable": false
+      },
+      {
+        "role": "blob-icon-3",
+        "dataType": "image-wrapper",
+        "dataDesignType": "icon",
+        "className": "cli-empty-img cli-empty-img--third",
+        "editable": false
+      }
+    ],
+    "elements": [
+      {
+        "role": "title",
+        "dataType": "text",
+        "dataDesignType": "text",
+        "dataDesignOrder": 2,
+        "dataContentOrder": 1,
+        "dataSeo": true,
+        "defaultValue": "Все инструменты для уникального дизайна",
+        "cssClass": "cli-block-title cli-block-title--gigantic cli-text-center cli-text-bold",
+        "dataTitle": "CDN_PUG_COMPONENTS_TITLE"
+      },
+      {
+        "role": "subtitle",
+        "dataType": "text",
+        "dataDesignType": "text",
+        "dataDesignOrder": 3,
+        "dataContentOrder": 2,
+        "defaultValue": "Не упусти возможность узнать свои скрытые таланты и проверь свои силы с помощью дизайн-блока",
+        "cssClass": "cli-block-subtitle cli-block-subtitle--big cli-text-center cli-text-regular",
+        "dataTitle": "CDN_PUG_COMPONENTS_SUBTITLE"
+      },
+      {
+        "role": "button",
+        "dataType": "button",
+        "dataDesignType": "button",
+        "defaultValue": "Просто бесподобно!",
+        "href": "#",
+        "cssClass": "cli-button cli-button--big cli-button--primary",
+        "dataTitle": "CDN_PUG_COMPONENTS_BUTTON",
+        "labelDataType": "text"
+      },
+      {
+        "role": "image",
+        "dataType": "image-wrapper",
+        "dataDesignType": "image",
+        "defaultSrc": "https://274418.selcdn.ru/cv08300-33250f0d-0664-43fc-9dbf-9d89738d114e/uploads/62653/847971ee-6581-406a-9b26-47848533d4e3.jpg",
+        "defaultAlt": "image alt",
+        "linkClass": "cli-default cli-default-link",
+        "imgClass": "cli-image",
+        "dataTitle": "CDN_PUG_COMPONENTS_IMAGE"
+      }
+    ],
+    "background": {
+      "dataType": "background",
+      "dataDesignType": "background",
+      "className": "cli-background",
+      "defaultVars": {
+        "--background-image": "url(https://cdn2.craftum.com/images/empty01_bg.webp)",
+        "--background-color": "#000000"
+      },
+      "editable": false
+    }
+  },
+  "apiPayload": null,
+  "notes": "apiPayload заполнить после Network dump. presetId — главный ключ для insert-api."
+}

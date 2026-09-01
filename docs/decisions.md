@@ -187,3 +187,29 @@ Host → iframe: `{ source: "craft-host", focus: { mode, keepIds } }` где `mo
 Craft это **не** пересобирает и **не** выносит в восьмую вкладку рядом с Шапкой/Подвалом. Попап остаётся `scope: page` в аутлайне страницы (как cover: иначе исчезнет, а отдельной вкладки нет).
 
 Редактор: клик по кнопке с хешем попапа открывает окно на канвасе; клик по «Попап» в аутлайне — то же. Инспектор кнопки: тип **Попап / форма**. Патч пишет `href="#n-…"`. Заявки — как у обычных форм (formBridge). Если JS Крафтума нет, formBridge сам ставит `show`.
+
+## ADR-0035 · Craftum Blocks: page world для snapshot
+
+Расширение MV3: content script **изолирован** от JavaScript страницы Craftum.
+
+Snapshot-вставка **не может** вызывать `webpackChunkeditor`, Pinia, WebSocket из `editor.js` / `craftum-api.js`.
+
+Решение: `content/page-world.js` инжектируется в **page context**, мост через `postMessage`. `web_accessible_resources` обязателен.
+
+## ADR-0036 · Craftum Blocks: create_block только WebSocket
+
+`POST /blocks/blocks/` → `200 null`, блок не создаётся.
+
+Создание: WebSocket `service: blocks`, `action: create_block` (webpack модуль 4163). PUT/PATCH на `/blocks/blocks/{id}/` → 405.
+
+Разведка: `docs/craftum-blocks-research/api-findings.md`, архитектура: `docs/craftum-blocks/architecture.md`.
+
+## ADR-0037 · Craftum Blocks: превью админки ≠ snapshot
+
+Карточка в `/admin/craftum-blocks` (картинка WebP, название, категория) **не** определяет, что вставится в Craftum.
+
+Источник вставки — поле `insert.craftumBlock` в `catalog.json`, заполняется только при **«↑ В каталог»** из расширения (снимок выбранной секции workshop-страницы).
+
+Перед publish: сохранить страницу Craftum (Ctrl+S), обновить список секций, проверить плашку UUID+текст в форме. Republish с тем же `id` = upsert snapshot.
+
+Workflow: `docs/craftum-blocks/admin-workflow.md`.

@@ -1,0 +1,15 @@
+{
+  "id": "hero-nordic-v1",
+  "version": 1,
+  "name": "Hero Nordic",
+  "description": "Cover-hero на базе дизайн-блока Craftum с кастомными текстами",
+  "craftum": {
+    "insertVia": "design-block",
+    "presetId": "ab8a097d-8b5f-4420-ac29-790617b9c742"
+  },
+  "defaultTexts": {
+    "title": "Создавайте сайты быстрее",
+    "subtitle": "Кастомный hero Nordic Builder — заголовок, текст, кнопка и изображение",
+    "button": "Узнать больше"
+  }
+}

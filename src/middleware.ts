@@ -10,6 +10,8 @@ function isPublic(pathname: string): boolean {
   if (pathname.startsWith("/api/admin/login")) return true;
   if (pathname.startsWith("/api/preview/")) return true;
   if (pathname.startsWith("/api/plans")) return true;
+  if (pathname.startsWith("/api/craftum-blocks")) return true;
+  if (pathname.startsWith("/craftum-blocks")) return true;
   if (pathname.startsWith("/api/demo")) return true;
   return false;
 }

@@ -6,7 +6,8 @@
 - Puck не рендерит сайт. Legacy HTML + DOM patch.
 - Секреты и `.env` не коммитить. Снапшоты в `storage/` не коммитить.
 - Перед правками: `docs/architecture.md`, `docs/mvp-plan.md`, `docs/decisions.md`
+- **Craftum Blocks (расширение):** `docs/craftum-blocks/README.md`, `agent-guide.md`, `roadmap.md`
 - Live-editor / полигон / что не трогать: `docs/live-editor.md`
 - Журнал дня: `docs/devlog.md`
 - План после 21.08: `docs/plan-2026-08-22.md`
-- Промпт новой сессии: `docs/prompt-2026-08-22.md`
+- Промпт новой сессии: `docs/prompt-2026-08-22.md` (мигратор), `docs/prompt-2026-09-02.md` (**Craftum Blocks**)
