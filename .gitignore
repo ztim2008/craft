@@ -38,6 +38,7 @@ yarn-error.log*
 
 # craftum research captures (may contain API secrets)
 /docs/craftum-blocks-research/captured/*.json
+/docs/craftum-blocks-research/captured/pw-extension-profile/
 
 # accidental dumps
 /www.zip
