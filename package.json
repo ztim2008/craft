@@ -12,7 +12,9 @@
     "test:craftum-blocks:e2e": "tsx scripts/craftum-blocks-e2e-snapshot.ts --inject",
     "test:craftum-blocks:e2e:extension": "tsx scripts/craftum-blocks-e2e-snapshot.ts",
     "e2e": "tsx scripts/e2e-walk.ts",
-    "build:extension": "bash craftum-blocks-extension/build.sh",
+    "build:extension": "tsx scripts/sync-extension-releases.ts && bash craftum-blocks-extension/build.sh",
+    "sync:extension-releases": "tsx scripts/sync-extension-releases.ts",
+    "prebuild": "tsx scripts/sync-extension-releases.ts",
     "start:prod": "next start -p 3040"
   },
   "dependencies": {

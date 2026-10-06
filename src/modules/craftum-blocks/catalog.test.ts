@@ -29,6 +29,19 @@ describe("parseCraftumBlockInput", () => {
       }),
     );
   });
+
+  it("keeps explicit category on snapshot metadata update", () => {
+    const block = parseCraftumBlockInput({
+      id: "hero-test",
+      name: "Hero",
+      description: "Desc",
+      category: "form",
+      featured: false,
+      insert: { mode: "design" },
+    });
+    assert.equal(block.category, "form");
+    assert.equal(block.featured, undefined);
+  });
 });
 
 describe("catalog.json snapshot blocks", () => {

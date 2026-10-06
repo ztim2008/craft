@@ -18,6 +18,12 @@
     .top button, .top a { border: 0; background: transparent; color: inherit; font: inherit; padding: 8px 10px; border-radius: 4px; cursor: pointer; text-decoration: none; }
     .top button:disabled { opacity: 0.4; cursor: default; }
     .top button:hover, .top a:hover, .top .on { background: #2271b1; }
+    .top .more { position: relative; }
+    .top .more > summary { list-style: none; cursor: pointer; padding: 8px 10px; border-radius: 4px; }
+    .top .more > summary::-webkit-details-marker { display: none; }
+    .top .more[open] > summary, .top .more > summary:hover { background: #2271b1; }
+    .top .more-menu { position: absolute; top: 100%; left: 0; min-width: 160px; background: #1d2327; border: 1px solid #3c434a; border-radius: 6px; padding: 6px; z-index: 30; display: flex; flex-direction: column; gap: 2px; }
+    .top .more-menu button { text-align: left; width: 100%; }
     .primary { background: #2271b1 !important; color: #fff !important; }
     .ghost { background: #fff !important; color: #2271b1 !important; }
     .work { display: grid; grid-template-columns: 240px minmax(0, 1fr) 320px; min-height: 0; }
@@ -120,7 +126,7 @@
     }
 
     function isLiveView() {
-      return state.view === "edit" || state.view === "sections" || state.view === "siteheader" || state.view === "sitefooter" || state.view === "sitehtml" || state.view === "sitewidgets" || state.view === "menu";
+      return state.view === "edit" || state.view === "sections" || state.view === "siteheader" || state.view === "sitefooter" || state.view === "sitehtml" || state.view === "sitewidgets" || state.view === "menu" || state.view === "goods";
     }
 
     function preferHome() {
@@ -286,6 +292,20 @@
       return state.content.menuInserts;
     }
 
+    function listItemsBag() {
+      if (!state.content.listItems || typeof state.content.listItems !== "object") state.content.listItems = {};
+      return state.content.listItems;
+    }
+
+    function ensureListLayout(sectionId) {
+      const bag = listItemsBag();
+      if (!bag[sectionId]) bag[sectionId] = { order: [], removed: [], inserts: [] };
+      if (!Array.isArray(bag[sectionId].order)) bag[sectionId].order = [];
+      if (!Array.isArray(bag[sectionId].removed)) bag[sectionId].removed = [];
+      if (!Array.isArray(bag[sectionId].inserts)) bag[sectionId].inserts = [];
+      return bag[sectionId];
+    }
+
     function menuInsertForNode(id) {
       return menuInserts().find((item) =>
         (item.itemNodeIds || []).includes(id) || (item.textNodeIds || []).includes(id)
@@ -396,6 +416,8 @@
         if (!state.content.forms) state.content.forms = {};
         if (!state.content.htmlBlocks) state.content.htmlBlocks = [];
         if (!state.content.menuInserts) state.content.menuInserts = [];
+        if (!state.content.listItems) state.content.listItems = {};
+        state.goodsCatalog = data.goodsCatalog || [];
         if (!state.content.site) state.content.site = {};
         if (!state.content.pages) state.content.pages = {};
         if (!state.content.sections) state.content.sections = { order: [], hidden: [], removed: [], inserts: [] };
@@ -418,6 +440,7 @@
         forms: c.forms || {},
         htmlBlocks: c.htmlBlocks || [],
         menuInserts: c.menuInserts || [],
+        listItems: c.listItems || {},
         site: c.site || {},
         pages: c.pages || {},
         sections: c.sections || { order: [], hidden: [], removed: [], inserts: [] },
@@ -430,6 +453,7 @@
       state.content.forms = JSON.parse(JSON.stringify(data.forms || {}));
       state.content.htmlBlocks = JSON.parse(JSON.stringify(data.htmlBlocks || []));
       state.content.menuInserts = JSON.parse(JSON.stringify(data.menuInserts || []));
+      state.content.listItems = JSON.parse(JSON.stringify(data.listItems || {}));
       state.content.site = JSON.parse(JSON.stringify(data.site || {}));
       state.content.pages = JSON.parse(JSON.stringify(data.pages || {}));
       state.content.sections = JSON.parse(JSON.stringify(data.sections || { order: [], hidden: [], removed: [], inserts: [] }));
@@ -569,12 +593,14 @@
             forms: state.content.forms,
             htmlBlocks: state.content.htmlBlocks,
             menuInserts: state.content.menuInserts || [],
+            listItems: state.content.listItems || {},
             site: state.content.site || {},
             pages: state.content.pages || {},
             sections: state.content.sections || { order: [], hidden: [], removed: [], inserts: [] },
           }),
         });
         state.status = "Черновик сохранён";
+        await load();
         reloadCanvas(true);
       } catch (err) {
         state.error = err.message;
@@ -607,6 +633,7 @@
         sitehtml: "На канвасе только HTML-код · правьте справа или кнопкой «Редактировать код»",
         sitewidgets: "На канвасе только виджет .pic · правка ссылок и картинок уходит на все страницы",
         menu: "На канвасе только шапка с меню · клик по пункту или список справа",
+        goods: "Карточки товаров (list-item): ↑↓ · удалить · добавить клон",
         sections: "Секции этой страницы",
         edit: "",
       };
@@ -828,6 +855,12 @@
       document.querySelectorAll("[data-nav]").forEach((btn) => {
         btn.classList.toggle("on", btn.getAttribute("data-nav") === state.view);
       });
+      const more = document.getElementById("nav-more");
+      if (more) {
+        const demoted = ["siteheader", "sitefooter", "menu", "fields"];
+        more.classList.toggle("on", demoted.includes(state.view));
+        if (demoted.includes(state.view)) more.open = true;
+      }
     }
 
     function showStage() {
@@ -837,7 +870,7 @@
       const stageFrame = document.getElementById("stage-frame");
       if (!frame || !panel) return;
       const live = isLiveView();
-      const withPanel = !live || state.view === "menu" || state.view === "sitehtml" || state.view === "sitewidgets";
+      const withPanel = !live || state.view === "menu" || state.view === "goods" || state.view === "sitehtml" || state.view === "sitewidgets";
       frame.style.display = live ? "block" : "none";
       if (stageBar) stageBar.style.display = live ? "flex" : "none";
       if (stageFrame) stageFrame.style.display = live ? "flex" : "none";
@@ -1272,6 +1305,96 @@
         if (!links.length && !menuInserts().length) panel.appendChild(el('<div class="card muted">Пунктов меню в модели нет — кликните пункт на живой шапке.</div>'));
         return;
       }
+      if (state.view === "goods") {
+        panel.appendChild(el('<p class="hint">Карточки товаров: ↑↓ · удалить · + Добавить (клон в том же дизайне). После правок — Сохранить → Опубликовать.</p>'));
+        const groups = state.goodsCatalog || [];
+        if (!groups.length) {
+          panel.appendChild(el('<div class="card muted">На этой странице нет секции goods с cli-goods-item.</div>'));
+          return;
+        }
+        groups.forEach((group) => {
+          const layout = ensureListLayout(group.sectionId);
+          if (!layout.order.length) {
+            layout.order = (group.cards || []).map((c) => c.key);
+          }
+          const labelByKey = new Map((group.cards || []).map((c) => [c.key, c]));
+          const display = layout.order
+            .map((key) => labelByKey.get(key) || {
+              key,
+              kind: String(key).startsWith("li-") ? "insert" : "donor",
+              label: (layout.inserts.find((item) => item.id === key) || {}).label || key,
+            })
+            .filter((card) => card && !(layout.removed || []).includes(card.key));
+          const head = el('<div class="card"><h2></h2></div>');
+          head.querySelector("h2").textContent = group.label || "Товары";
+          const addBtn = document.createElement("button");
+          addBtn.type = "button";
+          addBtn.className = "primary";
+          addBtn.textContent = "+ Добавить карточку";
+          addBtn.addEventListener("click", async () => {
+            recordChange();
+            const id = "li-" + Date.now().toString(36);
+            layout.inserts.push({ id, label: "Новая карточка" });
+            layout.order = layout.order.concat([id]);
+            fillPanel();
+            await save();
+          });
+          head.appendChild(addBtn);
+          panel.appendChild(head);
+          display.forEach((card, index) => {
+            const row = el('<div class="card"><div class="muted"></div><div class="row" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div></div>');
+            row.querySelector(".muted").textContent = (index + 1) + ". " + (card.label || card.key) + (card.kind === "insert" ? " · клон" : "");
+            const actions = row.querySelector(".row");
+            function move(delta) {
+              recordChange();
+              const order = layout.order.slice();
+              const i = order.indexOf(card.key);
+              if (i < 0) return;
+              const j = i + delta;
+              if (j < 0 || j >= order.length) return;
+              const tmp = order[i];
+              order[i] = order[j];
+              order[j] = tmp;
+              layout.order = order;
+            }
+            const up = document.createElement("button");
+            up.type = "button";
+            up.textContent = "↑";
+            up.addEventListener("click", async () => {
+              move(-1);
+              fillPanel();
+              await save();
+            });
+            const down = document.createElement("button");
+            down.type = "button";
+            down.textContent = "↓";
+            down.addEventListener("click", async () => {
+              move(1);
+              fillPanel();
+              await save();
+            });
+            const del = document.createElement("button");
+            del.type = "button";
+            del.textContent = "Удалить";
+            del.addEventListener("click", async () => {
+              recordChange();
+              if (card.kind === "donor") {
+                layout.removed = Array.from(new Set((layout.removed || []).concat([card.key])));
+              } else {
+                layout.inserts = layout.inserts.filter((item) => item.id !== card.key);
+              }
+              layout.order = layout.order.filter((k) => k !== card.key);
+              fillPanel();
+              await save();
+            });
+            actions.appendChild(up);
+            actions.appendChild(down);
+            actions.appendChild(del);
+            panel.appendChild(row);
+          });
+        });
+        return;
+      }
       if (state.view === "fields") {
         panel.appendChild(el('<p class="hint">Запасной список полей, если клик по блоку не попал в разметку.</p>'));
         const page = currentPage();
@@ -1640,7 +1763,7 @@
       const lab = el("<label><span></span></label>");
       lab.querySelector("span").textContent = field.type + " · " + field.label;
       const input = document.createElement(field.type === "textarea" || field.type === "html" ? "textarea" : "input");
-      if (field.type === "image") input.placeholder = "URL картинки";
+      if (field.type === "image") input.placeholder = "URL /assets/…";
       if (field.type === "phone") {
         input.type = "tel";
         input.inputMode = "tel";
@@ -1662,6 +1785,34 @@
       });
       lab.appendChild(input);
       wrap.appendChild(lab);
+      if (field.type === "image") {
+        const uploadRow = el('<div class="row" style="display:flex;gap:8px;align-items:center;margin:0 0 8px"></div>');
+        const file = document.createElement("input");
+        file.type = "file";
+        file.accept = "image/jpeg,image/png,image/webp,image/gif";
+        file.style.flex = "1";
+        const status = el('<span class="muted"></span>');
+        file.addEventListener("change", async () => {
+          const blob = file.files && file.files[0];
+          if (!blob) return;
+          status.textContent = "Загрузка…";
+          try {
+            const body = new FormData();
+            body.append("file", blob, blob.name || "image.jpg");
+            const res = await fetch("/api/admin/upload", { method: "POST", body, credentials: "same-origin" });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || "Ошибка загрузки");
+            input.value = data.url;
+            input.dispatchEvent(new Event("input"));
+            status.textContent = data.url;
+          } catch (err) {
+            status.textContent = err.message || "Ошибка";
+          }
+        });
+        uploadRow.appendChild(file);
+        uploadRow.appendChild(status);
+        wrap.appendChild(uploadRow);
+      }
       if (isLinkField(field)) wrap.appendChild(linkActionPanel(field, input));
       return wrap;
     }
@@ -1719,6 +1870,13 @@
         box.appendChild(el('<p class="hint">Меню живёт в шапке. Кликните пункт на канвасе или правьте список на панели снизу. Новая ссылка — клон пункта. После публикации — на всех страницах.</p>'));
         return;
       }
+      if (state.view === "goods") {
+        const box = document.getElementById("inspector");
+        if (!box) return;
+        box.innerHTML = "";
+        box.appendChild(el('<p class="hint">Товары (list-item): панель снизу — ↑↓ · удалить · добавить. После «Опубликовать» DOM попадает в public/ и ZIP.</p>'));
+        return;
+      }
       const box = document.getElementById("inspector");
       if (!box) return;
       box.innerHTML = "";
@@ -1746,30 +1904,28 @@
         box.appendChild(head);
         box.appendChild(fieldInput(field));
       }
-      const pageSeo = currentPageSeo();
-      const seo = el('<div class="card"><div class="muted">SEO этой страницы</div></div>');
-      seo.appendChild(labeledInput("Title", false, () => pageSeo.seo.title, (v) => { pageSeo.seo.title = v; }));
-      seo.appendChild(labeledInput("Description", true, () => pageSeo.seo.description, (v) => { pageSeo.seo.description = v; }));
-      seo.appendChild(labeledInput("OG image", false, () => pageSeo.seo.ogImage, (v) => { pageSeo.seo.ogImage = v; }));
-      box.appendChild(seo);
+      const seoLink = el('<div class="card"><p class="hint" style="margin:0">SEO страницы — вкладка «SEO / сайт».</p></div>');
+      box.appendChild(seoLink);
     }
 
     function mountShell() {
       if (document.getElementById("shell")) return;
       const root = el(`<div class="shell" id="shell">
         <header class="top">
-          <h1>Редактор страниц</h1>
+          <h1>Редактор</h1>
           <button data-nav="edit" type="button">Страница</button>
-          <button data-nav="sections" type="button">Секции</button>
-          <button data-nav="siteheader" type="button">Шапка</button>
-          <button data-nav="sitefooter" type="button">Подвал</button>
-          <button data-nav="sitehtml" type="button">HTML-код</button>
-          <button data-nav="sitewidgets" type="button">Виджеты</button>
+          <button data-nav="goods" type="button">Товары</button>
           <button data-nav="seo" type="button">SEO / сайт</button>
-          <button data-nav="menu" type="button">Меню</button>
           <button data-nav="leads" type="button">Заявки</button>
-          <button data-nav="blocks" type="button">HTML-блоки</button>
-          <button data-nav="fields" type="button">Все поля</button>
+          <details class="more" id="nav-more">
+            <summary>Ещё</summary>
+            <div class="more-menu">
+              <button data-nav="siteheader" type="button">Шапка</button>
+              <button data-nav="sitefooter" type="button">Подвал</button>
+              <button data-nav="menu" type="button">Меню</button>
+              <button data-nav="fields" type="button">Все поля</button>
+            </div>
+          </details>
           <span class="grow"></span>
           <span id="status"></span>
           <button id="undo" type="button" disabled title="Ctrl+Z">Отменить</button>
@@ -1791,7 +1947,6 @@
               <button data-vp-btn="mobile" type="button">Телефон</button>
               <span id="mode-hint" class="muted"></span>
               <span class="grow"></span>
-              <button id="insert-start" type="button">+ секция в начало</button>
             </div>
             <div class="stage-frame" id="stage-frame" data-vp="desktop">
               <iframe id="canvas" title="Страница"></iframe>
@@ -1825,10 +1980,10 @@
             return;
           }
           state.view = btn.getAttribute("data-nav");
-          if (state.view === "siteheader" || state.view === "sitefooter" || state.view === "sitehtml" || state.view === "sitewidgets" || state.view === "menu") {
+          if (state.view === "siteheader" || state.view === "sitefooter" || state.view === "sitehtml" || state.view === "sitewidgets" || state.view === "menu" || state.view === "goods") {
             preferHome();
             const type = state.view === "sitefooter" ? "footer" : "header";
-            if (state.view !== "sitehtml" && state.view !== "sitewidgets") {
+            if (state.view !== "sitehtml" && state.view !== "sitewidgets" && state.view !== "goods") {
               const sec = uniqueSiteSections(type)[0];
               if (sec) {
                 state.selectedSection = sec.id;
@@ -1859,7 +2014,6 @@
           paintViewport();
         });
       });
-      document.getElementById("insert-start").addEventListener("click", () => openInsertModal(""));
       document.getElementById("insert-cancel").addEventListener("click", closeInsertModal);
       document.getElementById("insert-ok").addEventListener("click", () => confirmInsertHtml());
       document.getElementById("insert-modal").addEventListener("click", (ev) => {

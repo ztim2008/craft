@@ -35,6 +35,7 @@
 | [agent-guide.md](./agent-guide.md) | **новые агенты** | что трогать, что нельзя, типовые ошибки |
 | [admin-workflow.md](./admin-workflow.md) | **админ** | workshop-страница, много блоков, republish |
 | [roadmap.md](./roadmap.md) | план | фазы до продакшена и монетизации |
+| [ideas.md](./ideas.md) | продукт | идеи на будущее (не roadmap) |
 | [monetization.md](./monetization.md) | продукт, бизнес | тарифы, GTM, billing, KPI |
 | [../craftum-blocks-research/api-findings.md](../craftum-blocks-research/api-findings.md) | разведка | REST + WebSocket Craftum |
 | [../craftum-blocks-extension-mvp.md](../craftum-blocks-extension-mvp.md) | история | ТЗ v0.1 (частично устарело) |

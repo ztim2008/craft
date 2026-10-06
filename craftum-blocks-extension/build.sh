@@ -39,10 +39,12 @@ cp -r "$EXT_DIR/content" "$EXT_DIR/icons" "$EXT_DIR/popup" "$EXT_STAGE/"
 # Setup ZIP (установщик + extension/)
 mkdir -p "$SETUP_STAGE/extension"
 cp -r "$EXT_STAGE/"* "$SETUP_STAGE/extension/"
+cp "$INSTALLER_DIR/INSTALL.bat" "$SETUP_STAGE/"
 cp "$INSTALLER_DIR/Установить Craftum Blocks.bat" "$SETUP_STAGE/"
 cp "$INSTALLER_DIR/install.ps1" "$SETUP_STAGE/"
 cp "$INSTALLER_DIR/install.sh" "$SETUP_STAGE/"
 cp "$INSTALLER_DIR/ПРОЧТИ-МЕНЯ.txt" "$SETUP_STAGE/"
+echo "Craftum Blocks v${VERSION}" > "$SETUP_STAGE/VERSION.txt"
 chmod +x "$SETUP_STAGE/install.sh"
 
 ( cd "$SETUP_STAGE" && zip -r "$SETUP_ZIP" . -x "*.DS_Store" )
@@ -62,7 +64,9 @@ fi
 
 # Публикация на сайт
 cp "$SETUP_ZIP" "$ROOT/public/downloads/craftum-blocks-setup.zip"
+cp "$SETUP_ZIP" "$ROOT/public/downloads/craftum-blocks-setup-${VERSION}.zip"
 cp "$PORTABLE_ZIP" "$ROOT/public/downloads/craftum-blocks-mvp.zip"
+cp "$PORTABLE_ZIP" "$ROOT/public/downloads/craftum-blocks-mvp-${VERSION}.zip"
 [[ -f "$CRX_OUT" ]] && cp "$CRX_OUT" "$ROOT/public/downloads/craftum-blocks.crx"
 
 rm -rf "$EXT_STAGE" "$SETUP_STAGE"

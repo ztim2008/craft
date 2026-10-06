@@ -1,4 +1,4 @@
-import { duplicateCraftumBlock } from "@/modules/craftum-blocks/catalog";
+import { duplicateCraftumBlock, getAdminCraftumBlockCatalog } from "@/modules/craftum-blocks/catalog";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,8 +16,8 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   try {
-    const { catalog, block } = duplicateCraftumBlock(id, body.newId?.trim().toLowerCase());
-    return Response.json({ ok: true, block, catalog }, { status: 201 });
+    const { block } = duplicateCraftumBlock(id, body.newId?.trim().toLowerCase());
+    return Response.json({ ok: true, block, catalog: getAdminCraftumBlockCatalog() }, { status: 201 });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Ошибка дублирования";
     const status = message === "Блок не найден" ? 404 : 400;

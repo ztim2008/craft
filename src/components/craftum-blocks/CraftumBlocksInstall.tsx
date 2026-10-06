@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import {
+  EXTENSION_CURRENT_VERSION,
+  EXTENSION_DOWNLOAD,
+} from "@/modules/craftum-blocks/extension-releases";
 
-const VERSION = "0.2.0";
-const SETUP_URL = "/downloads/craftum-blocks-setup.zip";
-const PORTABLE_URL = "/downloads/craftum-blocks-mvp.zip";
-const CRX_URL = "/downloads/craftum-blocks.crx";
+const VERSION = EXTENSION_CURRENT_VERSION;
+const SETUP_URL = EXTENSION_DOWNLOAD.setupVersioned;
+const PORTABLE_URL = EXTENSION_DOWNLOAD.portableVersioned;
+const CRX_URL = EXTENSION_DOWNLOAD.crx;
 
 type BrowserKind = "chrome" | "yandex" | "edge" | "firefox" | "other";
 type OsKind = "windows" | "mac" | "linux" | "other";
@@ -49,14 +54,14 @@ export function CraftumBlocksInstall() {
   }, []);
 
   const isWindows = os === "windows";
-  const primaryUrl = isWindows ? SETUP_URL : PORTABLE_URL;
-  const primaryName = isWindows ? "craftum-blocks-setup.zip" : "craftum-blocks-mvp.zip";
+  const primaryUrl = SETUP_URL;
+  const primaryName = `craftum-blocks-setup-${VERSION}.zip`;
 
   const steps = useMemo(() => {
     if (isWindows) {
       return [
         "Скачайте установщик и распакуйте ZIP в любую папку.",
-        "Запустите «Установить Craftum Blocks.bat» (двойной клик).",
+        "Запустите INSTALL.bat (двойной клик).",
         "Установщик скопирует файлы и откроет страницу расширений в браузере.",
         "Включите «Режим разработчика» → «Загрузить распакованное».",
         "Вставьте путь из буфера (Ctrl+V) — он уже скопирован установщиком.",
@@ -64,11 +69,10 @@ export function CraftumBlocksInstall() {
       ];
     }
     return [
-      "Скачайте архив и распакуйте.",
-      "macOS/Linux: запустите install.sh из архива.",
-      "Или вручную: chrome://extensions / browser://extensions.",
-      "Режим разработчика → загрузить папку extension.",
-      "Откройте редактор Craftum.",
+      "Скачайте установщик и распакуйте ZIP.",
+      "macOS/Linux: в терминале chmod +x install.sh && ./install.sh",
+      "Или вручную: chrome://extensions → режим разработчика → папка extension.",
+      "Откройте редактор Craftum — «Мои блоки» справа внизу.",
     ];
   }, [isWindows]);
 
@@ -97,29 +101,34 @@ export function CraftumBlocksInstall() {
           Craftum Blocks
         </h1>
         <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-white/70">
-          Установщик для теста: копирует расширение, открывает браузер, кладёт путь в буфер. Остаётся один
-          клик — «Загрузить распакованное».
+          Расширение для Craftum: вставляйте блоки из{" "}
+          <Link href="/craftum-blocks/catalog" className="text-violet-300 underline hover:text-white">
+            каталога
+          </Link>{" "}
+          прямо в редактор. Установщик копирует файлы, открывает браузер, кладёт путь в буфер.
         </p>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <Link
+            href="/craftum-blocks/catalog"
+            className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-8 py-4 text-base font-semibold text-white transition hover:bg-white/10"
+          >
+            Смотреть каталог блоков
+          </Link>
           <button
             type="button"
-            onClick={() =>
-              download(primaryUrl, isWindows ? `craftum-blocks-setup-${VERSION}.zip` : `craftum-blocks-${VERSION}.zip`)
-            }
+            onClick={() => download(primaryUrl, primaryName)}
             className="inline-flex items-center justify-center rounded-2xl bg-violet-500 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-violet-500/30 transition hover:bg-violet-400"
           >
-            {isWindows ? "Скачать установщик Windows" : "Скачать архив"}
+            {isWindows ? "Скачать установщик Windows" : "Скачать установщик"}
           </button>
-          {isWindows && (
-            <button
-              type="button"
-              onClick={() => download(PORTABLE_URL, `craftum-blocks-mvp-${VERSION}.zip`)}
-              className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-8 py-4 text-base font-semibold text-white transition hover:bg-white/10"
-            >
-              Только расширение (ZIP)
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => download(PORTABLE_URL, `craftum-blocks-mvp-${VERSION}.zip`)}
+            className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-8 py-4 text-base font-semibold text-white transition hover:bg-white/10"
+          >
+            Только расширение (ZIP)
+          </button>
           {browser !== "firefox" && (
             <button
               type="button"
@@ -137,7 +146,7 @@ export function CraftumBlocksInstall() {
           <p className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
             {isWindows ? (
               <>
-                Скачано. Распакуйте ZIP → запустите <strong>Установить Craftum Blocks.bat</strong>.
+                Скачано. Распакуйте ZIP → запустите <strong>INSTALL.bat</strong>.
               </>
             ) : (
               <>Скачано. Распакуйте и запустите install.sh или загрузите папку extension вручную.</>
@@ -152,9 +161,17 @@ export function CraftumBlocksInstall() {
             {primaryName}
           </a>
           {" · "}
-          <a className="underline hover:text-white" href="/craftum-blocks/catalog">
-            каталог блоков
+          <Link className="underline hover:text-white" href="/craftum-blocks/versions">
+            версии и changelog
+          </Link>
+          {" · "}
+          <a className="underline hover:text-white" href="/craftum-blocks/versions/feed.xml">
+            RSS
           </a>
+          {" · "}
+          <Link className="underline hover:text-white" href="/craftum-blocks/catalog">
+            каталог блоков
+          </Link>
           {" · "}
           <a className="underline hover:text-white" href={CRX_URL}>
             .crx

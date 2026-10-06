@@ -581,6 +581,135 @@ function applyMenuInserts(html, inserts) {
   return next;
 }
 
+const LIST_RE = /<!--craft-list:[^>]+-->[\s\S]*?<!--\/craft-list:[^>]+-->/g;
+
+function collectGoodsCardsC(html, sectionId) {
+  const id = escapeRegex(sectionId);
+  const openRe = new RegExp(`<(section)\\b[^>]*\\bid=(["'])${id}\\2[^>]*>`, "i");
+  const match = openRe.exec(html);
+  if (!match) return [];
+  const sec = elementRangeC(html, "section", match.index, match[0]);
+  if (!sec) return [];
+  const slice = html.slice(sec.start, sec.end);
+  const cards = [];
+  const re = /<li\b([^>]*\bcli-goods-item\b[^>]*)>/gi;
+  let cardMatch;
+  while ((cardMatch = re.exec(slice))) {
+    const abs = sec.start + cardMatch.index;
+    const range = elementRangeC(html, "li", abs, cardMatch[0]);
+    if (!range) continue;
+    cards.push({
+      key: `d${cards.length}`,
+      start: range.start,
+      end: range.end,
+      html: html.slice(range.start, range.end),
+    });
+    re.lastIndex = range.end - sec.start;
+  }
+  return cards;
+}
+
+function rewriteListIdsC(cardHtml, insertId) {
+  const ids = [...cardHtml.matchAll(/\bid=(["'])(n-[^"']+)\1/gi)].map((m) => m[2]);
+  const unique = [...new Set(ids)];
+  const map = new Map();
+  unique.forEach((id, i) => {
+    map.set(id, hashedNidC(`${insertId}:n:${i}:${id}`));
+  });
+  return cardHtml.replace(/\bid=(["'])(n-[^"']+)\1/gi, (_full, q, id) => `id=${q}${map.get(id) || id}${q}`);
+}
+
+function cardLabelC(cardHtml) {
+  const texts = [...cardHtml.matchAll(/>([^<]{2,80})</g)]
+    .map((m) => String(m[1] || "").trim())
+    .filter(
+      (t) =>
+        t &&
+        t.toLowerCase() !== "buy now" &&
+        !/^[\d\s.$€]+$/.test(t) &&
+        !t.startsWith("{") &&
+        !/^https?:/i.test(t),
+    );
+  return texts[0] || "Карточка";
+}
+
+function resolveListTimeline(layout, donor) {
+  const removed = new Set((layout && layout.removed) || []);
+  const inserts = ((layout && layout.inserts) || []).filter((item) => item && item.id);
+  const byInsert = new Map(inserts.map((item) => [item.id, item]));
+  const byDonor = new Map(donor.map((card) => [card.key, card]));
+  let order = ((layout && layout.order) || []).filter((key) => {
+    if (byDonor.has(key)) return !removed.has(key);
+    return byInsert.has(key);
+  });
+  const hasInsertInOrder = order.some((key) => byInsert.has(key));
+  if (!hasInsertInOrder && inserts.length) {
+    const expanded = [];
+    let donorOrder = order.filter((key) => byDonor.has(key));
+    for (const card of donor) {
+      if (!removed.has(card.key) && !donorOrder.includes(card.key)) donorOrder.push(card.key);
+    }
+    for (const key of donorOrder) {
+      expanded.push(key);
+      for (const ins of inserts.filter((item) => item.afterKey === key)) expanded.push(ins.id);
+    }
+    for (const ins of inserts.filter((item) => !item.afterKey && !expanded.includes(ins.id))) {
+      expanded.unshift(ins.id);
+    }
+    order = expanded;
+  } else {
+    for (const card of donor) {
+      if (!removed.has(card.key) && !order.includes(card.key)) order.push(card.key);
+    }
+    for (const ins of inserts) {
+      if (!order.includes(ins.id)) order.push(ins.id);
+    }
+  }
+  return order;
+}
+
+function applyListItems(html, bag) {
+  const layouts = bag && typeof bag === "object" ? bag : null;
+  if (!layouts) return html;
+  let next = html.replace(LIST_RE, "");
+  const sectionIds = Object.keys(layouts).filter((id) => id && id.startsWith("n-"));
+  for (const sectionId of sectionIds) {
+    const layout = layouts[sectionId] || {};
+    const donor = collectGoodsCardsC(next, sectionId);
+    if (!donor.length) continue;
+    const removed = new Set(layout.removed || []);
+    const byKey = new Map(donor.map((card) => [card.key, card]));
+    const inserts = (layout.inserts || []).filter((item) => item && item.id);
+    const byInsert = new Map(inserts.map((item) => [item.id, item]));
+    const template = (donor[0] && donor[0].html) || "";
+    const order = resolveListTimeline(layout, donor);
+    const chunks = [];
+    for (const key of order) {
+      if (byKey.has(key) && !removed.has(key)) {
+        chunks.push(byKey.get(key).html);
+        continue;
+      }
+      const extra = byInsert.get(key);
+      if (!extra) continue;
+      const safe = String(extra.id).replace(/[^a-zA-Z0-9_-]/g, "");
+      const cloned = rewriteListIdsC(template, extra.id);
+      chunks.push(`<!--craft-list:${safe}-->${cloned}<!--/craft-list:${safe}-->`);
+    }
+    if (!chunks.length) {
+      // all removed — wipe donor cards region
+      const first = donor[0];
+      const last = donor[donor.length - 1];
+      next = `${next.slice(0, first.start)}${next.slice(last.end)}`;
+      continue;
+    }
+    const first = donor[0];
+    const last = donor[donor.length - 1];
+    const joined = chunks.join("");
+    next = `${next.slice(0, first.start)}${joined}${next.slice(last.end)}`;
+  }
+  return next;
+}
+
 function expandSimilarFieldsC(fields, groups) {
   const source = fields || {};
   if (!groups || !groups.length) return source;
@@ -603,7 +732,10 @@ function applyContent(html, overlay, pagePath) {
   return applySeo(
     applyHtmlBlocks(
       patchHtml(
-        applyMenuInserts(applySections(html, overlay && overlay.sections), overlay && overlay.menuInserts),
+        applyMenuInserts(
+          applyListItems(applySections(html, overlay && overlay.sections), overlay && overlay.listItems),
+          overlay && overlay.menuInserts,
+        ),
         fields,
       ),
       (overlay && overlay.htmlBlocks) || [],
@@ -613,4 +745,14 @@ function applyContent(html, overlay, pagePath) {
   );
 }
 
-module.exports = { applyContent, patchHtml, applyHtmlBlocks, applySeo, applySections, applyMenuInserts };
+module.exports = {
+  applyContent,
+  patchHtml,
+  applyHtmlBlocks,
+  applySeo,
+  applySections,
+  applyMenuInserts,
+  applyListItems,
+  collectGoodsCardsC,
+  cardLabelC,
+};

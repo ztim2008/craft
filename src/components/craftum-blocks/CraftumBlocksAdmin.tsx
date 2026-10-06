@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CraftumBlocksCategoriesPanel } from "@/components/craftum-blocks/CraftumBlocksCategoriesPanel";
+import { ExtensionPublishKeyPanel } from "@/components/craftum-blocks/ExtensionPublishKeyPanel";
 import { BlockPreviewGallery } from "@/components/craftum-blocks/BlockPreviewGallery";
 import {
   getCategoryMetaFromList,
@@ -17,6 +18,10 @@ type CatalogBlock = {
   category?: string;
   featured?: boolean;
   previewUrl?: string;
+  insertCount?: number;
+  lastInsertedAt?: string;
+  publishedAt?: string;
+  updatedAt?: string;
   insert: {
     mode: InsertMode;
     templateTitle?: string;
@@ -84,21 +89,23 @@ function blockToForm(block: CatalogBlock): EditForm {
 }
 
 function formToPayload(form: EditForm, original?: CatalogBlock) {
-  const insert =
-    form.mode === "cover"
-      ? { mode: "cover" as const, templateTitle: form.templateTitle.trim() }
-      : form.mode === "hero"
-        ? {
-            mode: "hero" as const,
-            heroTexts: {
-              title: form.heroTitle.trim(),
-              subtitle: form.heroSubtitle.trim(),
-              button: form.heroButton.trim(),
-            },
-          }
-        : form.mode === "snapshot" && original?.insert.mode === "snapshot"
-          ? original.insert
-          : { mode: "design" as const };
+  let insert: CatalogBlock["insert"];
+  if (original?.insert.mode === "snapshot") {
+    insert = original.insert;
+  } else if (form.mode === "cover") {
+    insert = { mode: "cover", templateTitle: form.templateTitle.trim() };
+  } else if (form.mode === "hero") {
+    insert = {
+      mode: "hero",
+      heroTexts: {
+        title: form.heroTitle.trim(),
+        subtitle: form.heroSubtitle.trim(),
+        button: form.heroButton.trim(),
+      },
+    };
+  } else {
+    insert = { mode: "design" };
+  }
 
   return {
     id: form.id.trim().toLowerCase(),
@@ -109,6 +116,51 @@ function formToPayload(form: EditForm, original?: CatalogBlock) {
     previewUrl: form.previewUrl.trim() || undefined,
     insert,
   };
+}
+
+type SortKey =
+  | "name-asc"
+  | "name-desc"
+  | "inserts-desc"
+  | "inserts-asc"
+  | "updated-desc"
+  | "category-asc";
+
+const SORT_LABELS: Record<SortKey, string> = {
+  "name-asc": "Название А→Я",
+  "name-desc": "Название Я→А",
+  "inserts-desc": "Популярность ↓",
+  "inserts-asc": "Популярность ↑",
+  "updated-desc": "Недавно обновлены",
+  "category-asc": "Категория",
+};
+
+function sortBlocks(blocks: CatalogBlock[], sortKey: SortKey, categories: CraftumBlockCategory[]) {
+  const catOrder = new Map(categories.map((c, i) => [c.id, c.order ?? i]));
+  return [...blocks].sort((a, b) => {
+    switch (sortKey) {
+      case "name-desc":
+        return b.name.localeCompare(a.name, "ru");
+      case "inserts-desc":
+        return (b.insertCount ?? 0) - (a.insertCount ?? 0) || a.name.localeCompare(b.name, "ru");
+      case "inserts-asc":
+        return (a.insertCount ?? 0) - (b.insertCount ?? 0) || a.name.localeCompare(b.name, "ru");
+      case "updated-desc":
+        return (
+          String(b.updatedAt || b.publishedAt || "").localeCompare(
+            String(a.updatedAt || a.publishedAt || ""),
+          ) || a.name.localeCompare(b.name, "ru")
+        );
+      case "category-asc": {
+        const ca = catOrder.get(a.category || "custom") ?? 999;
+        const cb = catOrder.get(b.category || "custom") ?? 999;
+        return ca - cb || a.name.localeCompare(b.name, "ru");
+      }
+      case "name-asc":
+      default:
+        return a.name.localeCompare(b.name, "ru");
+    }
+  });
 }
 
 function absPreviewUrl(url?: string): string | null {
@@ -126,6 +178,7 @@ export function CraftumBlocksAdmin() {
   const [pending, setPending] = useState(false);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>("inserts-desc");
   const [editOpen, setEditOpen] = useState(false);
   const [editBlock, setEditBlock] = useState<CatalogBlock | null>(null);
   const [form, setForm] = useState<EditForm>(EMPTY_FORM);
@@ -155,7 +208,7 @@ export function CraftumBlocksAdmin() {
   const filteredBlocks = useMemo(() => {
     if (!catalog) return [];
     const q = search.trim().toLowerCase();
-    return catalog.blocks.filter((b) => {
+    const filtered = catalog.blocks.filter((b) => {
       if (categoryFilter && (b.category || "custom") !== categoryFilter) return false;
       if (!q) return true;
       return (
@@ -164,7 +217,13 @@ export function CraftumBlocksAdmin() {
         b.description.toLowerCase().includes(q)
       );
     });
-  }, [catalog, search, categoryFilter]);
+    return sortBlocks(filtered, sortKey, categories);
+  }, [catalog, search, categoryFilter, sortKey, categories]);
+
+  const totalInserts = useMemo(
+    () => (catalog?.blocks ?? []).reduce((sum, b) => sum + (b.insertCount ?? 0), 0),
+    [catalog],
+  );
 
   const countsByCategory = useMemo(() => {
     const map = new Map<string, number>();
@@ -291,11 +350,13 @@ export function CraftumBlocksAdmin() {
 
       {tab === "blocks" && (
         <>
+      <ExtensionPublishKeyPanel />
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-[#1d2327]">Craftum Blocks</h1>
           <p className="mt-1 text-sm text-[#646970]">
             Каталог блоков для расширения · {catalog?.blocks.length ?? 0} шт.
+            {totalInserts > 0 && <> · {totalInserts} вставок</>}
             {catalog?.updatedAt && (
               <> · обновлено {catalog.updatedAt.slice(0, 19).replace("T", " ")}</>
             )}
@@ -375,6 +436,25 @@ export function CraftumBlocksAdmin() {
         </aside>
 
         <main className="min-w-0 flex-1 overflow-auto p-4">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-[#646970]">
+              Показано {filteredBlocks.length} из {catalog?.blocks.length ?? 0}
+            </p>
+            <label className="flex items-center gap-2 text-sm text-[#646970]">
+              Сортировка
+              <select
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value as SortKey)}
+                className="rounded border border-[#c3c4c7] px-3 py-1.5 text-sm text-[#1d2327]"
+              >
+                {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
+                  <option key={key} value={key}>
+                    {SORT_LABELS[key]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
           {loading && <p className="text-center text-sm text-[#646970]">Загрузка…</p>}
           {!loading && filteredBlocks.length === 0 && (
             <p className="text-center text-sm text-[#646970]">Блоки не найдены</p>
@@ -413,8 +493,13 @@ export function CraftumBlocksAdmin() {
                         <div className="flex h-full items-center justify-center text-4xl">{cat.emoji}</div>
                       )}
                       {block.featured && (
-                        <span className="absolute left-2 top-2 rounded bg-[#2271b1] px-2 py-0.5 text-xs text-white">
-                          featured
+                        <span className="absolute left-2 top-2 rounded bg-[#6d5efc] px-2 py-0.5 text-xs text-white">
+                          Рекомендуем
+                        </span>
+                      )}
+                      {(block.insertCount ?? 0) > 0 && (
+                        <span className="absolute right-2 top-2 rounded bg-[#1d2327]/80 px-2 py-0.5 text-xs text-white">
+                          ↓ {block.insertCount}
                         </span>
                       )}
                     </div>
@@ -423,6 +508,7 @@ export function CraftumBlocksAdmin() {
                       <p className="mt-1 line-clamp-2 text-xs text-[#646970]">{block.description}</p>
                       <p className="mt-2 font-mono text-[10px] text-[#a7aaad]">
                         {block.id} · {cat.emoji} {cat.name} · {modeLabel(block.insert.mode)}
+                        {(block.insertCount ?? 0) > 0 && <> · {block.insertCount} вставок</>}
                       </p>
                     </div>
                   </button>
@@ -515,7 +601,7 @@ export function CraftumBlocksAdmin() {
                   checked={form.featured}
                   onChange={(e) => setForm((f) => ({ ...f, featured: e.target.checked }))}
                 />
-                Featured (выделить в панели Craftum)
+                Рекомендуем (показывать выше в панели Craftum)
               </label>
 
               {editBlock && (
@@ -566,7 +652,7 @@ export function CraftumBlocksAdmin() {
               {editBlock?.insert.mode === "snapshot" && (
                 <p className="rounded bg-amber-50 px-3 py-2 text-xs text-amber-900">
                   Snapshot: содержимое меняется через Craftum («↑ В каталог»). Здесь — название,
-                  категория, превью, featured.
+                  категория, превью, «Рекомендуем».
                 </p>
               )}
 

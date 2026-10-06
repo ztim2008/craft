@@ -56,6 +56,21 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
 
+  if (msg?.type === "RECORD_INSERT") {
+    fetch("https://craft.nordic-builder.ru/api/craftum-blocks/stats/insert", {
+      method: "POST",
+      cache: "no-store",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ blockId: msg.blockId || "" }),
+    })
+      .then(async (res) => {
+        const data = res.ok ? await res.json().catch(() => ({})) : {};
+        sendResponse({ ok: res.ok, data });
+      })
+      .catch((e) => sendResponse({ ok: false, error: String(e.message || e) }));
+    return true;
+  }
+
   if (msg?.type === "PUBLISH_BLOCK") {
     fetch(PUBLISH_URL, {
       method: "POST",

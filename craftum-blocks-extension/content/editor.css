@@ -102,7 +102,7 @@
 .craftum-blocks-publish-fab--standalone {
   position: fixed;
   right: 16px;
-  bottom: 24px;
+  bottom: 424px;
   z-index: 2147483647;
 }
 
@@ -151,7 +151,11 @@
   background: #fff;
   border-radius: 16px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.18);
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.04),
+    0 28px 70px rgba(15, 23, 42, 0.38),
+    0 48px 120px rgba(90, 74, 230, 0.22),
+    0 80px 160px rgba(15, 23, 42, 0.18);
   overflow: hidden;
 }
 
@@ -400,8 +404,40 @@
 }
 
 .craftum-blocks-modal h2 {
-  margin: 0 0 8px;
+  margin: 0;
   font-size: 18px;
+}
+
+.cb-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.cb-modal-close {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cb-modal-close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.cb-modal-lead {
+  margin: 0 0 16px;
+  color: #64748b;
+  font-size: 14px;
 }
 
 .craftum-blocks-modal p {
@@ -426,12 +462,71 @@
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   font: inherit;
+  color: #0f172a;
+  background: #fff;
 }
 
 .craftum-blocks-form .cb-check {
   display: flex;
   align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.craftum-blocks-form .cb-check input[type="checkbox"] {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: #6d5efc;
+  cursor: pointer;
+}
+
+.cb-publish-id-hint {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+}
+
+.cb-publish-mode {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin: 0 0 14px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.cb-publish-mode legend {
+  width: 100%;
+  margin-bottom: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.cb-publish-mode label {
+  display: flex;
+  align-items: center;
   gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.cb-publish-mode input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: #6d5efc;
+  cursor: pointer;
+}
+
+.cb-publish-update-fields[hidden] {
+  display: none !important;
 }
 
 .craftum-blocks-actions {
@@ -519,6 +614,26 @@
   color: #b45309;
 }
 
+.cb-publish-key-banner {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #fcd34d;
+  background: #fffbeb;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #92400e;
+}
+
+.cb-publish-key-banner a {
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+.cb-publish-key-banner a:hover {
+  text-decoration: underline;
+}
+
 .cb-publish-preview {
   margin: 0 0 12px;
   padding: 10px 12px;
@@ -563,8 +678,28 @@
 }
 
 .craftum-blocks-card.featured {
-  border-color: #c4b5fd;
-  background: linear-gradient(180deg, #faf5ff 0%, #fff 100%);
+  border-color: #6d5efc;
+  background: linear-gradient(160deg, #7c6dfc 0%, #5a4ae6 100%);
+  box-shadow: 0 8px 24px rgba(90, 74, 230, 0.28);
+}
+
+.craftum-blocks-card.featured .cb-card-body strong,
+.craftum-blocks-card.featured .cb-card-body span,
+.craftum-blocks-card.featured .cb-card-body .cb-tag {
+  color: #fff;
+}
+
+.craftum-blocks-card.featured .cb-card-body .cb-tag {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.craftum-blocks-card.featured .cb-card-fallback {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.craftum-blocks-card.featured:hover {
+  border-color: #a78bfa;
+  box-shadow: 0 10px 28px rgba(90, 74, 230, 0.38);
 }
 
 .craftum-blocks-toast {

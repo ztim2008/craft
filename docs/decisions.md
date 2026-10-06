@@ -213,3 +213,22 @@ Snapshot-вставка **не может** вызывать `webpackChunkeditor
 Перед publish: сохранить страницу Craftum (Ctrl+S), обновить список секций, проверить плашку UUID+текст в форме. Republish с тем же `id` = upsert snapshot.
 
 Workflow: `docs/craftum-blocks/admin-workflow.md`.
+
+## ADR-0038 · Craftum Blocks: scope блоков — секции, не «Tilda-kit»
+
+**Контекст:** обсуждение блоков «как у Tilda» — бегущая строка, fixed соцкнопки, cookie-banner, bottom nav, site-wide хром.
+
+**Решение (2026-09-02):**
+
+1. **Craftum Blocks = каталог секций страницы** — JSON snapshot design/cover/form-блоков, редактируемых штатным Craftum (Контент / Дизайн).
+2. **Быстрый авторский workflow подтверждён:** собрать секцию → publish в каталог → **клонировать в каталоге под новым id** (или republish «Обновить по id») → вариации без пересборки с нуля.
+3. **Эксперiments автора (в рамках scope):** CSS через HTML-код внутри секции, пошаговая штатная анимация Craftum — пробуем на workshop 954965; каждый паттерн — только после проверки publish + insert + редактирование.
+4. **Не делаем пока** (отложено, не наш слой расширения):
+   - site-wide элементы: fixed виджеты на все страницы, cookie, bottom tab bar, сквозная шапка/подвал;
+   - «Zero block» / произвольный JS вне модели Craftum;
+   - HTML-блоки без редактируемых `data-type` как основной продукт;
+   - отдельный «site kit» — возможная фаза позже, не Craftum Blocks MVP.
+
+**Критерий блока в каталог:** текст/кнопки/картинки правятся после вставки; работает на publish; не дублирует штатный блок без явной пользы.
+
+См. также: `docs/craftum-blocks/philosophy.md`, `docs/craftum-blocks/admin-workflow.md`.

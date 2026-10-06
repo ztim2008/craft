@@ -3,7 +3,7 @@
  * Каталог блоков с craft.nordic-builder.ru, панель при открытии «+».
  */
 (function () {
-  const EXT_VERSION = "0.5.0";
+  const EXT_VERSION = "0.5.4";
   const LAUNCHER_SVG = `<svg class="cb-launcher-svg" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <rect width="48" height="48" rx="13" fill="url(#cb-launcher-grad)"/>
     <defs>
@@ -18,6 +18,7 @@
   </svg>`;
   const EDITOR_PATH = /^\/app\/site\/\d+\/page\/\d+/;
   const CATALOG_URL = "https://craft.nordic-builder.ru/api/craftum-blocks";
+  const ADMIN_PUBLISH_KEY_URL = "https://craft.nordic-builder.ru/admin/craftum-blocks";
 
   let extensionReloadNotified = false;
 
@@ -114,6 +115,67 @@
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
+  }
+
+  const CYRILLIC_TO_LATIN = {
+    а: "a",
+    б: "b",
+    в: "v",
+    г: "g",
+    д: "d",
+    е: "e",
+    ё: "e",
+    ж: "zh",
+    з: "z",
+    и: "i",
+    й: "y",
+    к: "k",
+    л: "l",
+    м: "m",
+    н: "n",
+    о: "o",
+    п: "p",
+    р: "r",
+    с: "s",
+    т: "t",
+    у: "u",
+    ф: "f",
+    х: "h",
+    ц: "ts",
+    ч: "ch",
+    ш: "sh",
+    щ: "sch",
+    ъ: "",
+    ы: "y",
+    ь: "",
+    э: "e",
+    ю: "yu",
+    я: "ya",
+  };
+
+  function translitRu(text) {
+    return String(text)
+      .toLowerCase()
+      .split("")
+      .map((ch) => CYRILLIC_TO_LATIN[ch] ?? ch)
+      .join("");
+  }
+
+  function generateCatalogId(name) {
+    const slug =
+      translitRu(name || "block")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 32) || "block";
+    let id = `${slug}-${Date.now().toString(36).slice(-5)}`;
+    let n = 0;
+    while (BLOCKS.some((b) => b.id === id)) {
+      id = `${slug}-${Math.random().toString(36).slice(2, 7)}`;
+      n += 1;
+      if (n > 20) break;
+    }
+    return id.slice(0, 50);
   }
 
   function snapshotPreviewText(blockOrSnapshot) {
@@ -539,8 +601,18 @@
   }
 
   async function openPublishModal() {
+    const { publishKey: storedKeyRaw } = await chrome.storage.local.get(["publishKey"]);
+    const storedKey = String(storedKeyRaw || "").trim();
+
     if (!isCatalogAdmin) {
-      toast("Публикация доступна только администратору каталога", "error");
+      if (!storedKey) {
+        toast(
+          "Ключ не настроен: скопируйте в админке Craft → popup расширения → «Сохранить ключ»",
+          "error",
+        );
+      } else {
+        toast("Публикация доступна только администратору каталога", "error");
+      }
       return;
     }
     const api = window.CraftumBlocksApi;
@@ -555,7 +627,7 @@
       return;
     }
 
-    const stored = await chrome.storage.local.get(["publishKey"]);
+    const stored = { publishKey: storedKey };
     let blocksOnPage = [];
     try {
       blocksOnPage = await api.fetchPageBlocksForPublish(pageId);
@@ -573,7 +645,17 @@
 
     const modal = document.createElement("div");
     modal.className = "craftum-blocks-modal craftum-blocks-modal--wide";
-    modal.innerHTML = `<h2>Опубликовать блок в каталог</h2><p>Снимок с Craftum → craft.nordic-builder.ru (ключ вводится здесь, не в Craftum)</p>`;
+    modal.innerHTML = `
+      <div class="cb-modal-header">
+        <h2>Опубликовать блок в каталог</h2>
+        <button type="button" class="cb-modal-close" title="Закрыть" aria-label="Закрыть">✕</button>
+      </div>
+      <p class="cb-modal-lead">Снимок с Craftum → craft.nordic-builder.ru. Ключ настраивается один раз в popup расширения.</p>`;
+    modal.addEventListener("mousedown", (e) => e.stopPropagation());
+    modal.addEventListener("click", (e) => e.stopPropagation());
+
+    const closeModal = () => overlay.remove();
+    modal.querySelector(".cb-modal-close")?.addEventListener("click", closeModal);
 
     const form = document.createElement("div");
     form.className = "craftum-blocks-form";
@@ -593,9 +675,33 @@
       ).join("");
     }
 
+    function buildCatalogBlockOptions() {
+      const catalogBlocks = sortBlocksForPanel(BLOCKS.filter((b) => b.craftumBlock));
+      if (!catalogBlocks.length) {
+        return `<option value="">— каталог пуст —</option>`;
+      }
+      return catalogBlocks
+        .map((b) => `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name)} (${escapeHtml(b.id)})</option>`)
+        .join("");
+    }
+
     form.innerHTML = `
-      <label>Ключ публикации<input id="cb-publish-key" type="password" placeholder="вставьте ключ из .env" autocomplete="off" /></label>
-      <p class="cb-form-hint">Только администратор. Ключ — в popup расширения.</p>
+      <div id="cb-publish-key-banner" class="cb-publish-key-banner" hidden>
+        Ключ не сохранён. Скопируйте в
+        <a href="${ADMIN_PUBLISH_KEY_URL}" target="_blank" rel="noopener">админке Craft</a>
+        → popup расширения → «Сохранить ключ» → обновите Craftum (F5).
+      </div>
+      <fieldset class="cb-publish-mode">
+        <legend>Режим публикации</legend>
+        <label><input type="radio" name="cb-publish-mode" value="new" checked /> Новый блок</label>
+        <label><input type="radio" name="cb-publish-mode" value="update" /> Обновить по id</label>
+      </fieldset>
+      <div id="cb-publish-update-fields" class="cb-publish-update-fields" hidden>
+        <label>Блок в каталоге
+          <select id="cb-publish-catalog-id">${buildCatalogBlockOptions()}</select>
+        </label>
+        <p class="cb-form-hint">Snapshot и метаданные перезапишутся. Превью в админке сохранится.</p>
+      </div>
       <label>Блок на странице
         <select id="cb-publish-block-id" ${blocksOnPage.length ? "" : "disabled"}>${buildBlockOptions(blocksOnPage)}</select>
       </label>
@@ -604,14 +710,62 @@
       <div id="cb-publish-preview" class="cb-publish-preview">— выберите секцию —</div>
       <p class="cb-form-hint">#1 сверху. Перед публикацией проверьте текст ниже — он попадёт в каталог.</p>
       <label>Категория<select id="cb-publish-category">${buildCategoryOptions()}</select></label>
-      <label>ID в каталоге<input id="cb-publish-id" placeholder="my-hero-v1" /></label>
       <label>Название<input id="cb-publish-name" placeholder="Мой hero" /></label>
       <label>Описание<input id="cb-publish-desc" placeholder="Кратко для панели" /></label>
-      <label class="cb-check"><input type="checkbox" id="cb-publish-featured" checked /> Featured</label>
+      <p id="cb-publish-id-hint" class="cb-form-hint cb-publish-id-hint">ID в каталоге будет создан автоматически</p>
+      <label class="cb-check"><input type="checkbox" id="cb-publish-featured" /> Рекомендуем (показывать выше в панели)</label>
     `;
 
-    const keyInput = () => document.getElementById("cb-publish-key");
     const blockSelect = () => document.getElementById("cb-publish-block-id");
+    const nameInput = () => document.getElementById("cb-publish-name");
+    const catalogSelect = () => document.getElementById("cb-publish-catalog-id");
+
+    function getPublishMode() {
+      return document.querySelector('input[name="cb-publish-mode"]:checked')?.value || "new";
+    }
+
+    function fillFromCatalogBlock(block) {
+      if (!block) return;
+      const nameEl = nameInput();
+      if (nameEl) nameEl.value = block.name || "";
+      const descEl = document.getElementById("cb-publish-desc");
+      if (descEl) descEl.value = block.description || "";
+      const catEl = document.getElementById("cb-publish-category");
+      if (catEl) catEl.value = block.category || "custom";
+      const featuredEl = document.getElementById("cb-publish-featured");
+      if (featuredEl) featuredEl.checked = !!block.featured;
+    }
+
+    function syncPublishModeUI() {
+      const mode = getPublishMode();
+      const updateFields = document.getElementById("cb-publish-update-fields");
+      if (updateFields) updateFields.hidden = mode !== "update";
+      if (mode === "update") {
+        const catalogId = catalogSelect()?.value;
+        const block = BLOCKS.find((b) => b.id === catalogId);
+        if (block) fillFromCatalogBlock(block);
+      }
+      updateIdHint();
+      if (submit) {
+        submit.textContent = mode === "update" ? "Обновить snapshot" : "Опубликовать";
+      }
+    }
+
+    function updateIdHint() {
+      const hint = document.getElementById("cb-publish-id-hint");
+      if (!hint) return;
+      if (getPublishMode() === "update") {
+        const id = catalogSelect()?.value;
+        hint.textContent = id
+          ? `Обновится блок в каталоге: ${id}`
+          : "Выберите блок в каталоге для обновления snapshot";
+        return;
+      }
+      const name = nameInput()?.value?.trim();
+      hint.textContent = name
+        ? `Новый ID: ${generateCatalogId(name)}`
+        : "ID в каталоге будет создан автоматически из названия";
+    }
 
     function renderPublishPreview() {
       const el = document.getElementById("cb-publish-preview");
@@ -657,40 +811,70 @@
     form.querySelector(".cb-refresh-blocks")?.addEventListener("click", () => {
       void refreshBlocksInModal();
     });
-    blockSelect()?.addEventListener("change", renderPublishPreview);
+    blockSelect()?.addEventListener("change", () => {
+      const b = blocksOnPage.find((x) => x.id === blockSelect()?.value);
+      if (b?.title) {
+        const nameEl = nameInput();
+        if (nameEl && !nameEl.value.trim()) nameEl.value = b.title;
+        updateIdHint();
+      }
+      renderPublishPreview();
+    });
+    nameInput()?.addEventListener("input", () => {
+      if (getPublishMode() === "new") updateIdHint();
+    });
+    form.querySelectorAll('input[name="cb-publish-mode"]').forEach((el) => {
+      el.addEventListener("change", syncPublishModeUI);
+    });
+    catalogSelect()?.addEventListener("change", syncPublishModeUI);
 
     const actions = document.createElement("div");
     actions.className = "craftum-blocks-actions";
     const cancel = document.createElement("button");
     cancel.className = "secondary";
     cancel.textContent = "Отмена";
-    cancel.onclick = () => overlay.remove();
+    cancel.onclick = closeModal;
 
     const submit = document.createElement("button");
     submit.className = "primary";
     submit.textContent = "Опубликовать";
-    submit.disabled = blocksOnPage.length === 0;
+    submit.disabled = blocksOnPage.length === 0 || !stored.publishKey;
     submit.onclick = async () => {
-      const publishKey = keyInput()?.value?.trim();
-      if (!publishKey) {
-        toast("Вставьте ключ публикации в форму", "error");
-        keyInput()?.focus();
+      const { publishKey } = await chrome.storage.local.get(["publishKey"]);
+      const publishKeyTrimmed = String(publishKey || "").trim();
+      if (!publishKeyTrimmed) {
+        toast("Настройте ключ в popup расширения (скопируйте из админки Craft)", "error");
+        const banner = document.getElementById("cb-publish-key-banner");
+        if (banner) banner.hidden = false;
         return;
       }
-      await chrome.storage.local.set({ publishKey });
 
       const blockId = blockSelect()?.value;
-      const id = document.getElementById("cb-publish-id")?.value?.trim().toLowerCase();
-      const name = document.getElementById("cb-publish-name")?.value?.trim();
+      const name = nameInput()?.value?.trim();
       const description = document.getElementById("cb-publish-desc")?.value?.trim();
       const featured = !!document.getElementById("cb-publish-featured")?.checked;
       const category = document.getElementById("cb-publish-category")?.value || "custom";
+      const mode = getPublishMode();
+      let id;
+      if (mode === "update") {
+        id = catalogSelect()?.value?.trim().toLowerCase();
+        if (!id) {
+          toast("Выберите блок в каталоге для обновления", "error");
+          return;
+        }
+        if (!BLOCKS.some((b) => b.id === id)) {
+          toast("Блок не найден в каталоге — обновите список «Мои блоки»", "error");
+          return;
+        }
+      } else {
+        id = generateCatalogId(name);
+      }
       if (!blockId) {
         toast("Выберите блок на странице", "error");
         return;
       }
-      if (!id || !name || !description) {
-        toast("Заполните id, название и описание", "error");
+      if (!name || !description) {
+        toast("Заполните название и описание", "error");
         return;
       }
       submit.disabled = true;
@@ -718,17 +902,21 @@
         }
         const res = await chrome.runtime.sendMessage({
           type: "PUBLISH_BLOCK",
-          key: publishKey,
+          key: publishKeyTrimmed,
           body: { id, name, description, featured, category, craftumBlock },
         });
         if (!res?.ok) throw new Error(res?.error || "Ошибка публикации");
-        toast(`Опубликовано: ${name}. Каталог обновлён.`, "ok");
+        const updated = !!res?.data?.updated;
+        toast(
+          updated ? `Обновлено: ${name} (${id})` : `Опубликовано: ${name} (${id})`,
+          "ok",
+        );
         overlay.remove();
         await loadBlocksFromServer(true);
       } catch (e) {
         toast(e.message || String(e), "error");
         submit.disabled = false;
-        submit.textContent = "Опубликовать";
+        submit.textContent = getPublishMode() === "update" ? "Обновить snapshot" : "Опубликовать";
       }
     };
 
@@ -737,23 +925,20 @@
     modal.appendChild(form);
     modal.appendChild(actions);
     overlay.appendChild(modal);
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) overlay.remove();
-    });
     document.body.appendChild(overlay);
 
-    const keyEl = keyInput();
-    if (keyEl && stored.publishKey) keyEl.value = stored.publishKey;
+    const keyBanner = document.getElementById("cb-publish-key-banner");
+    if (keyBanner && !stored.publishKey) keyBanner.hidden = false;
 
     if (blocksOnPage.length) {
       const sel = blockSelect();
       if (sel) sel.value = blocksOnPage[blocksOnPage.length - 1].id;
       const defaultBlock = blocksOnPage[blocksOnPage.length - 1];
       const defaultName = defaultBlock?.title || "my-block";
-      const idInput = document.getElementById("cb-publish-id");
-      if (idInput) idInput.value = defaultName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-      const nameInput = document.getElementById("cb-publish-name");
-      if (nameInput) nameInput.value = defaultName;
+      const nameEl = nameInput();
+      if (nameEl) nameEl.value = defaultName;
+      updateIdHint();
+      syncPublishModeUI();
       renderPublishPreview();
     }
   }
@@ -775,25 +960,10 @@
       });
       document.body.appendChild(fab);
     }
-
-    const headerActions = galleryEl?.querySelector(".cb-gallery-header-actions");
-    if (headerActions && !headerActions.querySelector(".craftum-blocks-publish-header-btn")) {
-      const headerBtn = document.createElement("button");
-      headerBtn.type = "button";
-      headerBtn.className = "craftum-blocks-publish-header-btn";
-      headerBtn.textContent = "↑ В каталог";
-      headerBtn.title = "Опубликовать блок в каталог";
-      headerBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        void openPublishModal();
-      });
-      headerActions.insertBefore(headerBtn, headerActions.firstChild);
-    }
   }
 
   function removePublishFab() {
     document.getElementById("craftum-blocks-publish-fab")?.remove();
-    galleryEl?.querySelector(".craftum-blocks-publish-header-btn")?.remove();
   }
 
   let dockEl = null;
@@ -1003,6 +1173,9 @@
     try {
       await insertBlock(block);
       toast(`Готово: ${block.name}. Сохранит Craftum.`, "ok");
+      if (chrome.runtime?.sendMessage) {
+        chrome.runtime.sendMessage({ type: "RECORD_INSERT", blockId: block.id }).catch(() => {});
+      }
     } catch (e) {
       toast(e.message || String(e), "error");
       scheduleSync();
@@ -1047,7 +1220,7 @@
       card.innerHTML = `
         <div class="cb-card-thumb">
           ${thumb ? `<img src="${escapeHtml(thumb)}" alt="" loading="lazy" />` : `<span class="cb-card-emoji">${cat.emoji}</span><span class="cb-card-fallback">${escapeHtml(preview || block.name)}</span>`}
-          ${block.featured ? '<span class="cb-card-badge">featured</span>' : ""}
+          ${block.featured ? '<span class="cb-card-badge">Рекомендуем</span>' : ""}
         </div>
         <div class="cb-card-body">
           <strong>${escapeHtml(block.name)}</strong>

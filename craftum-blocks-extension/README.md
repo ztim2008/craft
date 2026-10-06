@@ -4,7 +4,9 @@
 
 **Скачать:** https://craft.nordic-builder.ru/craftum-blocks
 
-Прямая ссылка на ZIP: https://craft.nordic-builder.ru/downloads/craftum-blocks-mvp.zip
+Установщик (Windows + macOS/Linux): https://craft.nordic-builder.ru/downloads/craftum-blocks-setup.zip
+
+Внутри: `INSTALL.bat`, `install.sh`, папка `extension/`.
 
 Подробная инструкция: [INSTALL.md](INSTALL.md)
 

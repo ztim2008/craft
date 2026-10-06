@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const { applyContent } = require("./patch.cjs");
+const { applyContent, collectGoodsCardsC, cardLabelC, applyListItems } = require("./patch.cjs");
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "public");
@@ -86,6 +86,7 @@ function readContent() {
     forms: raw.forms || {},
     htmlBlocks: raw.htmlBlocks || [],
     menuInserts: raw.menuInserts || [],
+    listItems: raw.listItems || {},
     site: raw.site || {},
     pages: raw.pages || {},
     sections: raw.sections || { order: [], hidden: [], removed: [], inserts: [] },
@@ -95,6 +96,69 @@ function readContent() {
 function writeContent(overlay) {
   fs.mkdirSync(DATA, { recursive: true });
   fs.writeFileSync(path.join(DATA, "content.json"), JSON.stringify(overlay, null, 2));
+}
+
+function goodsCatalog(pagePath) {
+  const model = readJson(path.join(DATA, "page-model.json"), { pages: [] });
+  const page = (model.pages || []).find((item) => item.path === pagePath);
+  if (!page) return [];
+  const rel = pageOutputPath(page.path);
+  if (!rel) return [];
+  const file = path.join(SOURCE, rel);
+  if (!fs.existsSync(file)) return [];
+  const html = fs.readFileSync(file, "utf8");
+  const content = readContent();
+  const bag = content.listItems || {};
+  const sections = (page.sections || []).filter(
+    (sec) => sec.type === "goods" || /good/i.test(String(sec.label || "")),
+  );
+  return sections
+    .map((sec) => {
+      const donor = collectGoodsCardsC(html, sec.id);
+      if (!donor.length) return null;
+      const layout = bag[sec.id] || { order: [], removed: [], inserts: [] };
+      const removed = new Set(layout.removed || []);
+      const inserts = layout.inserts || [];
+      const byInsert = new Map(inserts.filter((item) => item && item.id).map((item) => [item.id, item]));
+      let order = (layout.order || []).filter((key) => {
+        if (donor.some((d) => d.key === key)) return !removed.has(key);
+        return byInsert.has(key);
+      });
+      const hasInsertInOrder = order.some((key) => byInsert.has(key));
+      if (!hasInsertInOrder && inserts.length) {
+        const expanded = [];
+        let donorOrder = order.filter((key) => donor.some((d) => d.key === key));
+        for (const card of donor) {
+          if (!removed.has(card.key) && !donorOrder.includes(card.key)) donorOrder.push(card.key);
+        }
+        for (const key of donorOrder) {
+          expanded.push(key);
+          for (const ins of inserts.filter((item) => item.afterKey === key)) expanded.push(ins.id);
+        }
+        for (const ins of inserts.filter((item) => item && item.id && !item.afterKey && !expanded.includes(item.id))) {
+          expanded.unshift(ins.id);
+        }
+        order = expanded;
+      } else {
+        for (const card of donor) {
+          if (!removed.has(card.key) && !order.includes(card.key)) order.push(card.key);
+        }
+        for (const ins of inserts) {
+          if (ins && ins.id && !order.includes(ins.id)) order.push(ins.id);
+        }
+      }
+      const cards = order
+        .map((key) => {
+          const card = donor.find((d) => d.key === key);
+          if (card) return { key, kind: "donor", label: cardLabelC(card.html) };
+          const ins = byInsert.get(key);
+          if (ins) return { key: ins.id, kind: "insert", label: ins.label || "Новая карточка" };
+          return null;
+        })
+        .filter(Boolean);
+      return { sectionId: sec.id, label: sec.label || "Товары", cards };
+    })
+    .filter(Boolean);
 }
 
 function resolveEmail(content, formId) {
@@ -135,6 +199,47 @@ async function readBody(req) {
   let raw = "";
   for await (const chunk of req) raw += chunk;
   return raw;
+}
+
+async function readRaw(req) {
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  return Buffer.concat(chunks);
+}
+
+function parseMultipart(buffer, boundary) {
+  const sep = Buffer.from("--" + boundary);
+  const parts = [];
+  let start = buffer.indexOf(sep);
+  if (start < 0) return parts;
+  start += sep.length;
+  while (start < buffer.length) {
+    if (buffer[start] === 0x2d && buffer[start + 1] === 0x2d) break;
+    if (buffer[start] === 0x0d) start += 1;
+    if (buffer[start] === 0x0a) start += 1;
+    const next = buffer.indexOf(sep, start);
+    if (next < 0) break;
+    let part = buffer.subarray(start, next);
+    if (part.length >= 2 && part[part.length - 2] === 0x0d && part[part.length - 1] === 0x0a) {
+      part = part.subarray(0, part.length - 2);
+    }
+    const headerEnd = part.indexOf("\r\n\r\n");
+    if (headerEnd >= 0) {
+      const headers = part.subarray(0, headerEnd).toString("utf8");
+      const body = part.subarray(headerEnd + 4);
+      const nameMatch = /name="([^"]+)"/i.exec(headers);
+      const fileMatch = /filename="([^"]*)"/i.exec(headers);
+      const typeMatch = /Content-Type:\s*([^\r\n]+)/i.exec(headers);
+      parts.push({
+        name: nameMatch ? nameMatch[1] : "",
+        filename: fileMatch ? fileMatch[1] : "",
+        type: typeMatch ? typeMatch[1].trim() : "",
+        data: body,
+      });
+    }
+    start = next + sep.length;
+  }
+  return parts;
 }
 
 function walkHtml(dir) {
@@ -345,7 +450,13 @@ const server = http.createServer(async (req, res) => {
       } catch {
         leads = [];
       }
-      return json(res, 200, { content, model, leads, authed: true });
+      return json(res, 200, {
+        content,
+        model,
+        leads,
+        authed: true,
+        goodsCatalog: goodsCatalog("/"),
+      });
     }
     if (req.method === "GET" && url.pathname === "/api/admin/page-html") {
       const model = readJson(path.join(DATA, "page-model.json"), { pages: [] });
@@ -423,6 +534,7 @@ const server = http.createServer(async (req, res) => {
         forms: body.forms || {},
         htmlBlocks: body.htmlBlocks || [],
         menuInserts: body.menuInserts || [],
+        listItems: body.listItems != null ? body.listItems : current.listItems || {},
         site: body.site != null ? body.site : current.site || {},
         pages: body.pages != null ? body.pages : current.pages || {},
         sections: body.sections != null ? body.sections : current.sections || { order: [], hidden: [], removed: [], inserts: [] },
@@ -437,6 +549,32 @@ const server = http.createServer(async (req, res) => {
       writeContent(overlay);
       const files = publish(overlay);
       return json(res, 200, { ok: true, files, publishedAt: overlay.publishedAt });
+    }
+    if (req.method === "POST" && url.pathname === "/api/admin/upload") {
+      const ctype = String(req.headers["content-type"] || "");
+      const boundaryMatch = /boundary=(?:"([^"]+)"|([^;]+))/i.exec(ctype);
+      if (!boundaryMatch) return json(res, 400, { error: "Нужен multipart/form-data" });
+      const boundary = (boundaryMatch[1] || boundaryMatch[2] || "").trim();
+      const raw = await readRaw(req);
+      const parts = parseMultipart(raw, boundary);
+      const file = parts.find((part) => part.name === "file" && part.data && part.data.length);
+      if (!file) return json(res, 400, { error: "Нет файла" });
+      if (file.data.length > 5 * 1024 * 1024) return json(res, 400, { error: "Максимум 5 МБ" });
+      const type = String(file.type || "").toLowerCase();
+      let ext = path.extname(String(file.filename || "")).toLowerCase();
+      if (type === "image/jpeg") ext = ".jpg";
+      else if (type === "image/png") ext = ".png";
+      else if (type === "image/webp") ext = ".webp";
+      else if (type === "image/gif") ext = ".gif";
+      if (ext === ".jpeg") ext = ".jpg";
+      if (![".jpg", ".png", ".webp", ".gif"].includes(ext)) {
+        return json(res, 400, { error: "Только JPG, PNG, WebP или GIF" });
+      }
+      const name = crypto.randomBytes(8).toString("hex") + ext;
+      const dir = path.join(ROOT, "assets");
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(path.join(dir, name), file.data);
+      return json(res, 200, { ok: true, url: "/assets/" + name, bytes: file.data.length });
     }
     return json(res, 404, { error: "Not found" });
   }

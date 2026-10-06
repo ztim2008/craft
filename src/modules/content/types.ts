@@ -87,6 +87,18 @@ export type SectionLayout = {
   inserts?: SectionInsert[];
 };
 
+export type ListItemInsert = {
+  id: string;
+  afterKey?: string;
+  label?: string;
+};
+
+export type ListItemLayout = {
+  order?: string[];
+  removed?: string[];
+  inserts?: ListItemInsert[];
+};
+
 export type ContentOverlay = {
   version: 1;
   updatedAt: string;
@@ -95,6 +107,8 @@ export type ContentOverlay = {
   forms: Record<string, FormPatch>;
   htmlBlocks: HtmlBlock[];
   menuInserts?: MenuInsert[];
+  /** sectionId → goods list-item layout (Soap SKU) */
+  listItems?: Record<string, ListItemLayout>;
   site?: SiteSettings;
   pages?: Record<string, PageSeo>;
   sections?: SectionLayout;
@@ -113,6 +127,7 @@ export function emptyContent(): ContentOverlay {
     forms: {},
     htmlBlocks: [],
     menuInserts: [],
+    listItems: {},
     site: {},
     pages: {},
     sections: { order: [], hidden: [], removed: [], inserts: [] },

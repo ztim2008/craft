@@ -1,6 +1,6 @@
 import {
   addCraftumBlock,
-  getPublicCraftumBlockCatalog,
+  getAdminCraftumBlockCatalog,
   parseCraftumBlockInput,
 } from "@/modules/craftum-blocks/catalog";
 
@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return Response.json(getPublicCraftumBlockCatalog());
+  return Response.json(getAdminCraftumBlockCatalog());
 }
 
 export async function POST(request: Request) {
@@ -21,8 +21,11 @@ export async function POST(request: Request) {
 
   try {
     const block = parseCraftumBlockInput(body);
-    const catalog = addCraftumBlock(block);
-    return Response.json({ ok: true, block, catalog }, { status: 201 });
+    addCraftumBlock(block);
+    return Response.json(
+      { ok: true, block, catalog: getAdminCraftumBlockCatalog() },
+      { status: 201 },
+    );
   } catch (e) {
     const message = e instanceof Error ? e.message : "Ошибка сохранения";
     return Response.json({ error: message }, { status: 400 });

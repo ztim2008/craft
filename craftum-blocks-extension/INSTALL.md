@@ -9,10 +9,13 @@ https://craft.nordic-builder.ru/craftum-blocks
 После сборки (`npm run build:extension`):
 
 ```
-craftum-blocks-extension/dist/craftum-blocks-mvp-0.1.0.zip
+public/downloads/craftum-blocks-setup.zip
+craftum-blocks-extension/dist/craftum-blocks-setup-0.5.4.zip
 ```
 
-Скачайте ZIP на компьютер и распакуйте в любую папку, например `C:\CraftumBlocks`.
+**Windows:** распакуйте → `INSTALL.bat` → режим разработчика → вставить путь из буфера.
+
+**macOS/Linux:** распакуйте → `./install.sh` → загрузить папку из `~/.local/share/craftum-blocks`.
 
 ---
 

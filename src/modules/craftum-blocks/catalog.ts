@@ -11,6 +11,7 @@ import {
   sanitizeCraftumBlockSnapshot,
   type CraftumBlockSnapshot,
 } from "@/modules/craftum-blocks/snapshot";
+import { getInsertStatsMap } from "@/modules/craftum-blocks/insert-stats";
 
 export type CraftumHeroTexts = {
   title: string;
@@ -33,6 +34,8 @@ export type CraftumBlockCatalogItem = {
   previewUrl?: string;
   publishedAt?: string;
   updatedAt?: string;
+  insertCount?: number;
+  lastInsertedAt?: string;
   insert: CraftumBlockInsert;
 };
 
@@ -128,12 +131,17 @@ export function parseCraftumBlockInput(raw: unknown): CraftumBlockCatalogItem {
     insert: parseInsert(o.insert),
   };
   if (o.featured === true) block.featured = true;
+  else if (o.featured === false) block.featured = undefined;
   const previewUrl = String(o.previewUrl || "").trim();
   if (previewUrl) block.previewUrl = previewUrl;
-  const categoryRaw = String(o.category || "").trim();
-  block.category = categoryRaw
-    ? normalizeCategoryId(categoryRaw)
-    : inferCategoryFromMode(block.insert.mode);
+  if ("category" in o) {
+    const categoryRaw = String(o.category ?? "").trim();
+    block.category = categoryRaw
+      ? normalizeCategoryId(categoryRaw)
+      : inferCategoryFromMode(block.insert.mode);
+  } else {
+    block.category = inferCategoryFromMode(block.insert.mode);
+  }
   if (o.publishedAt) block.publishedAt = String(o.publishedAt);
   if (o.updatedAt) block.updatedAt = String(o.updatedAt);
   return block;
@@ -150,10 +158,29 @@ export function getCraftumBlockCatalog(): CraftumBlockCatalog {
 
 export function getPublicCraftumBlockCatalog(): CraftumBlockPublicCatalog {
   const catalog = getCraftumBlockCatalog();
+  const stats = getInsertStatsMap();
   return {
     ...catalog,
     categories: getCraftumBlockCategories(),
-    blocks: catalog.blocks.map(withCategory),
+    blocks: catalog.blocks.map((block) => {
+      const withCat = withCategory(block);
+      const count = stats[block.id]?.insertCount ?? 0;
+      return count > 0 ? { ...withCat, insertCount: count } : withCat;
+    }),
+  };
+}
+
+/** Каталог для админки: категории + счётчики вставок. */
+export function getAdminCraftumBlockCatalog(): CraftumBlockPublicCatalog {
+  const catalog = getPublicCraftumBlockCatalog();
+  const stats = getInsertStatsMap();
+  return {
+    ...catalog,
+    blocks: catalog.blocks.map((block) => ({
+      ...block,
+      insertCount: stats[block.id]?.insertCount ?? 0,
+      lastInsertedAt: stats[block.id]?.lastInsertedAt,
+    })),
   };
 }
 
@@ -189,6 +216,7 @@ export function upsertCraftumBlock(block: CraftumBlockCatalogItem): CraftumBlock
     const prev = catalog.blocks[idx];
     block.publishedAt = prev.publishedAt || now;
     block.updatedAt = now;
+    if (prev.previewUrl && !block.previewUrl) block.previewUrl = prev.previewUrl;
     return updateCraftumBlock(block.id, block);
   }
   block.publishedAt = now;
@@ -203,8 +231,21 @@ export function updateCraftumBlock(id: string, block: CraftumBlockCatalogItem): 
   if (block.id !== id && catalog.blocks.some((b) => b.id === block.id)) {
     throw new Error(`Блок «${block.id}» уже есть`);
   }
+  const prev = catalog.blocks[idx];
+  const now = new Date().toISOString();
+  const merged: CraftumBlockCatalogItem = {
+    ...prev,
+    ...block,
+    id,
+    category: block.category ?? prev.category,
+    publishedAt: prev.publishedAt,
+    updatedAt: now,
+  };
+  if (prev.previewUrl && !block.previewUrl) merged.previewUrl = prev.previewUrl;
+  if (block.featured !== true) delete merged.featured;
+
   const next = [...catalog.blocks];
-  next[idx] = block;
+  next[idx] = merged;
   return saveCraftumBlockCatalog(next);
 }
 

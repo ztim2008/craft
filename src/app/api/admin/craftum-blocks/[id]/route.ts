@@ -1,5 +1,6 @@
 import {
   getCraftumBlockById,
+  getAdminCraftumBlockCatalog,
   parseCraftumBlockInput,
   removeCraftumBlock,
   updateCraftumBlock,
@@ -28,8 +29,8 @@ export async function PUT(request: Request, { params }: Params) {
 
   try {
     const block = parseCraftumBlockInput(body);
-    const catalog = updateCraftumBlock(id, block);
-    return Response.json({ ok: true, block, catalog });
+    updateCraftumBlock(id, block);
+    return Response.json({ ok: true, block: getCraftumBlockById(id), catalog: getAdminCraftumBlockCatalog() });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Ошибка сохранения";
     const status = message === "Блок не найден" ? 404 : 400;
@@ -41,7 +42,7 @@ export async function DELETE(_req: Request, { params }: Params) {
   const { id } = await params;
   try {
     const catalog = removeCraftumBlock(id);
-    return Response.json({ ok: true, catalog });
+    return Response.json({ ok: true, catalog: getAdminCraftumBlockCatalog() });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Ошибка удаления";
     const status = message === "Блок не найден" ? 404 : 400;
